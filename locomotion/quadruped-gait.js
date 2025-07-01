@@ -1,3 +1,4 @@
+// Quadruped gait system with arbitrary heading and world-space gait & stepping
 class QuadrupedWalkPattern extends LocomotionPattern {
     constructor(config) {
         super('quadruped-walk', config);
@@ -6,6 +7,12 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         this.footSteps = [];
         this.phaseOffsets = [0, Math.PI, Math.PI, 0]; // Diagonal pairs
         this.state = 'idle';
+        this.footHome = [
+            { x:  40, y:  70 }, // front-left (body local)
+            { x: -40, y:  70 }, // front-right
+            { x:  40, y: -70 }, // back-left
+            { x: -40, y: -70 }  // back-right
+        ];
     }
 
     initializeFootSteps(bodyPosition, numFeet) {
@@ -13,21 +20,26 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         const sides = ['front-left', 'front-right', 'back-left', 'back-right'];
         for (let i = 0; i < numFeet; i++) {
             this.footSteps.push({
-                target: new FIK.V2(
-                    bodyPosition.x + ((i % 2 === 0) ? -40 : 40),
-                    bodyPosition.y + 80
-                ),
+                // Set to world position of local home, using heading = 0
+                target: new FIK.V2(bodyPosition.x + this.footHome[i].x, bodyPosition.y + this.footHome[i].y),
                 phase: this.phaseOffsets[i],
                 isLifted: false,
-                side: sides[i] || 'unknown'
+                side: sides[i] || 'unknown',
+                homeLocal: { ...this.footHome[i] }
             });
         }
     }
 
     update(creature, deltaTime) {
         super.update(creature, deltaTime);
-        
-        // Similar logic to bipedal but with diagonal gait pattern
+
+        // Initialize bodyHeading if not present
+        if (typeof creature.bodyHeading !== 'number') {
+            creature.bodyHeading = 0;
+        }
+
+        // === Arbitrary Heading Logic ===
+        // 1. Compute direction to target and angle difference
         const dirToTarget = new FIK.V2(
             creature.mouseTarget.x - creature.bodyPosition.x,
             creature.mouseTarget.y - creature.bodyPosition.y
@@ -35,61 +47,83 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         const targetAngle = Math.atan2(dirToTarget.y, dirToTarget.x);
         const angleDiff = creature.normalizeAngle(targetAngle - creature.bodyHeading);
 
+        // 2. State selection: turn in place or walk forward
         const absAngleDiff = Math.abs(angleDiff);
         const TURN_THRESHOLD = Math.PI / 4;
-        
+
         if (absAngleDiff > TURN_THRESHOLD) {
             this.state = 'turn';
         } else {
             this.state = 'walk';
         }
 
+        // 3. Animate heading based on state
         if (this.state === 'turn') {
             const turnRate = 0.08;
             creature.bodyHeading += turnRate * Math.sign(angleDiff);
             creature.bodyHeading = creature.normalizeAngle(creature.bodyHeading);
+            // Optionally, you could adjust leg phases for a "circle step"
         } else if (this.state === 'walk') {
             const walkTurnBlend = 0.05;
             creature.bodyHeading = creature.normalizeAngle(
                 creature.bodyHeading + walkTurnBlend * angleDiff
             );
+        }
 
-            // Update quadruped foot placement with trot gait (diagonal pairs)
-            const stepDir = new FIK.V2(Math.cos(creature.bodyHeading), Math.sin(creature.bodyHeading));
-            this.footSteps.forEach((foot, i) => {
-                foot.phase += 0.08;
-                
-                // Diagonal pairs: front-left with back-right, front-right with back-left
-                const pairPhase = i < 2 ? foot.phase : foot.phase + Math.PI;
-                foot.isLifted = Math.sin(pairPhase) > 0.6;
+        // 4. Move the body forward along heading (world coordinates)
+        if (this.state === 'walk') {
+            const speed = (this.stepLength * 1.2) * (deltaTime || 0.016); // px per frame, scaled by deltaTime
+            creature.bodyPosition.x += Math.cos(creature.bodyHeading) * speed;
+            creature.bodyPosition.y += Math.sin(creature.bodyHeading) * speed;
+        }
 
-                if (foot.isLifted) {
-                    // Calculate foot position based on quadruped body layout
-                    const isLeft = foot.side.includes('left');
-                    const isFront = foot.side.includes('front');
-                    
-                    // Body-relative positioning for quadruped
-                    const lateralOffset = isLeft ? -35 : 35;
-                    const longitudinalOffset = isFront ? 40 : -40;
-                    
-                    // Step forward from current position
-                    const baseX = foot.target.x + stepDir.x * this.stepLength * 0.4;
-                    const baseY = foot.target.y + stepDir.y * this.stepLength * 0.4;
-                    
-                    // Manual lerp to avoid p5.js conflicts
-                    foot.target.x += (baseX - foot.target.x) * 0.2;
-                    foot.target.y += (baseY - foot.target.y) * 0.2;
-                }
-            });
+        // 5. Animate foot placement in body-local and transform to world
+        this.updateFootPlacement(creature);
 
-            this.updateBodyFromFeet(creature);
+        // 6. Update body position based on grounded feet (stability)
+        this.updateBodyFromFeet(creature);
+    }
+
+    updateFootPlacement(creature) {
+        // Animate swing/stance for each foot in body-local space, then rotate to world
+        for (let i = 0; i < this.footSteps.length; i++) {
+            let foot = this.footSteps[i];
+            // Advance phase
+            foot.phase += 0.08;
+
+            // Diagonal pairs: front-left with back-right, front-right with back-left
+            const pairPhase = i < 2 ? foot.phase : foot.phase + Math.PI;
+            foot.isLifted = Math.sin(pairPhase) > 0.6;
+
+            // Base home position in body-local coordinates
+            let local = foot.homeLocal;
+
+            // Animate swing/stance in local space (forward is +y)
+            let localSwingY = 0;
+            if (foot.isLifted) {
+                // Swing arc: move foot forward in stride, add lift
+                localSwingY = Math.sin((foot.phase % (2*Math.PI))) * this.stepLength * 0.5;
+            }
+            // Local (x, y)
+            let localX = local.x;
+            let localY = local.y + localSwingY;
+
+            // Rotate local to world using bodyHeading
+            const c = Math.cos(creature.bodyHeading);
+            const s = Math.sin(creature.bodyHeading);
+            const wx = creature.bodyPosition.x + (localX * c - localY * s);
+            const wy = creature.bodyPosition.y + (localX * s + localY * c);
+
+            // Lerp for smoothness
+            foot.target.x += (wx - foot.target.x) * 0.2;
+            foot.target.y += (wy - foot.target.y) * 0.2;
         }
     }
 
     updateBodyFromFeet(creature) {
         let avgX = 0, avgY = 0;
         let groundedFeet = 0;
-        
+
         this.footSteps.forEach(foot => {
             if (!foot.isLifted) {
                 avgX += foot.target.x;
@@ -174,6 +208,7 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         );
     }
 }
+
 
 class BiomechanicalQuadrupedGait extends LocomotionPattern {
     constructor(config) {
