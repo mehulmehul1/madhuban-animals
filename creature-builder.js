@@ -760,86 +760,91 @@ class ModularCreatureBuilder {
     }
 
     drawChains() {
-        // Draw each chain with its specific style
         this.chains.forEach((chain, i) => {
             const config = this.chainConfigs[i];
-            
-            push();
-            
-            // Set colors
-            const color = config.color;
-            stroke(color[0], color[1], color[2]);
-            strokeWeight(2);
-            
-            // Draw bones as lines
-            chain.bones.forEach((bone, boneIndex) => {
-                line(bone.start.x, bone.start.y, bone.end.x, bone.end.y);
+            if (chain.bones.length < 2) return;
+
+            // 1. Generate the outline from the bone chain and a width profile
+            const outline = this.generateOutlineFromChain(chain, t => {
+                // Example width profile: thicker in the middle
+                return 30 * (0.5 + 0.5 * (1 - Math.pow(2 * t - 1, 2)));
             });
-            
-            // Draw joints as dots
-            fill(color[0], color[1], color[2]);
-            noStroke();
-            
-            // Different dot sizes based on type
-            const dotSize = config.attachment === 'free' ? 8 : 6;
-            
-            chain.bones.forEach((bone, boneIndex) => {
-                circle(bone.start.x, bone.start.y, dotSize);
-                
-                // Special markers for specific bones
-                if (config.role === 'spine' || config.role === 'body') {
-                    if (boneIndex === 0) {
-                        // Base marker
-                        stroke(color[0], color[1], color[2]);
-                        strokeWeight(2);
-                        noFill();
-                        circle(bone.start.x, bone.start.y, dotSize + 4);
-                    }
-                }
-            });
-            
-            // End effector dot
-            if (chain.bones.length > 0) {
-                const lastBone = chain.bones[chain.bones.length - 1];
-                circle(lastBone.end.x, lastBone.end.y, dotSize);
-                
-                // Special end effector marker
-                if (config.targetMode === 'mouse' || config.targetMode === 'foot') {
-                    stroke(color[0], color[1], color[2]);
-                    strokeWeight(2);
-                    noFill();
-                    circle(lastBone.end.x, lastBone.end.y, dotSize + 4);
-                }
+
+            // 2. Draw the main filled shape using the theme
+            const theme = this.themeManager.get(this.themeManager.currentTheme);
+            const creatureFill = this.themeManager.get('creature_fill')();
+            const creatureStroke = this.themeManager.get('creature_stroke');
+            const strokeWeight = this.themeManager.get('stroke_weight');
+
+            fill(creatureFill);
+            stroke(creatureStroke);
+            strokeWeight(strokeWeight);
+
+            beginShape();
+            for (const pt of outline) {
+                vertex(pt.x, pt.y);
             }
-            
-            // Draw role label
-            fill(0);
-            noStroke();
-            textAlign(CENTER);
-            textSize(9);
-            if (chain.bones.length > 0) {
-                const midBone = chain.bones[Math.floor(chain.bones.length / 2)];
-                text(config.role, midBone.start.x, midBone.start.y - 10);
-            }
-            
-            pop();
+            endShape(CLOSE);
+
+            // 3. Apply Madhubani-style decorations
+            this.applyDecorations(outline);
         });
+    }
+
+    generateOutlineFromChain(chain, widthProfile) {
+        const points = chain.bones.map(b => b.start).concat([chain.bones[chain.bones.length - 1].end]);
+        const outline = [];
+        const left = [], right = [];
+
+        for (let i = 0; i < points.length; i++) {
+            const t = i / (points.length - 1);
+            const w = widthProfile(t) / 2;
+
+            let dir;
+            if (i === 0) {
+                dir = points[1].minus(points[0]);
+            } else if (i === points.length - 1) {
+                dir = points[i].minus(points[i - 1]);
+            } else {
+                dir = points[i + 1].minus(points[i - 1]);
+            }
+            dir.normalize();
+            const normal = new FIK.V2(-dir.y, dir.x);
+
+            left.push(points[i].plus(normal.multiplyScalar(w)));
+            right.push(points[i].plus(normal.multiplyScalar(-w)));
+        }
+
+        return left.concat(right.reverse());
+    }
+
+    applyDecorations(path) {
+        // --- 1. Apply Border to the main outline ---
+        const borderStroke = this.themeManager.get('border.stroke');
+        this.borderDecorator.path = path;
+        this.borderDecorator.style = this.themeManager.get('border.style');
+        this.borderDecorator.draw(borderStroke);
+
+        // --- 2. Segment the path and apply different fillers ---
+        this.segmenter.path = path;
+        const segments = this.segmenter.segment(3);
+
+        const patterns = this.themeManager.get('filler.patterns');
+        const fillerStroke = this.themeManager.get('filler.stroke');
+
+        for (let i = 0; i < segments.length; i++) {
+            const segmentPath = segments[i];
+            if (segmentPath.length > 2) {
+                const patternName = patterns[i % patterns.length];
+                const style = this.themeManager.get(`filler.styles.${patternName}`);
+                
+                this.filler.path = segmentPath;
+                this.filler.style = style;
+                this.filler.draw(fillerStroke);
+            }
+        }
         
-        // Draw mouse target
-        push();
-        stroke(255, 0, 0);
-        strokeWeight(2);
-        noFill();
-        circle(this.mouseTarget.x, this.mouseTarget.y, 16);
-        line(this.mouseTarget.x - 8, this.mouseTarget.y, this.mouseTarget.x + 8, this.mouseTarget.y);
-        line(this.mouseTarget.x, this.mouseTarget.y - 8, this.mouseTarget.x, this.mouseTarget.y + 8);
-        
-        fill(255, 0, 0);
-        noStroke();
-        textAlign(CENTER);
-        textSize(10);
-        text("MOUSE", this.mouseTarget.x, this.mouseTarget.y - 20);
-        pop();
+        this.filler.path = [];
     }
 
     drawDebugInfo() {
