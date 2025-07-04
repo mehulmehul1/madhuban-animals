@@ -3,7 +3,7 @@ let builder;
 function setup() {
     createCanvas(windowWidth, windowHeight);
     builder = new ModularCreatureBuilder();
-    builder.buildQuadruped(); // Start with the quadruped
+    builder.buildHorse(); // Start with the horse
 }
 
 function draw() {
@@ -20,32 +20,36 @@ function keyPressed() {
             builder.buildBipedalCrane();
             break;
         case '3':
-            builder.buildQuadruped();
+            builder.buildHorse();
             break;
         case '4':
-            builder.buildSnake();
+            builder.buildLizard();
             break;
         case 'd':
             builder.showDebug = !builder.showDebug;
             break;
-        // Quadruped gait controls
+        case 's':
+            // Toggle skeleton visualization
+            builder.showSkeleton = !builder.showSkeleton;
+            break;
+        // Quadruped gait controls (works for horse and lizard)
         case 'w':
-            if (builder.creatureType === 'quadruped' && builder.activeLocomotion.transitionToGait) {
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
                 builder.activeLocomotion.transitionToGait('walk');
             }
             break;
         case 't':
-            if (builder.creatureType === 'quadruped' && builder.activeLocomotion.transitionToGait) {
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
                 builder.activeLocomotion.transitionToGait('trot');
             }
             break;
         case 'g':
-            if (builder.creatureType === 'quadruped' && builder.activeLocomotion.transitionToGait) {
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
                 builder.activeLocomotion.transitionToGait('gallop');
             }
             break;
         case 'p':
-            if (builder.creatureType === 'quadruped' && builder.activeLocomotion.transitionToGait) {
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
                 builder.activeLocomotion.transitionToGait('pace');
             }
             break;

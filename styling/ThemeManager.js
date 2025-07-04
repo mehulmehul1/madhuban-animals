@@ -8,7 +8,7 @@ class ThemeManager {
                 stroke_weight: 2,
                 border: {
                     stroke: [139, 69, 19],
-                    style: { numLines: 2, strokeGap: 3, beads: { count: 15, size: 4 } }
+                    style: { numLines: 1, strokeGap: 3, beads: { count: 15, size: 4 } }
                 },
                 filler: {
                     stroke: [139, 69, 19],

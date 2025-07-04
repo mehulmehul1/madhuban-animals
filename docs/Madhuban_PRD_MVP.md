@@ -1,7 +1,7 @@
 # Product Requirements Document: Project Madhuban MVP
 
-**Version:** 2.0 (Multi-Creature Showcase)
-**Date:** 2025-06-28
+**Version:** 2.1 (Advanced Creature Animation Integration)
+**Date:** 2025-07-02
 
 ## 1. Introduction & Vision
 
@@ -15,9 +15,9 @@ The core of the MVP is to build a system that can:
 3.  Segment the shapes into distinct areas, each with its own styling.
 4.  Place these decorated elements within a simple scene.
 5.  Manage all styling and composition through a flexible and theme-based system.
-6.  **[NEW]** Support multi-chain, hierarchical skeletons for creatures, with each part (spine, fins, tail, etc.) as a separate IK chain, each with its own width profile and animation logic.
-7.  **[NEW]** Animate all parts of a creature in a physically plausible, hierarchical way (e.g., fins and tail follow the body, follow-through effects).
-8.  **[NEW]** Allow for easy extension to arbitrary creatures and recursive skeletons in the future.
+6.  **[UPDATED]** Support multi-chain, hierarchical skeletons for creatures, with each part (spine, fins, tail, etc.) as a separate IK chain, each with its own width profile and animation logic, adhering to biomechanically plausible joint constraints and proportions.
+7.  **[UPDATED]** Animate all parts of a creature in a physically plausible, hierarchical way (e.g., fins and tail follow the body, follow-through effects), driven by procedural gait controllers and foot placement systems.
+8.  **[UPDATED]** Allow for easy extension to arbitrary creatures and recursive skeletons in the future, leveraging a data-driven approach for anatomical and locomotion parameters.
 
 This MVP will lay the foundation for the full vision of Project Madhuban, which includes advanced semantic storytelling.
 
@@ -28,11 +28,11 @@ This MVP will lay the foundation for the full vision of Project Madhuban, which 
 *   **Requirement:** The system must leverage the existing `FIK.js` (`fullik`) library to drive a procedural animation engine. The focus is on building a sophisticated control layer on top of this library to produce anatomically correct and biomechanically plausible creature movement.
 
 *   **Details:**
-     **`FIK.js` Integration:** The system will use `FIK.Structure3D` and `FIK.Chain3D` as the foundational components for all skeletal definitions and IK solving.
-    *   **`ConstraintManager` & Profiles:** A data-driven `ConstraintManager` will apply anatomically correct joint limits to the `FIK.js` chains. These limits (e.g., cone constraints for ball-and-socket joints, rotor constraints for hinges) will be defined in swappable `ConstraintProfile` assets for different creature types, based on the principles in the `Advanced Creature Animation Systems` guide.
-    *   **`GaitController`:** A high-level state machine will manage procedural locomotion. It will control gait patterns (e.g., walk, trot), footfall timing, and phase relationships between limbs to generate realistic movement cycles.
-    *   **`FootPlacement` System:** An algorithm will manage the swing and stance phases of each foot, calculating step targets and using sinusoidal trajectories for the swing arc to create natural-looking steps.
-    **Multi-Chain Skeletons:** The system now supports multiple named IK chains (e.g., 'body', 'tailFin', 'pectoralFin'), each with its own width profile and animation logic. Chains can be hierarchically animated, with parent chains influencing the base and motion of child chains (e.g., fins follow the animated body).
+    *   **`FIK.js` Integration:** The system will use `FIK.Structure3D` and `FIK.Chain3D` as the foundational components for all skeletal definitions and IK solving.
+    *   **`ConstraintManager` & Profiles:** A data-driven `ConstraintManager` will apply anatomically correct joint limits to the `FIK.js` chains. These limits (e.g., cone constraints for ball-and-socket joints, rotor constraints for hinges) will be defined in swappable `ConstraintProfile` assets for different creature types, based on the principles in the `Advanced Creature Animation Systems` guide and the detailed anatomical research (see Section 5).
+    *   **`GaitController`:** A high-level state machine will manage procedural locomotion. It will control gait patterns (e.g., walk, trot), footfall timing, and phase relationships between limbs to generate realistic movement cycles, incorporating Froude number scaling for realistic gait transitions.
+    *   **`FootPlacement` System:** An algorithm will manage the swing and stance phases of each foot, calculating step targets and using sinusoidal trajectories for the swing arc to create natural-looking steps. This system will be robust enough to handle various terrains and maintain center of mass stability.
+    *   **Multi-Chain Skeletons:** The system now supports multiple named IK chains (e.g., 'body', 'tailFin', 'pectoralFin'), each with its own width profile and animation logic. Chains can be hierarchically animated, with parent chains influencing the base and motion of child chains (e.g., fins follow the animated body).
     *   **Recursive Skeletons:** The architecture is being extended to support fully recursive, tree-based skeletons, enabling arbitrary creatures with complex, branching structures (not just linear chains).
     *   **Parameterization:** Chain properties (segment counts, lengths, widths) are being parameterized relative to parent or global proportions, allowing for flexible and reusable creature templates.
     *   **Robust Leg Animation:** The system must include robust, physically plausible foot planting and stepping logic for creatures with legs (e.g., lizard), using FABRIK or similar IK methods. The logic must be adaptable to the recursive skeleton system.
@@ -43,9 +43,9 @@ This MVP will lay the foundation for the full vision of Project Madhuban, which 
 *   **Requirement:** The system must leverage the existing `FIK.js` (`fullik`) library to drive a procedural animation engine. The focus is on building a sophisticated control layer on top of this library to produce anatomically correct and biomechanically plausible creature movement.
 *   **Details:**
     *   **`FIK.js` Integration:** The system will use `FIK.Structure3D` and `FIK.Chain3D` as the foundational components for all skeletal definitions and IK solving.
-    *   **`ConstraintManager` & Profiles:** A data-driven `ConstraintManager` will apply anatomically correct joint limits to the `FIK.js` chains. These limits (e.g., cone constraints for ball-and-socket joints, rotor constraints for hinges) will be defined in swappable `ConstraintProfile` assets for different creature types, based on the principles in the `Advanced Creature Animation Systems` guide.
-    *   **`GaitController`:** A high-level state machine will manage procedural locomotion. It will control gait patterns (e.g., walk, trot), footfall timing, and phase relationships between limbs to generate realistic movement cycles.
-    *   **`FootPlacement` System:** An algorithm will manage the swing and stance phases of each foot, calculating step targets and using sinusoidal trajectories for the swing arc to create natural-looking steps.
+    *   **`ConstraintManager` & Profiles:** A data-driven `ConstraintManager` will apply anatomically correct joint limits to the `FIK.js` chains. These limits (e.g., cone constraints for ball-and-socket joints, rotor constraints for hinges) will be defined in swappable `ConstraintProfile` assets for different creature types, based on the principles in the `Advanced Creature Animation Systems` guide and the detailed anatomical research (see Section 5).
+    *   **`GaitController`:** A high-level state machine will manage procedural locomotion. It will control gait patterns (e.g., walk, trot), footfall timing, and phase relationships between limbs to generate realistic movement cycles, incorporating Froude number scaling for realistic gait transitions.
+    *   **`FootPlacement` System:** An algorithm will manage the swing and stance phases of each foot, calculating step targets and using sinusoidal trajectories for the swing arc to create natural-looking steps. This system will be robust enough to handle various terrains and maintain center of mass stability.
     *   **Multi-Chain Skeletons:** The system now supports multiple named IK chains (e.g., 'body', 'tailFin', 'pectoralFin'), each with its own width profile and animation logic. Chains can be hierarchically animated, with parent chains influencing the base and motion of child chains (e.g., fins follow the animated body).
     *   **Recursive Skeletons:** The architecture is being extended to support fully recursive, tree-based skeletons, enabling arbitrary creatures with complex, branching structures (not just linear chains).
     *   **Parameterization:** Chain properties (segment counts, lengths, widths) are being parameterized relative to parent or global proportions, allowing for flexible and reusable creature templates.
@@ -136,6 +136,7 @@ The development of the MVP will proceed in the following phases:
     *   **Theme & Pattern Expansion:** Add support for multiple themes, advanced color rules, and a broader set of Madhubani patterns and motifs.
     *   **Future Directions:**
         *   Procedural generation of new creature templates (beyond fish and foliage).
+        *   Procedural generation of new creature templates (beyond fish and foliage).
         *   Interactive scene editing and theme switching.
         *   Integration of semantic storytelling and generative scene logic.
 
@@ -145,11 +146,97 @@ The MVP will be considered successful when the system can:
 
 *   On command (e.g., pressing keys '1', '2', '3', '4'), generate, animate, and render one of the four target creatures in the center of the canvas.
 *   Each creature must be animated using a distinct, anatomically appropriate locomotion model:
-    *   **Fish:** Serpentine, "follow-the-leader" spine undulation.
-    *   **Crane:** Bipedal, alternating leg gait.
-    *   **Horse:** Erect quadrupedal gait (e.g., walk or trot).
-    *   **Lizard:** Sprawling quadrupedal gait with lateral spine undulation.
-*   Each creature must be fully "skinned" using the `PathEngine` and decorated with the complete Madhubani styling pipeline: multi-layered borders, segmented bodies, and pattern fills.
-*   All styling must be driven by the `ThemeManager`, ensuring a cohesive aesthetic.
+    *   **Fish:** Serpentine, 
 
-This MVP will provide a robust and executable proof-of-concept for the core visual and procedural capabilities of Project Madhuban, with a clear path to further expansion and generalization.
+
+ "knee" (actually the ankle) joint positioned high.
+    *   **Spine/Torso:** Compact, providing a stable base for leg attachment and head/neck movement.
+    *   **Neck:** Long and flexible, composed of multiple small segments, allowing for a wide range of head movements.
+    *   **Wings:** Present in a folded, resting pose. If flight is considered in future iterations, a multi-bone hierarchy for wing folding and flapping would be required.
+*   **Joint Constraints:**
+    *   **Hip (Ball-and-Socket):** Allows forward/backward swing and some lateral movement, with constraints to prevent unnatural poses.
+    *   **Knee (Hinge):** Primarily flexion in one direction.
+    *   **Ankle (Hinge):** Between tibiotarsus and tarsometatarsus, allowing flexion.
+    *   **Neck Segments:** Multiple hinge joints along the neck for graceful curves and head orientation.
+*   **Locomotion Pattern (Bipedal Walk):**
+    *   **Alternating Leg Gait:** An alternating movement of the two legs, with one in stance phase while the other is in swing phase, prioritizing stability.
+    *   **Center of Mass (CoM) Control:** Slight shifts in torso or head position to maintain balance during walking.
+    *   **Foot Placement:** Precise foot placement to ensure stability, with the foot landing flat on the ground.
+
+### 5.3. Horse (Erect Quadruped)
+
+*   **Skeletal Structure & Proportions:**
+    *   **Legs:** Four strong legs, each with distinct segments:
+        *   **Forelimbs:** Scapula, humerus, radius/ulna (forearm), carpus (knee-like joint), metacarpus (cannon bone), and phalanges (hoof).
+        *   **Hindlimbs:** Pelvis, femur, tibia/fibula, tarsus (hock), metatarsus, and phalanges.
+    *   **Proportions:** Equine-specific proportions will be researched for anatomical accuracy (e.g., cannon bone length relative to forearm/tibia). The guide's human baseline proportions will be adapted as a starting point.
+    *   **Spine:** Relatively rigid, with some flexibility for canter/gallop, but primarily acting as a stable base for leg attachment.
+    *   **Neck and Head:** Strong neck connecting to the torso, with an independently movable head.
+*   **Joint Constraints:**
+    *   **Shoulder/Hip (Ball-and-Socket):** Allow for significant forward/backward swing and some abduction/adduction. Constraints will prevent extreme rotations.
+    *   **Elbow/Stifle (Hinge):** Primary flexion/extension.
+    *   **Knee/Hock (Hinge):** Primary flexion/extension.
+    *   **Fetlock/Pastern (Hinge-like):** Allow for shock absorption and slight flexion.
+*   **Locomotion Pattern (Erect Quadrupedal Gait):**
+    *   **Walk/Trot:** Implementation of four-beat walk and two-beat diagonal trot, adhering to specific phase relationships and duty factors.
+    *   **Froude Number Transitions:** Incorporation of Froude number scaling for realistic gait transitions (e.g., walk→trot when Froude > 0.4-0.6).
+    *   **Foot Planting:** Robust foot planting logic ensuring realistic hoof landing and lifting, with appropriate ground contact and swing arcs.
+
+### 5.4. Lizard (Sprawling Quadruped)
+
+*   **Skeletal Structure & Proportions:**
+    *   **Legs:** Four limbs, typically shorter and more splayed than an erect quadruped. Segments include humerus, radius/ulna, carpus, metacarpals, and phalanges for forelimbs; and femur, tibia/fibula, tarsus, metatarsals, and phalanges for hindlimbs.
+    *   **Proportions:** Limb segments will be relatively short compared to body length, resulting in a low-to-the-ground posture.
+    *   **Spine:** Highly flexible, contributing significantly to locomotion through lateral undulation. This will be a primary IK chain.
+    *   **Tail:** Long, often tapering, capable of undulation and contributing to balance and propulsion.
+*   **Joint Constraints:**
+    *   **Shoulder/Hip (Ball-and-Socket):** Wide range of motion, particularly for lateral abduction, to accommodate the sprawling posture. Constraints will be set to reflect the typical splayed limb angles.
+    *   **Elbow/Knee (Hinge):** Flexion will occur primarily in a horizontal plane, allowing the limbs to push outwards and backwards.
+    *   **Spine & Tail:** Multiple hinge joints along the spine and tail for significant lateral flexion and undulation.
+*   **Locomotion Pattern (Sprawling Quadrupedal Gait with Lateral Spine Undulation):**
+    *   **Lateral Undulation:** Application of a serpentine pattern to the spine and tail, with the limbs acting as pivots or pushing points. The body will snake from side to side, and the limbs will move in coordination with this undulation.
+    *   **Alternating Limb Movement:** Limbs will move in an alternating pattern, with primary forward motion driven by the body's lateral thrust.
+    *   **Foot Drag/Placement:** Depending on the gait, feet might drag or be lifted minimally, with emphasis on pushing off the ground for propulsion.
+
+
+
+
+### 5.3. Horse (Erect Quadruped)
+
+*   **Skeletal Structure & Proportions:**
+    *   **Legs:** Four strong legs, each with distinct segments:
+        *   **Forelimbs:** Scapula, humerus, radius/ulna (forearm), carpus (knee-like joint), metacarpus (cannon bone), and phalanges (hoof).
+        *   **Hindlimbs:** Pelvis, femur, tibia/fibula, tarsus (hock), metatarsus, and phalanges.
+    *   **Proportions:** Equine-specific proportions will be researched for anatomical accuracy (e.g., cannon bone length relative to forearm/tibia). The guide's human baseline proportions will be adapted as a starting point.
+    *   **Spine:** Relatively rigid, with some flexibility for canter/gallop, but primarily acting as a stable base for leg attachment.
+    *   **Neck and Head:** Strong neck connecting to the torso, with an independently movable head.
+*   **Joint Constraints:**
+    *   **Shoulder/Hip (Ball-and-Socket):** Allow for significant forward/backward swing and some abduction/adduction. Constraints will prevent extreme rotations.
+    *   **Elbow/Stifle (Hinge):** Primary flexion/extension.
+    *   **Knee/Hock (Hinge):** Primary flexion/extension.
+    *   **Fetlock/Pastern (Hinge-like):** Allow for shock absorption and slight flexion.
+*   **Locomotion Pattern (Erect Quadrupedal Gait):**
+    *   **Walk/Trot:** Implementation of four-beat walk and two-beat diagonal trot, adhering to specific phase relationships and duty factors.
+    *   **Froude Number Transitions:** Incorporation of Froude number scaling for realistic gait transitions (e.g., walk→trot when Froude > 0.4-0.6).
+    *   **Foot Planting:** Robust foot planting logic ensuring realistic hoof landing and lifting, with appropriate ground contact and swing arcs.
+
+### 5.4. Lizard (Sprawling Quadruped)
+
+*   **Skeletal Structure & Proportions:**
+    *   **Legs:** Four limbs, typically shorter and more splayed than an erect quadruped. Segments include humerus, radius/ulna, carpus, metacarpals, and phalanges for forelimbs; and femur, tibia/fibula, tarsus, metatarsals, and phalanges for hindlimbs.
+    *   **Proportions:** Limb segments will be relatively short compared to body length, resulting in a low-to-the-ground posture.
+    *   **Spine:** Highly flexible, contributing significantly to locomotion through lateral undulation. This will be a primary IK chain.
+    *   **Tail:** Long, often tapering, capable of undulation and contributing to balance and propulsion.
+*   **Joint Constraints:**
+    *   **Shoulder/Hip (Ball-and-Socket):** Wide range of motion, particularly for lateral abduction, to accommodate the sprawling posture. Constraints will be set to reflect the typical splayed limb angles.
+    *   **Elbow/Knee (Hinge):** Flexion will occur primarily in a horizontal plane, allowing the limbs to push outwards and backwards.
+    *   **Spine & Tail:** Multiple hinge joints along the spine and tail for significant lateral flexion and undulation.
+*   **Locomotion Pattern (Sprawling Quadrupedal Gait with Lateral Spine Undulation):**
+    *   **Lateral Undulation:** Application of a serpentine pattern to the spine and tail, with the limbs acting as pivots or pushing points. The body will snake from side to side, and the limbs will move in coordination with this undulation.
+    *   **Alternating Limb Movement:** Limbs will move in an alternating pattern, with primary forward motion driven by the body's lateral thrust.
+    *   **Foot Drag/Placement:** Depending on the gait, feet might drag or be lifted minimally, with emphasis on pushing off the ground for propulsion.
+
+
+
+
+

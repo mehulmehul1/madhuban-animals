@@ -1,167 +1,201 @@
 {
   "master": [
     {
-      "id": "anim-1",
-      "name": "Anatomical Constraint System",
-      "details": "Build the system for applying realistic, data-driven anatomical joint constraints to FIK.js skeletons, as per the 'Advanced Creature Animation Systems' guide.",
-      "status": "in-progress",
+      "id": "p5brush-integration",
+      "name": "p5.brush.js Integration",
+      "details": "Critical missing feature: Integrate p5.brush.js for hand-drawn aesthetic as required by PRD",
+      "status": "todo",
+      "priority": "critical",
       "dependencies": [],
       "subtasks": [
         {
-          "id": "anim-1.1",
-          "name": "Integrate FIK.js Library",
-          "details": "Create a wrapper or manager within Creature.js to handle the creation and state of FIK.Structure3D and FIK.Chain3D objects. Ensure the library is correctly loaded and accessible.",
-          "status": "in-progress"
-        },
-        {
-          "id": "anim-1.2",
-          "name": "Design ConstraintProfile Data Structure",
-          "details": "Create a JSON or object schema for defining joint constraints. It should support hinge joints (axis of rotation) and ball-and-socket joints (cone angle limits), based on the guide's specifications.",
+          "id": "p5brush-1",
+          "name": "Add p5.brush.js Library",
+          "details": "Include p5.brush.js library in index.html and verify it loads properly",
           "status": "todo"
         },
         {
-          "id": "anim-1.3",
-          "name": "Implement ConstraintManager",
-          "details": "Develop a manager that takes a creature's skeleton and a ConstraintProfile, then iterates through the bones, applying the appropriate constraints using FIK.js's built-in methods (e.g., `addConsecutiveRotorConstrainedBone`, `setBallJointConstraint`).",
+          "id": "p5brush-2", 
+          "name": "Update Filler to use p5.brush",
+          "details": "Modify Filler class to use p5.brush rendering instead of standard p5.js for authentic hand-drawn patterns",
           "status": "todo"
         },
         {
-          "id": "anim-1.4",
-          "name": "Create a Visual Test Rig",
-          "details": "Build a simple test case with a single, multi-bone leg to visually debug and validate that the joint constraints (e.g., a knee that only bends backward) are being correctly applied and enforced by the IK solver.",
+          "id": "p5brush-3",
+          "name": "Update BorderDecorator for p5.brush",
+          "details": "Convert border drawing to use p5.brush for consistent hand-drawn aesthetic",
           "status": "todo"
         }
       ]
     },
     {
-      "id": "anim-2",
-      "name": "Generic Locomotion Engine",
-      "details": "Develop a flexible, high-level controller that can manage different types of procedural locomotion (gait-based, serpentine, etc.).",
+      "id": "creature-specialization",
+      "name": "Creature Anatomical Specialization", 
+      "details": "Differentiate Horse (erect quadruped) from Lizard (sprawling quadruped) and enhance anatomical accuracy",
       "status": "todo",
-      "dependencies": [
-        "anim-1"
-      ],
+      "priority": "high",
+      "dependencies": [],
       "subtasks": [
         {
-          "id": "anim-2.1",
-          "name": "Design Generic Locomotion Controller",
-          "details": "Create a controller that can load and execute different locomotion strategies (e.g., a 'Gait' strategy for bipeds/quadrupeds, a 'SineWave' strategy for fish/snakes).",
-          "status": "todo"
+          "id": "creature-1",
+          "name": "Implement Horse-specific anatomy",
+          "details": "Create distinct Horse creature with erect posture, proper proportions, and ungulate gait patterns",
+          "status": "partial"
         },
         {
-          "id": "anim-2.2",
-          "name": "Implement Gait-Based Locomotion Strategy",
-          "details": "Implement the logic for gait-based movement, including phase-based footfall timing, a stepping algorithm (stance/swing detection), and foot swing trajectories. This should be data-driven by a 'Gait Profile'.",
-          "status": "todo"
+          "id": "creature-2",
+          "name": "Implement Lizard sprawling quadruped",
+          "details": "Create Lizard with sprawling posture, lateral spine undulation, and proper joint constraints",
+          "status": "partial"
         },
         {
-          "id": "anim-2.3",
-          "name": "Implement Sine-Wave Locomotion Strategy",
-          "details": "Implement the logic for serpentine movement, where a sine wave propagates down a single IK chain to create undulation. Parameters (amplitude, frequency) should be controllable.",
+          "id": "creature-3",
+          "name": "Research-based anatomical proportions",
+          "details": "Update bone length ratios and joint angles based on real anatomical data from PRD Section 5",
           "status": "todo"
         }
       ]
     },
     {
-      "id": "render-1",
-      "name": "Shape Generation Engine (PathEngine)",
-      "details": "Develop the 'bridge' between the solved IK system and the decoration components by generating a renderable outline from a bone chain.",
+      "id": "movement-system",
+      "name": "2D Canvas Movement System",
+      "details": "Fix quadruped movement to allow full 2D canvas movement like fish/crane instead of left/right only",
       "status": "todo",
-      "dependencies": [
-        "anim-2"
-      ],
+      "priority": "critical",
+      "dependencies": [],
       "subtasks": [
         {
-          "id": "render-1.1",
-          "name": "Implement the `WidthProfile` system",
-          "details": "Create a system for defining the width of a creature's body parts at any point along a bone chain. This should be a data structure (e.g., an array of values) associated with each renderable IK chain.",
+          "id": "movement-1",
+          "name": "Fix quadruped 2D movement",
+          "details": "Quadrupeds (horse/lizard) currently only move left/right - need full canvas movement like fish/crane",
           "status": "todo"
         },
         {
-          "id": "render-1.2",
-          "name": "Create the `PathEngine.generateOutline` function",
-          "details": "This function will take a solved bone chain (an array of p5.Vector points) and a width profile, and it will generate a smooth outline (a path of p5.Vector points) representing the creature's skin.",
+          "id": "movement-2",
+          "name": "Mouse target following",
+          "details": "Ensure all creatures can move toward mouse in any direction (up/down/diagonal)",
           "status": "todo"
         }
       ]
     },
     {
-      "id": "render-2",
-      "name": "Decoration Pipeline Integration",
-      "details": "Connect the generated outlines from the PathEngine to the full styling and decoration pipeline (Segmenter, Filler, BorderDecorator).",
-      "status": "todo",
-      "dependencies": [
-        "render-1"
-      ],
+      "id": "rendering-system",
+      "name": "Geometric Shape Rendering System",
+      "details": "Implement artist-inspired basic geometric shapes for creature construction",
+      "status": "in-progress", 
+      "priority": "high",
+      "dependencies": [],
       "subtasks": [
         {
-          "id": "render-2.1",
-          "name": "Update Creature `draw` loop",
-          "details": "Modify the main `draw` loop to use `PathEngine.generateOutline` and pass the resulting path to the decoration components.",
+          "id": "render-geo-1",
+          "name": "Complete geometric shape system",
+          "details": "Basic geometric shapes implemented but need full artist workflow: rectangle, cylinder, ellipse, tapered cylinder, capsule",
+          "status": "partial"
+        },
+        {
+          "id": "render-geo-2", 
+          "name": "Fix leg bone segmentation",
+          "details": "4-bone legs (femur/tibia/tarsus/feet) render as single shape instead of individual bone segments",
           "status": "todo"
         },
         {
-          "id": "render-2.2",
-          "name": "Apply ThemeManager Styles",
-          "details": "Ensure all colors, patterns, and border styles used in the decoration are pulled from the `ThemeManager` to create a cohesive look.",
+          "id": "render-geo-3",
+          "name": "Artist workflow implementation",
+          "details": "Implement skeleton-first, simple shapes second, details later approach",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "id": "debug-visualization",
+      "name": "Debug and Visualization System",
+      "details": "Improve debug panel and skeleton visualization for better development workflow",
+      "status": "in-progress",
+      "priority": "medium", 
+      "dependencies": [],
+      "subtasks": [
+        {
+          "id": "debug-1",
+          "name": "Clean up debug panel",
+          "details": "Debug panel is cluttered, possibly due to previous HTML overlay issues",
+          "status": "todo"
+        },
+        {
+          "id": "debug-2",
+          "name": "Improve skeleton visualization", 
+          "details": "Current skeleton toggle is hard to read - need lines for bones, circles on joints, different colors for limbs",
+          "status": "todo"
+        },
+        {
+          "id": "debug-3",
+          "name": "Add skeleton toggle functionality",
+          "details": "S key toggle for wireframe overlay - basic implementation exists but needs enhancement",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "id": "gait-enhancement",
+      "name": "Advanced Gait System",
+      "details": "Implement Froude number scaling and biomechanically accurate gait transitions",
+      "status": "todo", 
+      "priority": "medium",
+      "dependencies": ["creature-specialization"],
+      "subtasks": [
+        {
+          "id": "gait-1",
+          "name": "Froude Number Gait Transitions",
+          "details": "Implement speed-dependent gait switching using Froude number scaling (walk→trot at Fr > 0.4-0.6)",
+          "status": "partial"
+        },
+        {
+          "id": "gait-2",
+          "name": "Center of Mass Control",
+          "details": "Add CoM tracking and stability margin calculations for realistic balance",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "id": "scene-system",
+      "name": "Scene Composition System",
+      "details": "Implement ScenePlacementManager for multi-creature scenes and advanced composition",
+      "status": "todo",
+      "priority": "medium", 
+      "dependencies": ["p5brush-integration"],
+      "subtasks": [
+        {
+          "id": "scene-1",
+          "name": "ScenePlacementManager Implementation",
+          "details": "Create system for placing multiple creatures, foliage, and scene elements with composition rules",
+          "status": "partial"
+        },
+        {
+          "id": "scene-2", 
+          "name": "Multi-creature Interaction",
+          "details": "Support multiple animated creatures in same scene with spatial awareness",
           "status": "todo"
         }
       ]
     },
     {
-      "id": "mvp-content",
-      "name": "MVP Creature Implementation",
-      "details": "Create the data profiles (skeleton, constraints, locomotion, width) for each of the four target MVP creatures.",
+      "id": "theme-expansion",
+      "name": "Theme System Enhancement",
+      "details": "Expand theming capabilities with more Madhubani patterns and color palettes",
       "status": "todo",
-      "dependencies": [
-        "render-2"
-      ],
+      "priority": "low",
+      "dependencies": ["p5brush-integration"],
       "subtasks": [
         {
-          "id": "mvp-content.1",
-          "name": "Create Fish Profile",
-          "details": "Define the skeleton, width profile, and sine-wave locomotion parameters for the fish.",
+          "id": "theme-1",
+          "name": "Additional Madhubani Patterns",
+          "details": "Add traditional patterns: paisley, lotus, geometric motifs, fish scales",
           "status": "todo"
         },
         {
-          "id": "mvp-content.2",
-          "name": "Create Crane Profile",
-          "details": "Define the skeleton, constraint profile, width profile, and bipedal gait parameters for the crane.",
-          "status": "todo"
-        },
-        {
-          "id": "mvp-content.3",
-          "name": "Create Horse Profile",
-          "details": "Define the skeleton, constraint profile (erect posture, unguligrade), width profile, and quadrupedal gait parameters for the horse.",
-          "status": "todo"
-        },
-        {
-          "id": "mvp-content.4",
-          "name": "Create Lizard Profile",
-          "details": "Define the skeleton, constraint profile (sprawling posture), width profile, and quadrupedal gait parameters for the lizard.",
-          "status": "todo"
-        }
-      ]
-    },
-    {
-      "id": "mvp-final",
-      "name": "Final Integration & Scene Switching",
-      "details": "Implement the final user-facing feature: switching between the completed creatures.",
-      "status": "todo",
-      "dependencies": [
-        "mvp-content"
-      ],
-      "subtasks": [
-        {
-          "id": "mvp-final.1",
-          "name": "Implement Creature Loader",
-          "details": "Create a system that can load a creature's complete profile (skeleton, constraints, etc.) from data files or objects.",
-          "status": "todo"
-        },
-        {
-          "id": "mvp-final.2",
-          "name": "Implement Keyboard Input",
-          "details": "Hook up keyboard presses (1, 2, 3, 4) to load and display the corresponding creature.",
+          "id": "theme-2",
+          "name": "Multiple Color Palettes", 
+          "details": "Create authentic Madhubani color schemes: earth tones, festival colors, seasonal themes",
           "status": "todo"
         }
       ]
@@ -169,10 +203,88 @@
   ],
   "archive": [
     {
-      "id": "setup-1",
+      "id": "setup-1", 
       "name": "Project Consolidation",
       "details": "Merge the `madhuban-animals` and `madhuban-dayone` codebases into a single, unified project. All subtasks completed.",
       "status": "done"
+    },
+    {
+      "id": "anim-1-DONE",
+      "name": "Basic Animation System (COMPLETED)",
+      "details": "FIK.js integration, ModularCreatureBuilder, multi-chain skeletons, locomotion patterns - ALL IMPLEMENTED",
+      "status": "done",
+      "subtasks": [
+        {
+          "id": "anim-1.1-DONE", 
+          "name": "FIK.js Integration",
+          "details": "FIK.js fully integrated in creature-builder.js with Chain2D system",
+          "status": "done"
+        },
+        {
+          "id": "anim-1.2-DONE",
+          "name": "Multi-chain Creature System", 
+          "details": "ModularCreatureBuilder supports hierarchical chains with parent-child relationships",
+          "status": "done"
+        },
+        {
+          "id": "anim-1.3-DONE",
+          "name": "Locomotion Patterns",
+          "details": "Implemented quadruped gaits, bipedal walking, serpentine, and undulation patterns",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "render-1-DONE",
+      "name": "Shape Generation System (COMPLETED)",
+      "details": "Path generation from bone chains with width profiles - IMPLEMENTED",
+      "status": "done", 
+      "subtasks": [
+        {
+          "id": "render-1.1-DONE",
+          "name": "Width Profile System",
+          "details": "generateOutlineFromChain function creates shaped outlines from bone chains",
+          "status": "done"
+        },
+        {
+          "id": "render-1.2-DONE", 
+          "name": "Decoration Pipeline",
+          "details": "Full styling pipeline with ThemeManager, BorderDecorator, Filler, Segmenter - working",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "basic-creatures-DONE",
+      "name": "Basic Creature Implementation (COMPLETED)",
+      "details": "All 4 target creatures implemented with working animation - Fish, Crane, Quadruped, Snake",
+      "status": "done",
+      "subtasks": [
+        {
+          "id": "creatures-1-DONE",
+          "name": "Fish Implementation",
+          "details": "Swimming fish with spine undulation and fins - WORKING",
+          "status": "done"
+        },
+        {
+          "id": "creatures-2-DONE", 
+          "name": "Crane Implementation", 
+          "details": "Bipedal crane with legs, neck, wings - WORKING",
+          "status": "done"
+        },
+        {
+          "id": "creatures-3-DONE",
+          "name": "Quadruped Implementation",
+          "details": "Four-legged creature with advanced gait system - WORKING", 
+          "status": "done"
+        },
+        {
+          "id": "creatures-4-DONE",
+          "name": "Snake Implementation",
+          "details": "Serpentine locomotion with flexible spine - WORKING",
+          "status": "done"
+        }
+      ]
     }
   ]
 }

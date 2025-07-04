@@ -70,11 +70,16 @@ class QuadrupedWalkPattern extends LocomotionPattern {
             );
         }
 
-        // 4. Move the body forward along heading (world coordinates)
+        // 4. Move the body toward target (full 2D movement like fish)
         if (this.state === 'walk') {
-            const speed = (this.stepLength * 1.2) * (deltaTime || 0.016); // px per frame, scaled by deltaTime
-            creature.bodyPosition.x += Math.cos(creature.bodyHeading) * speed;
-            creature.bodyPosition.y += Math.sin(creature.bodyHeading) * speed;
+            const speed = (this.stepLength * 1.2) * (deltaTime || 0.016);
+            // Direct movement toward target instead of just along heading
+            const dirToTarget = new FIK.V2(
+                creature.mouseTarget.x - creature.bodyPosition.x,
+                creature.mouseTarget.y - creature.bodyPosition.y
+            ).normalised();
+            creature.bodyPosition.x += dirToTarget.x * speed;
+            creature.bodyPosition.y += dirToTarget.y * speed;
         }
 
         // 5. Animate foot placement in body-local and transform to world

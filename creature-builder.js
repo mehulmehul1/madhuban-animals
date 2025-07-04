@@ -7,6 +7,7 @@ class ModularCreatureBuilder {
         // Global settings
         this.mouseTarget = new FIK.V2(400, 300);
         this.showDebug = true;
+        this.showSkeleton = false; // New: toggle skeleton visualization
         this.renderMode = 'dots-and-lines';
         
         // Body tracking system
@@ -20,6 +21,7 @@ class ModularCreatureBuilder {
         this.boneTemplateSystem = new BoneTemplateSystem();
         this.gaitSystem = new GaitSystem();
         this.constraintSystem = new ConstraintSystem();
+        this.shapeProfileSystem = new ShapeProfileSystem();
 
         // Madhubani styling systems
         this.themeManager = new ThemeManager();
@@ -50,7 +52,9 @@ class ModularCreatureBuilder {
             locomotionRole: params.locomotionRole || null, // How this chain participates in locomotion
             footIndex: params.footIndex,
             constraintTemplate: params.constraintTemplate || 'default',
-            behaviorController: params.behaviorController || null
+            behaviorController: params.behaviorController || null,
+            shapeProfile: params.shapeProfile || null,
+            scale: params.scale || 1.0
         };
     }
 
@@ -87,7 +91,9 @@ class ModularCreatureBuilder {
                 flexibility: 'high'
             }),
             locomotionRole: 'primary',
-            constraintTemplate: 'vertebra'
+            constraintTemplate: 'vertebra',
+            shapeProfile: 'spine',
+            scale: 1.2
         });
         this.addChain(spineConfig);
         
@@ -102,7 +108,9 @@ class ModularCreatureBuilder {
             color: [255, 100, 150],
             bones: this.boneTemplateSystem.generateBones('fin', 30, { angle: 0 }),
             locomotionRole: 'propulsion',
-            constraintTemplate: 'finBase'
+            constraintTemplate: 'finBase',
+            shapeProfile: 'fin',
+            scale: 0.8
         });
         this.addChain(tailFinConfig);
         
@@ -201,6 +209,24 @@ class ModularCreatureBuilder {
             constraintTemplate: 'neck'
         });
         this.addChain(neckConfig);
+
+          // Neck - attached to body top, follows mouse
+          const headConfig = this.createChainConfig({
+            role: 'head',
+            type: 'head',
+            attachment: 'parent',
+            targetMode: 'mouse',
+            parentRole: 'neck',
+            attachmentPoint: 'end',
+            color: [200, 150, 100],
+            bones: this.boneTemplateSystem.generateBones('crane-leg', 10, {
+                segments: 10,
+                flexibility: 'high'
+            }),
+            locomotionRole: 'tracking',
+            constraintTemplate: 'head'
+        });
+        this.addChain(headConfig);
         
         // Legs - attached to body base, follow foot targets
         ['left', 'right'].forEach((side, i) => {
@@ -264,9 +290,9 @@ class ModularCreatureBuilder {
         });
     }
 
-    buildQuadruped() {
+    buildHorse() {
         this.clearCreature();
-        this.creatureType = 'quadruped';
+        this.creatureType = 'horse';
         
         this.creatureConfig = {
             bodyLength: 200,
@@ -283,24 +309,26 @@ class ModularCreatureBuilder {
         
         this.activeLocomotion.initializeFootSteps(this.bodyPosition, 4);
         
-        // Body/Spine - follows leg average position
+        // Body/Spine - rigid horse spine for stability
         const bodyConfig = this.createChainConfig({
             role: 'body',
             type: 'spine',
             attachment: 'free',
             targetMode: 'calculated', // Will follow leg average
-            color: [150, 100, 200],
-            bones: this.boneTemplateSystem.generateBones('vertebrate-spine', 20, {
-                segments: 6,
-                flexibility: 'medium'
+            color: [139, 69, 19], // Brown horse color
+            bones: this.boneTemplateSystem.generateBones('vertebrate-spine', 25, {
+                segments: 8,
+                flexibility: 'low' // Rigid spine for horse
             }),
             locomotionRole: 'primary',
             constraintTemplate: 'vertebra',
-            shapeProfile: 'torso'
+            shapeProfile: 'torso',
+            scale: 1.3, // Larger, more muscular body
+            erectPosture: true
         });
         this.addChain(bodyConfig);
         
-        // Neck - attached to body top, follows mouse
+        // Neck - strong horse neck
         const neckConfig = this.createChainConfig({
             role: 'neck',
             type: 'neck',
@@ -308,18 +336,20 @@ class ModularCreatureBuilder {
             targetMode: 'mouse',
             parentRole: 'body',
             attachmentPoint: 'end',
-            color: [200, 150, 100],
-            bones: this.boneTemplateSystem.generateBones('vertebrate-neck', 10, {
-                segments: 4,
-                flexibility: 'high'
+            color: [139, 69, 19], // Match body color
+            bones: this.boneTemplateSystem.generateBones('vertebrate-neck', 15, {
+                segments: 6,
+                flexibility: 'medium' // Strong but flexible horse neck
             }),
             locomotionRole: 'tracking',
             constraintTemplate: 'neck',
-            shapeProfile: 'neck'
+            shapeProfile: 'neck',
+            scale: 1.1,
+            erectPosture: true
         });
         this.addChain(neckConfig);
         
-        // Front legs - attached to body front
+        // Front legs - erect posture with powerful shoulders
         ['left', 'right'].forEach((side, i) => {
             const legConfig = this.createChainConfig({
                 role: `front-leg-${side}`,
@@ -328,21 +358,25 @@ class ModularCreatureBuilder {
                 targetMode: 'foot',
                 parentRole: 'body',
                 attachmentPoint: 'bone-index',
-                attachmentIndex: 4, // Front of body
-                color: [100, 200, 100],
-                bones: this.boneTemplateSystem.generateBones('vertebrate-leg', 40, {
+                attachmentIndex: 6, // Front of body
+                color: [139, 69, 19], // Match body color
+                bones: this.boneTemplateSystem.generateBones('horse-front-leg', 50, {
                     segments: 4,
-                    side: side
+                    side: side,
+                    erectPosture: true
                 }),
                 locomotionRole: 'support',
                 constraintTemplate: 'leg',
                 footIndex: i, // Front feet are 0 and 1
-                shapeProfile: 'limb'
+                shapeProfile: 'leg',
+                scale: 1.2, // Muscular horse legs
+                erectPosture: true,
+                ungulgrade: true // Walks on hooves
             });
             this.addChain(legConfig);
         });
 
-        // Back legs - attached to body back
+        // Back legs - powerful hindquarters for propulsion
         ['left', 'right'].forEach((side, i) => {
             const legConfig = this.createChainConfig({
                 role: `back-leg-${side}`,
@@ -351,21 +385,26 @@ class ModularCreatureBuilder {
                 targetMode: 'foot',
                 parentRole: 'body',
                 attachmentPoint: 'bone-index',
-                attachmentIndex: 1, // Back of body
-                color: [100, 200, 100],
-                bones: this.boneTemplateSystem.generateBones('vertebrate-leg', 60, {
+                attachmentIndex: 2, // Back of body
+                color: [139, 69, 19], // Match body color
+                bones: this.boneTemplateSystem.generateBones('horse-hind-leg', 65, {
                     segments: 4,
-                    side: side
+                    side: side,
+                    erectPosture: true,
+                    powerfulHindquarters: true
                 }),
-                locomotionRole: 'support',
+                locomotionRole: 'propulsion', // Hind legs provide power
                 constraintTemplate: 'leg',
                 footIndex: i + 2, // Back feet are 2 and 3
-                shapeProfile: 'limb'
+                shapeProfile: 'leg',
+                scale: 1.3, // Powerful hind legs
+                erectPosture: true,
+                ungulgrade: true
             });
             this.addChain(legConfig);
         });
         
-        // Tail - attached to the back of the body
+        // Tail - flowing horse tail with hair
         const tailConfig = this.createChainConfig({
             role: 'tail',
             type: 'tail',
@@ -374,51 +413,189 @@ class ModularCreatureBuilder {
             parentRole: 'body',
             attachmentPoint: 'bone-index',
             attachmentIndex: 0, 
-            color: [255, 150, 100],
-            bones: this.boneTemplateSystem.generateBones('vertebrate-tail', 30, {  // Increased length for better visibility
-                segments: 5,  // Added one more segment for smoother movement
-                taper: true
+            color: [101, 67, 33], // Darker brown for tail
+            bones: this.boneTemplateSystem.generateBones('vertebrate-tail', 35, {
+                segments: 6,
+                taper: true,
+                flexibility: 'medium', // Less flexible than lizard tail
+                horseHair: true
             }),
             locomotionRole: 'balance',
             constraintTemplate: 'vertebra',
-            shapeProfile: 'tapered-tail'
+            shapeProfile: 'tail',
+            scale: 1.1,
+            erectPosture: true
         });
         this.addChain(tailConfig);
 
         console.log("Built modular quadruped with " + this.chains.length + " chains");
     }
 
+    buildLizard() {
+        this.clearCreature();
+        this.creatureType = 'lizard';
+        
+        this.creatureConfig = {
+            bodyLength: 180,
+            legLength: 50,
+            tailLength: 120,
+            sprawlAngle: 45
+        };
+        
+        // Set up sprawling quadruped locomotion with lateral undulation
+        this.activeLocomotion = new BiomechanicalQuadrupedGait({
+            gaitType: 'walk',
+            stepLength: 25,
+            legLength: 50,
+            frequency: 1.5,
+            sprawling: true
+        });
+        
+        this.activeLocomotion.initializeFootSteps(this.bodyPosition, 4);
+        
+        // Highly flexible spine - supports lateral undulation for sprawling locomotion
+        const spineConfig = this.createChainConfig({
+            role: 'spine',
+            type: 'spine',
+            attachment: 'free',
+            targetMode: 'calculated',
+            color: [85, 107, 47], // Olive green lizard color
+            bones: this.boneTemplateSystem.generateBones('vertebrate-spine', 12, {
+                segments: 15, // More segments for flexibility
+                flexibility: 'very-high'
+            }),
+            locomotionRole: 'primary',
+            constraintTemplate: 'vertebra',
+            shapeProfile: 'torso',
+            scale: 0.8, // Lower profile body
+            sprawlingPosture: true,
+            lateralUndulation: true
+        });
+        this.addChain(spineConfig);
+        
+        // Sprawling legs - splayed outward for low-to-ground locomotion
+        ['left', 'right'].forEach((side, i) => {
+            // Front legs - splayed at 45 degree angle
+            const frontLegConfig = this.createChainConfig({
+                role: `front-leg-${side}`,
+                type: 'leg',
+                attachment: 'parent',
+                targetMode: 'foot',
+                parentRole: 'spine',
+                attachmentPoint: 'bone-index',
+                attachmentIndex: 11, // Front of body
+                color: [85, 107, 47], // Match body color
+                bones: this.boneTemplateSystem.generateBones('lizard-leg', 30, {
+                    segments: 4,
+                    side: side,
+                    sprawlAngle: 45,
+                    sprawlingPosture: true
+                }),
+                locomotionRole: 'support',
+                constraintTemplate: 'leg',
+                footIndex: i,
+                shapeProfile: 'leg',
+                scale: 0.7, // Thinner sprawling legs
+                sprawlingPosture: true,
+                sprawlAngle: 45
+            });
+            this.addChain(frontLegConfig);
+            
+            // Back legs - powerful for propulsion with sprawling gait
+            const backLegConfig = this.createChainConfig({
+                role: `back-leg-${side}`,
+                type: 'leg',
+                attachment: 'parent',
+                targetMode: 'foot',
+                parentRole: 'spine',
+                attachmentPoint: 'bone-index',
+                attachmentIndex: 4, // Back of body
+                color: [85, 107, 47], // Match body color
+                bones: this.boneTemplateSystem.generateBones('lizard-leg', 35, {
+                    segments: 4,
+                    side: side,
+                    sprawlAngle: 45,
+                    sprawlingPosture: true,
+                    powerfulPush: true
+                }),
+                locomotionRole: 'propulsion', // Back legs push body forward
+                constraintTemplate: 'leg',
+                footIndex: i + 2,
+                shapeProfile: 'leg',
+                scale: 0.75, // Slightly thicker for propulsion
+                sprawlingPosture: true,
+                sprawlAngle: 45
+            });
+            this.addChain(backLegConfig);
+        });
+        
+        // Long undulating tail - contributes to locomotion
+        const tailConfig = this.createChainConfig({
+            role: 'tail',
+            type: 'tail',
+            attachment: 'parent',
+            targetMode: 'parent-relative',
+            parentRole: 'spine',
+            attachmentPoint: 'bone-index',
+            attachmentIndex: 0,
+            color: [75, 96, 42], // Darker green for tail
+            bones: this.boneTemplateSystem.generateBones('vertebrate-tail', 18, {
+                segments: 12, // More segments for snake-like movement
+                taper: true,
+                flexibility: 'very-high'
+            }),
+            locomotionRole: 'propulsion', // Tail assists in forward motion
+            constraintTemplate: 'vertebra',
+            shapeProfile: 'tail',
+            scale: 0.8,
+            sprawlingPosture: true,
+            lateralUndulation: true
+        });
+        this.addChain(tailConfig);
+        
+        console.log("Built modular lizard with " + this.chains.length + " chains");
+    }
+    
     buildSnake() {
         this.clearCreature();
         this.creatureType = 'snake';
         
         this.creatureConfig = {
-            segments: 20,
-            segmentLength: 15
+            segments: 25,
+            segmentLength: 12
         };
         
-        // Set up serpentine locomotion
+        // Set up pure serpentine locomotion
         this.activeLocomotion = this.locomotionSystem.createPattern('serpentine', {
             wavelength: 120,
             amplitude: 30,
             frequency: 2.0
         });
         
-        // Single long spine with high flexibility
+        // Single long spine with very high flexibility
         const spineConfig = this.createChainConfig({
             role: 'spine',
             type: 'spine',
             attachment: 'free',
             targetMode: 'mouse',
-            color: [100, 255, 100],
-            bones: this.boneTemplateSystem.generateBones('serpentine-spine', this.creatureConfig.segmentLength, {
+            color: [60, 180, 60],
+            bones: this.boneTemplateSystem.generateBones('fish-spine', this.creatureConfig.segmentLength, {
                 segments: this.creatureConfig.segments,
                 flexibility: 'very-high'
             }),
             locomotionRole: 'primary',
-            constraintTemplate: 'vertebra'
+            constraintTemplate: 'vertebra',
+            shapeProfile: 'spine',
+            scale: 0.8
         });
         this.addChain(spineConfig);
+        
+        console.log("Built pure snake with " + this.chains.length + " chains");
+    }
+    
+    // Legacy method - redirect to horse
+    buildQuadruped() {
+        this.buildHorse();
     }
 
     // CHAIN CREATION AND MANAGEMENT
@@ -437,11 +614,20 @@ class ModularCreatureBuilder {
             
             const bone = new FIK.Bone2D(startPos, endPos);
             
-            // Apply advanced constraints
-            const constraints = this.constraintSystem.getConstraints(
-                config.constraintTemplate, 
-                firstBone.constraints
-            );
+            // Apply advanced constraints - use anatomical data if available
+            let constraints;
+            if (firstBone.anatomicalRole && this.creatureType) {
+                constraints = this.constraintSystem.getAnatomicalConstraints(
+                    this.creatureType, 
+                    firstBone.anatomicalRole, 
+                    firstBone
+                );
+            } else {
+                constraints = this.constraintSystem.getConstraints(
+                    config.constraintTemplate, 
+                    firstBone.constraints
+                );
+            }
             bone.setClockwiseConstraintDegs(constraints.clockwise);
             bone.setAnticlockwiseConstraintDegs(constraints.anticlockwise);
             
@@ -450,10 +636,20 @@ class ModularCreatureBuilder {
             // Add remaining bones
             for (let i = 1; i < config.bones.length; i++) {
                 const boneConfig = config.bones[i];
-                const boneConstraints = this.constraintSystem.getConstraints(
-                    config.constraintTemplate, 
-                    boneConfig.constraints
-                );
+                let boneConstraints;
+                
+                if (boneConfig.anatomicalRole && this.creatureType) {
+                    boneConstraints = this.constraintSystem.getAnatomicalConstraints(
+                        this.creatureType, 
+                        boneConfig.anatomicalRole, 
+                        boneConfig
+                    );
+                } else {
+                    boneConstraints = this.constraintSystem.getConstraints(
+                        config.constraintTemplate, 
+                        boneConfig.constraints
+                    );
+                }
                 
                 chain.addConsecutiveBone(
                     boneConfig.direction.normalised(),
@@ -496,13 +692,40 @@ class ModularCreatureBuilder {
         switch (config.type) {
             case 'spine':
                 return (chain, cfg, ctx) => {
-                    if (this.creatureType === 'crane' || this.creatureType === 'quadruped') {
+                    if (this.creatureType === 'crane') {
+                        // Crane - upright posture, flexible neck movement
                         chain.setBaseLocation(this.bodyPosition);
                         chain.baseboneConstraintUV = new FIK.V2(Math.cos(this.bodyHeading), Math.sin(this.bodyHeading));
                         const dir = chain.baseboneConstraintUV;
                         const target = new FIK.V2(
-                            this.bodyPosition.x + dir.x * 60,
-                            this.bodyPosition.y + dir.y * 10
+                            this.bodyPosition.x + dir.x * 50,
+                            this.bodyPosition.y + dir.y * 5
+                        );
+                        chain.solveForTarget(target);
+                    } else if (this.creatureType === 'horse') {
+                        // Horse - rigid spine, erect posture, minimal vertical movement
+                        chain.setBaseLocation(this.bodyPosition);
+                        chain.baseboneConstraintUV = new FIK.V2(Math.cos(this.bodyHeading), Math.sin(this.bodyHeading));
+                        const dir = chain.baseboneConstraintUV;
+                        const target = new FIK.V2(
+                            this.bodyPosition.x + dir.x * 80, // Longer, more rigid
+                            this.bodyPosition.y + dir.y * 5   // Minimal vertical flex
+                        );
+                        chain.solveForTarget(target);
+                    } else if (this.creatureType === 'lizard') {
+                        // Lizard - low sprawling posture with lateral undulation
+                        chain.setBaseLocation(this.bodyPosition);
+                        chain.baseboneConstraintUV = new FIK.V2(Math.cos(this.bodyHeading), Math.sin(this.bodyHeading));
+                        const dir = chain.baseboneConstraintUV;
+                        
+                        // Enhanced lateral undulation with body wave
+                        const time = Date.now() * 0.002;
+                        const lateralWave = Math.sin(time) * 20;
+                        const forwardWave = Math.sin(time + Math.PI/2) * 10;
+                        
+                        const target = new FIK.V2(
+                            this.bodyPosition.x + dir.x * (40 + forwardWave) + lateralWave,
+                            this.bodyPosition.y + dir.y * 15 // Lower to ground
                         );
                         chain.solveForTarget(target);
                     } else if (this.creatureType === 'fish') {
@@ -567,15 +790,16 @@ class ModularCreatureBuilder {
                             const tailTarget = this.activeLocomotion.getTailTarget(cfg.role, ctx);
                             chain.solveForTarget(tailTarget);
                         } else {
-                            // Fallback tail logic
+                            // Enhanced tail logic based on creature type
                             const direction = ctx.parentBone.getDirectionUV();
+
                             const tailSwing = this.activeLocomotion ? 
-                                this.activeLocomotion.getTailSwing() : 
-                                Math.sin(Date.now() * 0.001) * 0.1;
+                            this.activeLocomotion.getTailSwing() : 
+                            Math.sin(Date.now() * 0.001) * 0.1;
                             const target = new FIK.V2(
                                 ctx.attachPoint.x - direction.x * 30,
                                 ctx.attachPoint.y + direction.y * 30 + tailSwing
-                            );
+                            );  
                             chain.solveForTarget(target);
                         }
                     }
@@ -723,6 +947,11 @@ class ModularCreatureBuilder {
         // Draw all chains with dots and lines
         this.drawChains();
         
+        // Draw skeleton overlay if enabled
+        if (this.showSkeleton) {
+            this.drawSkeleton();
+        }
+        
         // Draw debug info
         if (this.showDebug) {
             this.drawDebugInfo();
@@ -775,11 +1004,14 @@ class ModularCreatureBuilder {
             const config = this.chainConfigs[i];
             if (chain.bones.length < 2) return;
 
-            // 1. Generate the outline from the bone chain and a width profile
-            const fikOutline = this.generateOutlineFromChain(chain, t => {
-                // Example width profile: thicker in the middle
-                return 30 * (0.5 + 0.5 * (1 - Math.pow(2 * t - 1, 2)));
-            });
+            // 1. Generate the outline from the bone chain using anatomical width profile
+            const widthProfile = this.shapeProfileSystem.getProfileForChain(this.creatureType, config);
+            const fikOutline = this.generateOutlineFromChain(chain, widthProfile);
+            
+            // Debug: Log width profile info (remove in production)
+            if (this.showDebug && i === 0) {
+                console.log(`${this.creatureType} ${config.role}: width at 0.5 = ${widthProfile(0.5).toFixed(1)}`);
+            }
 
             // Convert FIK.V2 outline to p5.Vector outline for rendering and decoration
             const outline = fikOutline.map(p => createVector(p.x, p.y));
@@ -875,6 +1107,13 @@ class ModularCreatureBuilder {
         text(`Chains: ${this.chains.length}`, 20, y); y += 15;
         text(`Body: (${int(this.bodyPosition.x)}, ${int(this.bodyPosition.y)})`, 20, y); y += 15;
         
+        // Show posture type
+        const postureType = this.creatureType === 'horse' ? 'Erect/Unguligrade' :
+                           this.creatureType === 'lizard' ? 'Sprawling/Plantigrade' :
+                           this.creatureType === 'crane' ? 'Bipedal/Digitigrade' :
+                           this.creatureType === 'fish' ? 'Aquatic/Undulating' : 'Unknown';
+        text(`Posture: ${postureType}`, 20, y); y += 15;
+        
         if (this.activeLocomotion) {
             text(`Locomotion: ${this.activeLocomotion.name}`, 20, y); y += 15;
             text(`Cycle: ${this.activeLocomotion.getCycle().toFixed(2)}`, 20, y); y += 15;
@@ -898,7 +1137,7 @@ class ModularCreatureBuilder {
         push();
         fill(0, 180);
         noStroke();
-        rect(10, 10, 250, this.creatureType === 'quadruped' ? 200 : 130, 5);
+        rect(10, 10, 250, this.creatureType === 'quadruped' ? 220 : 150, 5);
         
         fill(255);
         textAlign(LEFT, TOP);
@@ -907,17 +1146,20 @@ class ModularCreatureBuilder {
         let y = 20;
         text('CREATURE TYPES', 20, y); y += 20;
         text('1: Fish (swimming)', 30, y); y += 15;
-        text('2: Bipedal Crane (walking)', 30, y); y += 15;
-        text('3: Quadruped (walking)', 30, y); y += 15;
-        text('4: Snake (slithering)', 30, y); y += 25;
+        text('2: Crane (bipedal walking)', 30, y); y += 15;
+        text('3: Horse (erect quadruped)', 30, y); y += 15;
+        text('4: Lizard (sprawling quadruped)', 30, y); y += 25;
         
-        // Gait controls (only for quadruped)
-        if (this.creatureType === 'quadruped' && this.activeLocomotion) {
+        // Gait controls (for horse and lizard)
+        if ((this.creatureType === 'horse' || this.creatureType === 'lizard') && this.activeLocomotion) {
             text('GAIT CONTROLS', 20, y); y += 20;
             text('W: Walk', 30, y); y += 15;
             text('T: Trot', 30, y); y += 15;
             text('G: Gallop', 30, y); y += 15;
-            text('P: Pace', 30, y); y += 15;
+            text('P: Pace', 30, y); y += 20;
+            
+            text('D: Toggle debug info', 30, y); y += 15;
+            text('S: Toggle skeleton', 30, y); y += 15;
             
             // Gait analysis info
             const analysis = this.activeLocomotion.getGaitAnalysis ? this.activeLocomotion.getGaitAnalysis() : null;
@@ -931,9 +1173,58 @@ class ModularCreatureBuilder {
                 text(`Stability: ${(analysis.stabilityMargin * 100).toFixed(1)}%`, 30, y);
             }
         } else {
-            text('D: Toggle debug info', 20, y); y += 20;
+            text('D: Toggle debug info', 20, y); y += 15;
+            text('S: Toggle skeleton', 20, y); y += 15;
             text('Mouse: Head target', 20, y);
         }
+        
+        pop();
+    }
+
+    drawSkeleton() {
+        push();
+        
+        // Skeleton styling - thin lines like artist's underdrawing
+        stroke(120, 120, 120, 150); // Gray with transparency
+        strokeWeight(1);
+        noFill();
+        
+        // Draw bone chains as thin lines
+        this.chains.forEach((chain, chainIndex) => {
+            if (!chain || !chain.bones) return;
+            
+            const config = this.chainConfigs[chainIndex];
+            if (!config) return;
+            
+            // Draw chain as connected lines
+            if (chain.bones.length > 1) {
+                beginShape();
+                noFill();
+                
+                chain.bones.forEach((bone) => {
+                    if (bone && bone.start) {
+                        vertex(bone.start.x, bone.start.y);
+                    }
+                });
+                
+                // Add end point of last bone
+                const lastBone = chain.bones[chain.bones.length - 1];
+                if (lastBone && lastBone.end) {
+                    vertex(lastBone.end.x, lastBone.end.y);
+                }
+                
+                endShape();
+            }
+            
+            // Draw bone connection points as small dots
+            chain.bones.forEach((bone) => {
+                if (bone && bone.start) {
+                    fill(120, 120, 120, 180);
+                    noStroke();
+                    circle(bone.start.x, bone.start.y, 3);
+                }
+            });
+        });
         
         pop();
     }
