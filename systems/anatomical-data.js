@@ -141,16 +141,16 @@ class AnatomicalData {
                 segments: 4,
                 // Front leg proportions
                 front: {
-                    scapula: 0.3,       // Hidden in body
-                    humerus: 0.25,      
-                    radius: 0.3,        // Forearm
-                    cannon: 0.15        // Metacarpus to hoof
+                    scapula: 0.6,       // Hidden in body
+                    humerus: 0.5,      
+                    radius: 0.6,        // Forearm
+                    cannon: 0.26        // Metacarpus to hoof
                 },
                 // Hind leg proportions  
                 hind: {
-                    femur: 0.25,
-                    tibia: 0.35,        // Main lower leg
-                    cannon: 0.15,       // Metatarsus
+                    femur: 0.6,
+                    tibia: 0.6,        // Main lower leg
+                    cannon: 0.26,       // Metatarsus
                     hoof: 0.05
                 }
             },

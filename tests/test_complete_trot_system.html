@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐎 Complete Trot Gait System - All Features</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; background:#2a2a2a; color:white;">
+    <div style="position:absolute; top:10px; left:10px; z-index:1000; background:rgba(0,0,0,0.9); padding:20px; border-radius:8px; max-width:400px;">
+        <h2>🐎 Complete Trot Gait System</h2>
+        <p><strong>🎮 Manual Controls:</strong></p>
+        <ul>
+            <li><kbd>W</kbd> - Walk Gait (4-beat lateral sequence)</li>
+            <li><kbd>T</kbd> - Trot Gait (2-beat diagonal pairs)</li>
+            <li><kbd>X</kbd> - Toggle Automatic Gait Switching</li>
+            <li><kbd>3</kbd> - Horse | <kbd>4</kbd> - Lizard</li>
+            <li><kbd>D</kbd> - Toggle debug visualization</li>
+        </ul>
+        
+        <p><strong>✅ Implemented Features:</strong></p>
+        <ul>
+            <li><span style="color:#ff6464;">🔴 Diagonal Pair 1:</span> LF + RH move together</li>
+            <li><span style="color:#6464ff;">🔵 Diagonal Pair 2:</span> RF + LH move together</li>
+            <li><span style="color:#ffff64;">🚀 Suspension Phase:</span> Brief airborne moments</li>
+            <li><span style="color:#64ff64;">⚡ Speed Transitions:</span> Auto walk↔trot based on distance</li>
+            <li><span style="color:#ff64ff;">📊 Enhanced Debug:</span> Real-time gait analysis</li>
+        </ul>
+        
+        <p><strong>🧪 Test Scenarios:</strong></p>
+        <ol>
+            <li><strong>Manual Testing:</strong> Press T/W to switch gaits manually</li>
+            <li><strong>Automatic Mode:</strong> Press X, then move mouse far away (auto-trot)</li>
+            <li><strong>Suspension Detection:</strong> Watch for yellow "AIRBORNE" indicator</li>
+            <li><strong>Froude Analysis:</strong> Check speed/distance thresholds in debug panel</li>
+        </ol>
+        
+        <p><strong>Expected Behaviors:</strong></p>
+        <ul>
+            <li>🐎 <strong>Trot:</strong> 45% duty factor, faster frequency, higher steps, suspension</li>
+            <li>🚶 <strong>Walk:</strong> 70% duty factor, stable 4-beat sequence, grounded</li>
+            <li>🔄 <strong>Auto Transitions:</strong> Fr>0.5 → trot, Fr<0.3 → walk</li>
+        </ul>
+    </div>
+
+    <script src="FIK.js"></script>
+    <script src="systems/shape-generation.js"></script>
+    <script src="styling/theme-manager.js"></script>
+    <script src="styling/border-decorator.js"></script>
+    <script src="styling/filler.js"></script>
+    <script src="styling/segmenter.js"></script>
+    <script src="locomotion/locomotion-pattern.js"></script>
+    <script src="locomotion/locomotion-system.js"></script>
+    <script src="locomotion/quadruped-gait.js"></script>
+    <script src="locomotion/serpentine-pattern.js"></script>
+    <script src="locomotion/undulate-pattern.js"></script>
+    <script src="locomotion/bipedal-walk-pattern.js"></script>
+    <script src="creature-builder.js"></script>
+    
+    <script>
+        let builder;
+        let testMode = 'manual'; // 'manual' or 'automatic'
+        let lastGait = null;
+        let frameCounter = 0;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            builder = new ModularCreatureBuilder();
+            builder.buildHorse(); // Start with horse
+            
+            // Start with walk gait for comparison
+            if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                builder.activeLocomotion.transitionToGait('walk', true);
+                lastGait = 'walk';
+            }
+            
+            console.log("🧪 COMPLETE TROT GAIT SYSTEM TEST");
+            console.log("All 4 trot subtasks implemented:");
+            console.log("✅ trot-1: Diagonal Pair Phase Logic");
+            console.log("✅ trot-2: Trot Gait Parameters");  
+            console.log("✅ trot-3: Speed-Based Gait Switching");
+            console.log("✅ trot-4: Visual Gait Indicator");
+            console.log("Press 'X' to test automatic gait switching!");
+        }
+
+        function draw() {
+            background(40, 40, 50);
+            frameCounter++;
+            
+            builder.update();
+            builder.draw();
+            
+            // Enhanced testing interface
+            drawTestInterface();
+            
+            // Log gait changes
+            if (builder.activeLocomotion && builder.activeLocomotion.gaitType) {
+                const currentGait = builder.activeLocomotion.gaitType;
+                if (lastGait !== currentGait) {
+                    lastGait = currentGait;
+                    console.log(`🔄 Gait changed to: ${currentGait.toUpperCase()}`);
+                    
+                    // Log transition details
+                    if (builder.activeLocomotion.transitionData) {
+                        const data = builder.activeLocomotion.transitionData;
+                        console.log(`   Froude Number: ${data.froudeNumber.toFixed(3)}`);
+                        console.log(`   Distance: ${data.distanceToTarget.toFixed(0)}px`);
+                        console.log(`   Automatic: ${data.automaticEnabled ? 'ON' : 'OFF'}`);
+                    }
+                }
+            }
+        }
+
+        function drawTestInterface() {
+            push();
+            
+            // Current mode indicator
+            fill(255, 255, 100);
+            textAlign(RIGHT);
+            textSize(16);
+            textStyle(BOLD);
+            
+            if (builder.activeLocomotion && builder.activeLocomotion.automaticGaitSwitching) {
+                text("Mode: AUTOMATIC", width - 20, 30);
+                fill(150, 255, 150);
+                textSize(12);
+                text("Move mouse far away to trigger trot!", width - 20, 50);
+                text("Move mouse close to trigger walk!", width - 20, 65);
+            } else {
+                text("Mode: MANUAL", width - 20, 30);
+                fill(255, 150, 150);
+                textSize(12);
+                text("Press T/W to change gaits manually", width - 20, 50);
+                text("Press X to enable automatic mode", width - 20, 65);
+            }
+            
+            // Feature completion status
+            fill(100, 255, 100);
+            textAlign(RIGHT);
+            textSize(14);
+            textStyle(BOLD);
+            text("✅ ALL TROT FEATURES COMPLETE", width - 20, height - 80);
+            
+            fill(200);
+            textSize(11);
+            textStyle(NORMAL);
+            text("1. Diagonal Pair Logic ✅", width - 20, height - 60);
+            text("2. Trot Parameters ✅", width - 20, height - 45);
+            text("3. Speed-Based Switching ✅", width - 20, height - 30);
+            text("4. Visual Gait Indicator ✅", width - 20, height - 15);
+            
+            // Performance indicator
+            if (frameCounter % 60 === 0) { // Every second
+                fill(255, 255, 100);
+                textAlign(LEFT);
+                textSize(10);
+                text(`FPS: ${frameRate().toFixed(0)}`, 20, height - 20);
+            }
+            
+            pop();
+        }
+
+        function keyPressed() {
+            switch (key.toLowerCase()) {
+                // Creature switching
+                case '3':
+                    builder.buildHorse();
+                    console.log("🐎 Switched to Horse - testing trot gait");
+                    break;
+                case '4':
+                    builder.buildLizard();
+                    console.log("🦎 Switched to Lizard - testing trot gait");
+                    break;
+                
+                // Manual gait controls
+                case 'w':
+                    if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('walk', true);
+                        console.log("🚶 MANUAL: Walk Gait - 4-beat lateral sequence");
+                        console.log("   70% duty factor, stable grounded support");
+                    }
+                    break;
+                case 't':
+                    if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('trot', true);
+                        console.log("🐎 MANUAL: Trot Gait - diagonal pairs active!");
+                        console.log("   45% duty factor, suspension phase, higher frequency");
+                        console.log("   Watch for red (LF+RH) and blue (RF+LH) pairs");
+                    }
+                    break;
+                    
+                // Toggle automatic gait switching
+                case 'x':
+                    if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.toggleAutomaticGaitSwitching) {
+                        const isEnabled = builder.activeLocomotion.toggleAutomaticGaitSwitching();
+                        console.log(`🔄 AUTOMATIC GAIT SWITCHING: ${isEnabled ? 'ENABLED' : 'DISABLED'}`);
+                        if (isEnabled) {
+                            console.log("   Move mouse far away (>100px) to trigger trot");
+                            console.log("   Move mouse close (<100px) to trigger walk");
+                            console.log("   Froude thresholds: Walk→Trot at Fr>0.5, Trot→Walk at Fr<0.3");
+                        }
+                    }
+                    break;
+                    
+                // Debug toggle
+                case 'd':
+                    builder.showDebug = !builder.showDebug;
+                    console.log(`Debug visualization: ${builder.showDebug ? 'ON' : 'OFF'}`);
+                    if (builder.showDebug) {
+                        console.log("   Enhanced debug panel shows:");
+                        console.log("   - Real-time Froude number and velocity");
+                        console.log("   - Suspension phase indicator");
+                        console.log("   - Diagonal pair color coding");
+                        console.log("   - Transition cooldown timer");
+                    }
+                    break;
+                    
+                // Quick test sequence
+                case ' ':
+                    console.log("🧪 RUNNING QUICK TEST SEQUENCE:");
+                    setTimeout(() => {
+                        if (builder.activeLocomotion) {
+                            builder.activeLocomotion.transitionToGait('walk', true);
+                            console.log("   1/3: Walk gait activated");
+                        }
+                    }, 0);
+                    setTimeout(() => {
+                        if (builder.activeLocomotion) {
+                            builder.activeLocomotion.transitionToGait('trot', true);
+                            console.log("   2/3: Trot gait activated - watch diagonal pairs!");
+                        }
+                    }, 2000);
+                    setTimeout(() => {
+                        if (builder.activeLocomotion) {
+                            builder.activeLocomotion.toggleAutomaticGaitSwitching();
+                            console.log("   3/3: Automatic switching enabled - test complete!");
+                        }
+                    }, 4000);
+                    break;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

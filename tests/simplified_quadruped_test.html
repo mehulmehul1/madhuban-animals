@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simplified Quadruped Mode Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .simple-mode { background-color: #e8f5e8; }
+        .complex-mode { background-color: #fff8e1; }
+        .instructions { background-color: #e3f2fd; }
+        .code-block { background-color: #f5f5f5; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        code { background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px; }
+        .highlight { font-weight: bold; color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Simplified Quadruped Mode Test</h1>
+    
+    <div class="test-section instructions">
+        <h2>🎯 Test Objective</h2>
+        <p><strong>Goal:</strong> Prove that simplified quadruped mode works exactly like the crane (biped) system</p>
+        <p><strong>Why:</strong> The crane moves perfectly in 2D while quadrupeds struggle - we need to make quadrupeds use the same simple approach</p>
+    </div>
+    
+    <div class="test-section simple-mode">
+        <h2>✅ SIMPLE MODE (New Implementation)</h2>
+        <p><strong>What it does:</strong> Makes quadruped movement work exactly like the crane</p>
+        
+        <div class="code-block">
+            <strong>How to enable:</strong><br>
+            <code>debugSimpleMode: true</code> in QuadrupedWalkPattern config
+        </div>
+        
+        <p><strong>Key Features:</strong></p>
+        <ul>
+            <li><span class="highlight">Direct foot placement:</span> Feet placed ahead of body like crane</li>
+            <li><span class="highlight">Simple phase control:</span> <code>foot.phase += 0.1</code> (same as crane)</li>
+            <li><span class="highlight">Body follows feet:</span> Average of grounded feet determines body position</li>
+            <li><span class="highlight">Smooth interpolation:</span> <code>* 0.1</code> factor (same as crane)</li>
+            <li><span class="highlight">No complex gait timing:</span> Ignores duty factors, phase relationships</li>
+        </ul>
+    </div>
+    
+    <div class="test-section complex-mode">
+        <h2>⚙️ COMPLEX MODE (Original System)</h2>
+        <p><strong>What it does:</strong> Uses research-based biomechanical gait system</p>
+        
+        <p><strong>Complexity factors causing issues:</strong></p>
+        <ul>
+            <li>Phase relationships [0, 180, 180, 0]</li>
+            <li>Duty factors (0.5 for trot, 0.7 for walk)</li>
+            <li>Body-relative coordinate systems</li>
+            <li>Gait transitions (walk→trot→gallop)</li>
+            <li>Biomechanical constraints</li>
+        </ul>
+    </div>
+    
+    <div class="test-section instructions">
+        <h2>🧪 Step-by-Step Test Instructions</h2>
+        
+        <h3>Step 1: Enable Simple Mode</h3>
+        <div class="code-block">
+// In your creature creation code (e.g., sketch.js or creature-builder.js):
+const quadrupedConfig = {
+    stepLength: 25,
+    stepHeight: 10,
+    debugSimpleMode: true  // ← ADD THIS LINE
+};
+
+// Then create quadruped with this config
+const gaitPattern = new QuadrupedWalkPattern(quadrupedConfig);
+        </div>
+        
+        <h3>Step 2: Test Movement</h3>
+        <ol>
+            <li>Open main application (<code>index.html</code>)</li>
+            <li>Create a quadruped (Horse or Lizard)</li>
+            <li>Move mouse around canvas</li>
+            <li><strong>Expected:</strong> Quadruped should move exactly like crane - smooth, responsive, all directions</li>
+        </ol>
+        
+        <h3>Step 3: Compare Modes</h3>
+        <ol>
+            <li>Test with <code>debugSimpleMode: true</code> - should work perfectly</li>
+            <li>Test with <code>debugSimpleMode: false</code> - may show movement issues</li>
+            <li>Compare responsiveness and 2D movement capability</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Debug Console Output</h2>
+        <p><strong>When simple mode is enabled, you should see:</strong></p>
+        <div class="code-block">
+🔧 DEBUG: Simple Mode ENABLED - Quadruped using crane-like movement
+🔧 Initialized simple mode foot positions: ["front-left", "front-right", "back-left", "back-right"]
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>✨ Expected Results</h2>
+        <p><strong>Simple Mode Success Criteria:</strong></p>
+        <ul>
+            <li>✅ Moves in all directions (up, down, diagonal) like crane</li>
+            <li>✅ Responsive turning and movement</li>
+            <li>✅ Smooth foot placement without jerky motion</li>
+            <li>✅ Body follows feet naturally</li>
+            <li>✅ No complex gait restrictions</li>
+        </ul>
+        
+        <p><strong>If successful, this proves the simplified approach works and can be the foundation for adding complexity back gradually.</strong></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🚀 Next Steps After Success</h2>
+        <ol>
+            <li><strong>Phase 1 Complete:</strong> Simple mode working = Task 1.2.1 foundation ready</li>
+            <li><strong>Phase 2:</strong> Add back gait complexity gradually using Document 2's velocity-driven approach</li>
+            <li><strong>Phase 3:</strong> Complete Task 1.2 (full 2D movement)</li>
+            <li><strong>Phase 4:</strong> Move to Task 1.3 (anatomical specialization)</li>
+        </ol>
+    </div>
+</body>
+</html>

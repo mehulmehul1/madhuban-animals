@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Test Organization Verification</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; background:#1a1a1a; color:white; font-family: Arial;">
+    <div style="position:absolute; top:20px; left:20px; z-index:1000; background:rgba(0,0,0,0.9); padding:20px; border-radius:8px; min-width:350px;">
+        <h2>✅ Test Organization Verification</h2>
+        <p><strong>Purpose:</strong> Verify that test files are properly organized and accessible</p>
+        
+        <div id="loadingStatus">Checking test organization...</div>
+        <div id="testResults" style="margin-top:15px;"></div>
+        
+        <p><strong>📁 Expected Structure:</strong></p>
+        <ul>
+            <li>All test files in <code>/tests/</code> folder</li>
+            <li>Script paths use <code>../</code> prefix</li>
+            <li>README.md documentation available</li>
+            <li>Template file for future tests</li>
+        </ul>
+    </div>
+
+    <!-- Test the script loading with ../ paths -->
+    <script src="../FIK.js"></script>
+    <script src="../systems/debug-manager.js"></script>
+    <script src="../creature-builder.js"></script>
+    
+    <script>
+        function setup() {
+            createCanvas(400, 300);
+            
+            let results = [];
+            let allPassed = true;
+            
+            // Test 1: Current location
+            try {
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/tests/')) {
+                    results.push('✅ File location: In /tests/ folder');
+                } else {
+                    results.push('❌ File location: Not in /tests/ folder');
+                    allPassed = false;
+                }
+            } catch (e) {
+                results.push('❌ File location check failed');
+                allPassed = false;
+            }
+            
+            // Test 2: Script loading
+            try {
+                if (typeof FIK !== 'undefined') {
+                    results.push('✅ FIK.js loaded with ../ path');
+                } else {
+                    results.push('❌ FIK.js failed to load');
+                    allPassed = false;
+                }
+            } catch (e) {
+                results.push('❌ FIK.js loading error');
+                allPassed = false;
+            }
+            
+            // Test 3: DebugManager loading
+            try {
+                if (typeof DebugManager !== 'undefined') {
+                    results.push('✅ DebugManager loaded with ../ path');
+                } else {
+                    results.push('❌ DebugManager failed to load');
+                    allPassed = false;
+                }
+            } catch (e) {
+                results.push('❌ DebugManager loading error');
+                allPassed = false;
+            }
+            
+            // Test 4: ModularCreatureBuilder loading
+            try {
+                if (typeof ModularCreatureBuilder !== 'undefined') {
+                    results.push('✅ ModularCreatureBuilder loaded');
+                } else {
+                    results.push('❌ ModularCreatureBuilder failed to load');
+                    allPassed = false;
+                }
+            } catch (e) {
+                results.push('❌ ModularCreatureBuilder loading error');
+                allPassed = false;
+            }
+            
+            // Test 5: Can instantiate creature builder
+            try {
+                const testBuilder = new ModularCreatureBuilder();
+                results.push('✅ CreatureBuilder instantiation successful');
+            } catch (e) {
+                results.push('❌ CreatureBuilder instantiation failed: ' + e.message);
+                allPassed = false;
+            }
+            
+            // Update UI
+            updateResults(results, allPassed);
+            
+            console.log('Test Organization Verification Results:', results);
+        }
+
+        function draw() {
+            background(30, 30, 40);
+            
+            fill(255);
+            textAlign(CENTER);
+            textSize(16);
+            text('Test Organization Verification', width/2, height/2 - 20);
+            textSize(12);
+            text('Check the panel for detailed results', width/2, height/2 + 10);
+        }
+
+        function updateResults(results, allPassed) {
+            const statusDiv = document.getElementById('loadingStatus');
+            const resultsDiv = document.getElementById('testResults');
+            
+            if (allPassed) {
+                statusDiv.innerHTML = '🎉 All tests passed! Test organization is working correctly.';
+                statusDiv.style.color = '#64ff64';
+                
+                resultsDiv.innerHTML = `
+                    <h3>✅ Test Results:</h3>
+                    <ul>${results.map(r => `<li>${r}</li>`).join('')}</ul>
+                    <div style="color: #64ff64; font-weight: bold; margin-top: 15px;">
+                        🎯 TEST ORGANIZATION: SUCCESS!
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>What this means:</strong>
+                        <ul>
+                            <li>All test files are properly organized in /tests/ folder</li>
+                            <li>Script paths are correctly updated with ../ prefix</li>
+                            <li>Test files can load the main project modules</li>
+                            <li>Ready for future test development</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = '❌ Some tests failed. Organization needs adjustment.';
+                statusDiv.style.color = '#ff6464';
+                
+                resultsDiv.innerHTML = `
+                    <h3>Test Results:</h3>
+                    <ul>${results.map(r => `<li style="color: ${r.includes('✅') ? '#64ff64' : '#ff6464'}">${r}</li>`).join('')}</ul>
+                    <div style="color: #ff6464; margin-top: 15px;">
+                        Check console for detailed error information.
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Quick Debug System Fix Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; background:#1a1a1a; color:white; font-family: Arial;">
+    <div style="position:absolute; top:20px; left:20px; z-index:1000; background:rgba(0,0,0,0.9); padding:20px; border-radius:8px; min-width:300px;">
+        <h2>🔧 Debug System Fix Test</h2>
+        <div id="loadingStatus">Loading scripts...</div>
+        <div id="testResults" style="margin-top:15px;"></div>
+    </div>
+
+    <!-- Minimal script loading for testing -->
+    <script src="../FIK.js"></script>
+    <script src="../systems/shape-generation.js"></script>
+    <script src="../systems/debug-manager.js"></script>
+    
+    <script>
+        // Test script loading
+        document.getElementById('loadingStatus').innerHTML = 'Scripts loaded. Testing...';
+        
+        function setup() {
+            createCanvas(400, 300);
+            
+            let testResults = [];
+            let allPassed = true;
+            
+            // Test 1: DebugManager class exists
+            try {
+                if (typeof DebugManager !== 'undefined') {
+                    testResults.push('✅ DebugManager class: EXISTS');
+                } else {
+                    testResults.push('❌ DebugManager class: NOT FOUND');
+                    allPassed = false;
+                }
+            } catch (e) {
+                testResults.push('❌ DebugManager class: ERROR - ' + e.message);
+                allPassed = false;
+            }
+            
+            // Test 2: DebugManager instantiation
+            try {
+                const debugMgr = new DebugManager();
+                testResults.push('✅ DebugManager instantiation: SUCCESS');
+                
+                // Test 3: Basic methods exist
+                if (typeof debugMgr.draw === 'function') {
+                    testResults.push('✅ DebugManager.draw method: EXISTS');
+                } else {
+                    testResults.push('❌ DebugManager.draw method: MISSING');
+                    allPassed = false;
+                }
+                
+            } catch (e) {
+                testResults.push('❌ DebugManager instantiation: ERROR - ' + e.message);
+                allPassed = false;
+            }
+            
+            // Update UI
+            const resultsDiv = document.getElementById('testResults');
+            const statusDiv = document.getElementById('loadingStatus');
+            
+            if (allPassed) {
+                statusDiv.innerHTML = '🎉 ALL TESTS PASSED! Debug system is working.';
+                statusDiv.style.color = '#64ff64';
+                resultsDiv.innerHTML = testResults.join('<br>') + '<br><br><strong style="color:#64ff64;">✅ The DebugManager loading issue is FIXED!</strong><br><br>You can now use the main index.html file safely.';
+            } else {
+                statusDiv.innerHTML = '❌ Some tests failed. Check details below.';
+                statusDiv.style.color = '#ff6464';
+                resultsDiv.innerHTML = testResults.join('<br>');
+            }
+            
+            console.log('Debug system test results:', testResults);
+        }
+
+        function draw() {
+            background(30, 30, 40);
+            
+            // Show status
+            fill(255);
+            textAlign(CENTER);
+            textSize(16);
+            text('Debug System Loading Test', width/2, height/2 - 20);
+            textSize(12);
+            text('Check the panel for results', width/2, height/2 + 10);
+        }
+    </script>
+</body>
+</html>

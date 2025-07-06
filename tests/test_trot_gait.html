@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trot Gait Test - Diagonal Pairs Implementation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; background:#2a2a2a; color:white;">
+    <div style="position:absolute; top:10px; left:10px; z-index:1000; background:rgba(0,0,0,0.8); padding:15px; border-radius:5px;">
+        <h2>🐎 Trot Gait Test - Diagonal Pairs</h2>
+        <p><strong>Controls:</strong></p>
+        <ul>
+            <li><kbd>W</kbd> - Walk Gait (4-beat lateral sequence)</li>
+            <li><kbd>T</kbd> - Trot Gait (2-beat diagonal pairs)</li>
+            <li><kbd>3</kbd> - Horse creature</li>
+            <li><kbd>4</kbd> - Lizard creature</li>
+        </ul>
+        <p><strong>Trot Diagonal Pairs:</strong></p>
+        <ul>
+            <li><span style="color:#ff6464;">Red:</span> LF + RH (Left-Front + Right-Hind)</li>
+            <li><span style="color:#6464ff;">Blue:</span> RF + LH (Right-Front + Left-Hind)</li>
+        </ul>
+        <p><strong>Expected Behavior:</strong></p>
+        <ul>
+            <li>Red feet move together (diagonal pair 1)</li>
+            <li>Blue feet move together (diagonal pair 2)</li>
+            <li>50% duty factor (shorter stance than walk)</li>
+            <li>Higher step frequency and lift</li>
+            <li>Brief suspension phase possible</li>
+        </ul>
+    </div>
+
+    <script src="FIK.js"></script>
+    <script src="systems/shape-generation.js"></script>
+    <script src="styling/theme-manager.js"></script>
+    <script src="styling/border-decorator.js"></script>
+    <script src="styling/filler.js"></script>
+    <script src="styling/segmenter.js"></script>
+    <script src="locomotion/locomotion-pattern.js"></script>
+    <script src="locomotion/locomotion-system.js"></script>
+    <script src="locomotion/quadruped-gait.js"></script>
+    <script src="locomotion/serpentine-pattern.js"></script>
+    <script src="locomotion/undulate-pattern.js"></script>
+    <script src="locomotion/bipedal-walk-pattern.js"></script>
+    <script src="creature-builder.js"></script>
+    
+    <script>
+        let builder;
+        let lastGait = null;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            builder = new ModularCreatureBuilder();
+            builder.buildHorse(); // Start with horse
+            
+            // Force trot gait for immediate testing
+            if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                builder.activeLocomotion.transitionToGait('trot');
+                lastGait = 'trot';
+            }
+            
+            console.log("🧪 TROT GAIT TEST INITIALIZED");
+            console.log("Press 'T' to activate trot gait and watch for diagonal pairs");
+        }
+
+        function draw() {
+            background(40, 40, 50);
+            
+            builder.update();
+            builder.draw();
+            
+            // Enhanced debug info for gait testing
+            drawTestInfo();
+        }
+
+        function drawTestInfo() {
+            // Current gait indicator
+            push();
+            fill(255);
+            textAlign(LEFT);
+            textSize(16);
+            textStyle(BOLD);
+            
+            if (builder.activeLocomotion && builder.activeLocomotion.gaitType) {
+                const currentGait = builder.activeLocomotion.gaitType;
+                
+                // Change color based on gait
+                if (currentGait === 'trot') {
+                    fill(255, 100, 100); // Red for trot
+                } else if (currentGait === 'walk') {
+                    fill(100, 255, 100); // Green for walk
+                } else {
+                    fill(255, 255, 100); // Yellow for other gaits
+                }
+                
+                text(`Current Gait: ${currentGait.toUpperCase()}`, width - 250, 30);
+                
+                // Show gait change notification
+                if (lastGait !== currentGait) {
+                    lastGait = currentGait;
+                    console.log(`🔄 Gait changed to: ${currentGait}`);
+                }
+                
+                // Show diagnostic info
+                if (builder.activeLocomotion.gaitParams) {
+                    fill(200);
+                    textSize(12);
+                    textStyle(NORMAL);
+                    text(`Duty Factor: ${(builder.activeLocomotion.gaitParams.dutyFactor * 100).toFixed(0)}%`, width - 250, 50);
+                    text(`Frequency: ${builder.activeLocomotion.gaitParams.frequency.toFixed(1)}Hz`, width - 250, 65);
+                    
+                    if (builder.activeLocomotion.getGroundedFeetCount) {
+                        text(`Grounded: ${builder.activeLocomotion.getGroundedFeetCount()}/4`, width - 250, 80);
+                    }
+                }
+            }
+            
+            // Instructions reminder
+            fill(255, 255, 100);
+            textSize(14);
+            textStyle(BOLD);
+            text("Press 'T' for TROT | Press 'W' for WALK", width - 350, height - 30);
+            
+            pop();
+        }
+
+        function keyPressed() {
+            switch (key.toLowerCase()) {
+                // Creature switching
+                case '3':
+                    builder.buildHorse();
+                    console.log("🐎 Switched to Horse");
+                    break;
+                case '4':
+                    builder.buildLizard();
+                    console.log("🦎 Switched to Lizard");
+                    break;
+                
+                // Gait controls - manual testing
+                case 'w':
+                    if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('walk');
+                        console.log("🚶 WALK GAIT ACTIVATED - 4-beat lateral sequence");
+                    }
+                    break;
+                case 't':
+                    if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('trot');
+                        console.log("🐎 TROT GAIT ACTIVATED - Diagonal pairs should be visible!");
+                        console.log("  Watch for: Red feet (LF+RH) and Blue feet (RF+LH) moving together");
+                    }
+                    break;
+                    
+                // Debug toggle
+                case 'd':
+                    builder.showDebug = !builder.showDebug;
+                    console.log(`Debug mode: ${builder.showDebug ? 'ON' : 'OFF'}`);
+                    break;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

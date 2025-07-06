@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚀 Quadruped Movement Fix - Direct Diagonal Movement</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .comparison { display: flex; gap: 20px; margin: 20px 0; }
+        .before, .after { flex: 1; padding: 15px; border-radius: 8px; }
+        .before { background: #ffeeee; border: 2px solid #ff6666; }
+        .after { background: #eeffee; border: 2px solid #66cc66; }
+        .movement-demo { font-family: monospace; font-size: 18px; text-align: center; margin: 10px 0; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; }
+        .arrow { font-size: 24px; color: #0066cc; }
+        h1 { color: #2c3e50; text-align: center; }
+        h2 { color: #34495e; }
+        .test-instructions { background: #e8f4fd; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; }
+    </style>
+</head>
+<body>
+    <h1>🐎 Quadruped Movement Fix: Diagonal vs Perpendicular</h1>
+    
+    <div class="comparison">
+        <div class="before">
+            <h2>❌ BEFORE (Perpendicular Movement)</h2>
+            <div class="movement-demo">
+                Mouse: 🎯<br>
+                ⬆️ Step 1: Move vertically<br>
+                🐎<br>
+                ➡️ Step 2: Move horizontally<br>
+                🐎────🎯
+            </div>
+            <p><strong>Problem:</strong> Hard assignment to ground level</p>
+            <code>foot.target.y = this.groundLevel;</code>
+            <p><strong>Result:</strong> Two-step perpendicular movement pattern</p>
+        </div>
+        
+        <div class="after">
+            <h2>✅ AFTER (Direct Diagonal Movement)</h2>
+            <div class="movement-demo">
+                Mouse: 🎯<br>
+                ↗️ Direct diagonal movement<br>
+                🐎╱<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;╱<br>
+                &nbsp;&nbsp;&nbsp;🎯
+            </div>
+            <p><strong>Fix:</strong> Smooth interpolation like crane</p>
+            <code>foot.target.x += (targetX - foot.target.x) * 0.15;</code><br>
+            <code>foot.target.y += (targetY - foot.target.y) * 0.15;</code>
+            <p><strong>Result:</strong> Direct diagonal movement like crane! 🎉</p>
+        </div>
+    </div>
+    
+    <div class="test-instructions">
+        <h2>🧪 Test Instructions</h2>
+        <ol>
+            <li><strong>Open your application</strong> (<code>index.html</code>)</li>
+            <li><strong>Press 3</strong> for Horse or <strong>4</strong> for Lizard</li>
+            <li><strong>Click anywhere on canvas</strong> - watch the movement pattern</li>
+            <li><strong>Compare with crane</strong> (Press 2) - should move similarly now!</li>
+            <li><strong>Test various directions</strong> - up, down, diagonal, etc.</li>
+        </ol>
+    </div>
+    
+    <div class="comparison">
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffc107;">
+            <h2>🔧 Technical Changes Made</h2>
+            <p><strong>Key Fix:</strong> Changed from hard assignment to smooth interpolation</p>
+            <p><strong>Movement Speed:</strong> 0.15 (slightly faster than crane's 0.1 for responsiveness)</p>
+            <p><strong>Benefits:</strong></p>
+            <ul>
+                <li>✅ Direct diagonal movement like crane</li>
+                <li>✅ Maintains realistic gait animations</li>
+                <li>✅ Smooth transitions without jarring jumps</li>
+                <li>✅ Works with adaptive ground system</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; color: #7f8c8d;">
+        <p><strong>Expected Result:</strong> Quadrupeds now move directly toward mouse target, just like the crane! 🚀</p>
+    </div>
+    
+</body>
+</html>

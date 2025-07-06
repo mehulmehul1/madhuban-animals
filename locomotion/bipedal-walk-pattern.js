@@ -34,55 +34,44 @@ class BipedalWalkPattern extends LocomotionPattern {
         const targetAngle = Math.atan2(dirToTarget.y, dirToTarget.x);
         const angleDiff = creature.normalizeAngle(targetAngle - creature.bodyHeading);
 
-        // 2. State selection: turn or walk
-        const absAngleDiff = Math.abs(angleDiff);
-        const TURN_THRESHOLD = Math.PI / 3; // ~60 deg
-        if (absAngleDiff > TURN_THRESHOLD) {
-            this.state = 'turn';
-        } else {
-            this.state = 'walk';
-        }
+        // 2. State selection: ALWAYS WALK toward target (like quadrupeds now)
+        // Simplified: always move toward mouse for responsive control
+        this.state = 'walk';
+        
+        // 3. Update heading gradually while walking
+        const walkTurnBlend = 0.07;
+        creature.bodyHeading = creature.normalizeAngle(
+            creature.bodyHeading + walkTurnBlend * angleDiff
+        );
 
-        // 3. Animate heading and feet
-        if (this.state === 'turn') {
-            const turnRate = 0.12;
-            creature.bodyHeading += turnRate * Math.sign(angleDiff);
-            creature.bodyHeading = creature.normalizeAngle(creature.bodyHeading);
-        } else if (this.state === 'walk') {
-            const walkTurnBlend = 0.07;
-            creature.bodyHeading = creature.normalizeAngle(
-                creature.bodyHeading + walkTurnBlend * angleDiff
-            );
+        // 4. Update foot placement - ALWAYS (no state restriction)
+        const stepDir = new FIK.V2(Math.cos(creature.bodyHeading), Math.sin(creature.bodyHeading));
+        this.footSteps.forEach((foot, i) => {
+            foot.phase += 0.1;
+            foot.isLifted = Math.sin(foot.phase) > 0.7;
 
-            // Update foot placement - place next step relative to current foot position
-            const stepDir = new FIK.V2(Math.cos(creature.bodyHeading), Math.sin(creature.bodyHeading));
-            this.footSteps.forEach((foot, i) => {
-                foot.phase += 0.1;
-                foot.isLifted = Math.sin(foot.phase) > 0.7;
-
-                if (foot.isLifted) {
-                    // Place next step ahead of current foot position, not body position
-                    const sideOffset = (foot.side === 'left' ? -5 : 5);
-                    const perp = new FIK.V2(-stepDir.y, stepDir.x);
-                    
-                    // Step forward from current foot position
-                    const targetX = creature.bodyPosition.x +
-                    stepDir.x * this.stepLength +      // Step forward in heading direction
-                    perp.x * sideOffset;               // Offset left/right from body center
+            if (foot.isLifted) {
+                // Place next step ahead of current foot position, not body position
+                const sideOffset = (foot.side === 'left' ? -5 : 5);
+                const perp = new FIK.V2(-stepDir.y, stepDir.x);
                 
-                const targetY = creature.bodyPosition.y +
-                    stepDir.y * this.stepLength +      // Step forward in heading direction  
-                    perp.y * sideOffset +              // Offset left/right from body center
-                    this.bodyHeight;   
-                    
-                    foot.target.x += (targetX - foot.target.x) * 0.1;
-                    foot.target.y += (targetY - foot.target.y) * 0.1;
-                }
-            });
+                // Step forward from current foot position
+                const targetX = creature.bodyPosition.x +
+                stepDir.x * this.stepLength +      // Step forward in heading direction
+                perp.x * sideOffset;               // Offset left/right from body center
+            
+            const targetY = creature.bodyPosition.y +
+                stepDir.y * this.stepLength +      // Step forward in heading direction  
+                perp.y * sideOffset +              // Offset left/right from body center
+                this.bodyHeight;   
+                
+                foot.target.x += (targetX - foot.target.x) * 0.1;
+                foot.target.y += (targetY - foot.target.y) * 0.1;
+            }
+        });
 
-            // Update body position based on foot average
-            this.updateBodyFromFeet(creature);
-        }
+        // 5. Update body position based on foot average - ALWAYS
+        this.updateBodyFromFeet(creature);
     }
 
     updateBodyFromFeet(creature) {

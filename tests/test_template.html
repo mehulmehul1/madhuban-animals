@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Template - [FEATURE_NAME]</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; background:#2a2a2a; color:white; font-family: Arial;">
+    <!-- Test Instructions Panel -->
+    <div style="position:absolute; top:10px; left:10px; z-index:1000; background:rgba(0,0,0,0.9); padding:20px; border-radius:8px; max-width:400px;">
+        <h2>🧪 Test: [FEATURE_NAME]</h2>
+        <p><strong>Purpose:</strong> [Describe what this test validates]</p>
+        
+        <p><strong>🎮 Controls:</strong></p>
+        <ul>
+            <li><kbd>D</kbd> - Toggle debug panel</li>
+            <li><kbd>1-4</kbd> - Switch creatures</li>
+            <!-- Add feature-specific controls here -->
+        </ul>
+        
+        <p><strong>✅ Expected Behaviors:</strong></p>
+        <ul>
+            <li>[List expected test outcomes]</li>
+            <li>[Include success criteria]</li>
+        </ul>
+        
+        <p><strong>🧪 Test Scenarios:</strong></p>
+        <ol>
+            <li>[Step-by-step test instructions]</li>
+            <li>[Include what to look for]</li>
+        </ol>
+    </div>
+
+    <!-- Load Main Project Scripts (IMPORTANT: Use ../ prefix for all paths) -->
+    <script src="../FIK.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="../styling/ThemeManager.js"></script>
+    <script src="../styling/border.js"></script>
+    <script src="../styling/filler.js"></script>
+    <script src="../styling/segmenter.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="../systems/shape-generation.js"></script>
+    <script src="../systems/anatomical-data.js"></script>
+    <script src="../systems/constraint-system.js"></script>
+    <script src="../systems/gait-system.js"></script>
+    <script src="../systems/bone-template-system.js"></script>
+    <script src="../systems/shape-profile-system.js"></script>
+    <script src="../systems/debug-manager.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="../locomotion/locomotion-pattern.js"></script>
+    <script src="../locomotion/locomotion-system.js"></script>
+    <script src="../locomotion/undulate-pattern.js"></script>
+    <script src="../locomotion/bipedal-walk-pattern.js"></script>
+    <script src="../locomotion/quadruped-gait.js"></script>
+    <script src="../locomotion/serpentine-pattern.js"></script>
+    
+    <!-- Main Application -->
+    <script src="../creature-builder.js"></script>
+    
+    <script>
+        let builder;
+        let testResults = {};
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            builder = new ModularCreatureBuilder();
+            builder.buildHorse(); // Or appropriate creature for test
+            
+            console.log("🧪 TEST INITIALIZED: [FEATURE_NAME]");
+            console.log("Expected: [Brief description of test goal]");
+            
+            // Initialize test-specific settings here
+            initializeTest();
+        }
+
+        function draw() {
+            background(40, 40, 50);
+            
+            builder.update();
+            builder.draw();
+            
+            // Display test-specific information
+            drawTestInfo();
+        }
+
+        function initializeTest() {
+            // Add test-specific initialization here
+            console.log("✅ Test initialized successfully");
+        }
+
+        function drawTestInfo() {
+            // Display test status, results, or metrics on screen
+            push();
+            fill(255);
+            textAlign(LEFT);
+            textSize(12);
+            text("Test Status: Running", 20, height - 40);
+            // Add more test-specific visualization here
+            pop();
+        }
+
+        function keyPressed() {
+            // Let builder handle debug keys first
+            if (builder && builder.handleKeyPress && builder.handleKeyPress(key)) {
+                return;
+            }
+            
+            switch (key.toLowerCase()) {
+                // Creature switching
+                case '3':
+                    builder.buildHorse();
+                    console.log("🐎 Switched to Horse");
+                    break;
+                case '4':
+                    builder.buildLizard();
+                    console.log("🦎 Switched to Lizard");
+                    break;
+                    
+                // Add test-specific key handling here
+                case ' ':
+                    console.log("🧪 Running automated test sequence");
+                    runAutomatedTests();
+                    break;
+            }
+        }
+
+        function mousePressed() {
+            // Pass mouse events to builder for debug panel interaction
+            if (builder && builder.handleMouseClick) {
+                builder.handleMouseClick(mouseX, mouseY);
+            }
+        }
+
+        function runAutomatedTests() {
+            // Add automated test sequences here
+            console.log("🎯 Automated tests would run here");
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

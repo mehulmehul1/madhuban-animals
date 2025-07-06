@@ -7,8 +7,8 @@ class ModularCreatureBuilder {
         // Global settings
         this.mouseTarget = new FIK.V2(400, 300);
         this.showDebug = true;
-        this.showSkeleton = false; // New: toggle skeleton visualization
-        this.renderMode = 'dots-and-lines';
+        this.showSkeleton = false; // Legacy - now handled by renderMode
+        this.renderMode = 'current'; // 'current', 'skeleton', 'muscle', 'skin'
         
         // Body tracking system
         this.bodyPosition = new FIK.V2(300, 300);
@@ -23,6 +23,21 @@ class ModularCreatureBuilder {
         this.constraintSystem = new ConstraintSystem();
         this.shapeProfileSystem = new ShapeProfileSystem();
 
+        // *** UNIFIED DEBUG SYSTEM ***
+        try {
+            this.debugManager = new DebugManager();
+        } catch (error) {
+            console.error("DebugManager failed to load:", error);
+            console.log("Using fallback debug system");
+            this.debugManager = {
+                enabled: true,
+                update: () => {},
+                draw: () => {},
+                handleKeyPress: () => false,
+                handleMouseClick: () => false
+            };
+        }
+
         // Madhubani styling systems
         this.themeManager = new ThemeManager();
         this.borderDecorator = new BorderDecorator([], {});
@@ -33,6 +48,20 @@ class ModularCreatureBuilder {
         this.creatureType = null;
         this.creatureConfig = null;
         this.activeLocomotion = null;
+        
+        // Skeleton visualization colors
+        this.chainColors = {
+            'spine': [100, 150, 255],      // Blue
+            'leg': [255, 100, 100],        // Red  
+            'neck': [100, 255, 100],       // Green
+            'tail': [255, 255, 100],       // Yellow
+            'fin': [255, 100, 255],        // Magenta
+            'tail-fin': [255, 100, 255],   // Magenta
+            'dorsal-fin': [255, 100, 255], // Magenta
+            'pectoral-fin': [255, 100, 255], // Magenta
+            'wing': [255, 150, 100],       // Orange
+            'default': [128, 128, 128]     // Gray
+        };
     }
 
     // MODULAR CHAIN CONFIGURATION SYSTEM
@@ -300,12 +329,19 @@ class ModularCreatureBuilder {
             neckLength: 40
         };
         
-        this.activeLocomotion = new BiomechanicalQuadrupedGait({
-            gaitType: 'trot',        // Start with trot
-            stepLength: 50,
-            legLength: 80,
-            frequency: 2.0
+        this.activeLocomotion = new QuadrupedWalkPattern({
+            stepLength: 50,          // Smaller steps for natural walk
+            stepHeight: 30,          // Moderate lift height  
+            adaptiveGround: true,    // Enable free movement like crane
+            debugSimpleMode: true,   // Enable simplified mode
+            useProperWalkGait: true, // 🔧 ENABLE PROPER WALK GAIT
+            shoulderHipDistance: 120, // Horse shoulder-to-hip distance
+            legSpacing: 45,          // Horse leg spacing (wider stance)
+            creatureConfig: this.creatureConfig  // 📐 PASS ANATOMICAL PROPORTIONS
         });
+        
+        // Set creature configuration for anatomical calculations
+        this.activeLocomotion.setCreatureConfig(this.creatureConfig);
         
         this.activeLocomotion.initializeFootSteps(this.bodyPosition, 4);
         
@@ -443,13 +479,19 @@ class ModularCreatureBuilder {
         };
         
         // Set up sprawling quadruped locomotion with lateral undulation
-        this.activeLocomotion = new BiomechanicalQuadrupedGait({
-            gaitType: 'walk',
-            stepLength: 25,
-            legLength: 50,
-            frequency: 1.5,
-            sprawling: true
+        this.activeLocomotion = new QuadrupedWalkPattern({
+            stepLength: 20,          // Shorter steps for lizard
+            stepHeight: 8,           // Lower lift for sprawling posture
+            adaptiveGround: true,    // Enable free movement like crane
+            debugSimpleMode: true,   // Enable simplified mode
+            useProperWalkGait: true, // 🔧 ENABLE PROPER WALK GAIT
+            shoulderHipDistance: 80, // Lizard shoulder-to-hip distance (shorter body)
+            legSpacing: 35,          // Lizard leg spacing (narrower than horse)
+            creatureConfig: this.creatureConfig  // 📐 PASS ANATOMICAL PROPORTIONS
         });
+        
+        // Set creature configuration for anatomical calculations
+        this.activeLocomotion.setCreatureConfig(this.creatureConfig);
         
         this.activeLocomotion.initializeFootSteps(this.bodyPosition, 4);
         
@@ -685,6 +727,9 @@ class ModularCreatureBuilder {
         
         // Update all chains with enhanced strategies
         this.updateChains();
+        
+        // *** UPDATE UNIFIED DEBUG SYSTEM ***
+        this.debugManager.update(this);
     }
 
     getChainUpdateStrategy(config) {
@@ -927,6 +972,33 @@ class ModularCreatureBuilder {
         }
     }
 
+    // RENDER MODE SYSTEM
+    setRenderMode(mode) {
+        const validModes = ['current', 'skeleton', 'muscle', 'skin'];
+        if (validModes.includes(mode)) {
+            this.renderMode = mode;
+            console.log(`Render mode changed to: ${mode}`);
+        } else {
+            console.warn(`Invalid render mode: ${mode}. Valid modes: ${validModes.join(', ')}`);
+        }
+    }
+    
+    switchRenderMode() {
+        const modes = ['current', 'skeleton', 'muscle', 'skin'];
+        const currentIndex = modes.indexOf(this.renderMode);
+        const nextIndex = (currentIndex + 1) % modes.length;
+        this.setRenderMode(modes[nextIndex]);
+    }
+    
+    getChainColor(role) {
+        const colorArray = this.chainColors[role] || this.chainColors['default'];
+        return color(colorArray[0], colorArray[1], colorArray[2]);
+    }
+    
+    getChainColorArray(role) {
+        return this.chainColors[role] || this.chainColors['default'];
+    }
+
     // RENDERING SYSTEM (keep existing draw methods)
     draw() {
         background(240, 248, 255);
@@ -937,25 +1009,42 @@ class ModularCreatureBuilder {
         line(0, 450, width, 450);
         
         // Draw body position
-        this.drawBodyIndicator();
+        // this.drawBodyIndicator();
         
-        // Draw foot targets for legged creatures
-        if (this.activeLocomotion && this.activeLocomotion.drawFootTargets) {
-            this.activeLocomotion.drawFootTargets();
+        // *** REMOVED: Individual foot target drawing - now handled by DebugManager ***
+        // Old code: if (this.activeLocomotion && this.activeLocomotion.drawFootTargets) {
+        //     this.activeLocomotion.drawFootTargets();
+        // }
+
+        // Multi-mode rendering system
+        switch(this.renderMode) {
+            case 'skeleton':
+                this.drawSkeleton();
+                break;
+                
+            case 'muscle':
+                this.drawSkeleton(); // Show skeleton as base
+                this.drawMuscleMasses();
+                break;
+                
+            case 'skin':
+                this.drawSkinLayer();
+                break;
+                
+            case 'current':
+            default:
+                // Original rendering system
+                this.drawChains();
+                
+                // Draw skeleton overlay if enabled (legacy support)
+                if (this.showSkeleton) {
+                    this.drawSkeleton();
+                }
+                break;
         }
         
-        // Draw all chains with dots and lines
-        this.drawChains();
-        
-        // Draw skeleton overlay if enabled
-        if (this.showSkeleton) {
-            this.drawSkeleton();
-        }
-        
-        // Draw debug info
-        if (this.showDebug) {
-            this.drawDebugInfo();
-        }
+        // *** UNIFIED DEBUG SYSTEM - Replaces all scattered debug rendering ***
+        this.debugManager.draw(this);
         
         // Draw controls
         this.drawControls();
@@ -1092,45 +1181,28 @@ class ModularCreatureBuilder {
         this.filler.path = [];
     }
 
-    drawDebugInfo() {
-        push();
-        fill(0, 200);
-        noStroke();
-        rect(10, 10, 250, 180);
-        
-        fill(255);
-        textAlign(LEFT);
-        textSize(11);
-        let y = 25;
-        
-        text(`Creature: ${this.creatureType}`, 20, y); y += 15;
-        text(`Chains: ${this.chains.length}`, 20, y); y += 15;
-        text(`Body: (${int(this.bodyPosition.x)}, ${int(this.bodyPosition.y)})`, 20, y); y += 15;
-        
-        // Show posture type
-        const postureType = this.creatureType === 'horse' ? 'Erect/Unguligrade' :
-                           this.creatureType === 'lizard' ? 'Sprawling/Plantigrade' :
-                           this.creatureType === 'crane' ? 'Bipedal/Digitigrade' :
-                           this.creatureType === 'fish' ? 'Aquatic/Undulating' : 'Unknown';
-        text(`Posture: ${postureType}`, 20, y); y += 15;
-        
-        if (this.activeLocomotion) {
-            text(`Locomotion: ${this.activeLocomotion.name}`, 20, y); y += 15;
-            text(`Cycle: ${this.activeLocomotion.getCycle().toFixed(2)}`, 20, y); y += 15;
-            if (this.activeLocomotion.footSteps) {
-                text(`Grounded feet: ${this.activeLocomotion.getGroundedFeetCount()}`, 20, y); y += 15;
-            }
+    // *** REMOVED: Old debug system replaced by unified DebugManager ***
+    // drawDebugInfo() method removed - now handled by this.debugManager.draw()
+    
+    // *** INPUT HANDLING FOR DEBUG SYSTEM ***
+    handleKeyPress(key) {
+        // Let debug manager handle its keys first
+        if (this.debugManager.handleKeyPress(key)) {
+            return true; // Debug manager handled it
         }
         
-        y += 10;
-        text("Chain attachments:", 20, y); y += 15;
-        this.chainConfigs.forEach((config, i) => {
-            const attachment = config.attachment === 'parent' ? 
-                `→ ${config.parentRole}` : config.attachment;
-            text(`${config.role}: ${attachment}`, 20, y); y += 12;
-        });
+        // Handle other creature builder keys
+        return false;
+    }
+    
+    handleMouseClick(mouseX, mouseY) {
+        // Let debug manager handle mouse clicks first
+        if (this.debugManager.handleMouseClick(mouseX, mouseY)) {
+            return true; // Debug manager handled it
+        }
         
-        pop();
+        // Handle other creature builder mouse events
+        return false;
     }
 
     drawControls() {
@@ -1160,6 +1232,7 @@ class ModularCreatureBuilder {
             
             text('D: Toggle debug info', 30, y); y += 15;
             text('S: Toggle skeleton', 30, y); y += 15;
+            text('A: Toggle adaptive ground (FREE vs CONSTRAINED)', 30, y); y += 15;
             
             // Gait analysis info
             const analysis = this.activeLocomotion.getGaitAnalysis ? this.activeLocomotion.getGaitAnalysis() : null;
@@ -1174,7 +1247,11 @@ class ModularCreatureBuilder {
             }
         } else {
             text('D: Toggle debug info', 20, y); y += 15;
-            text('S: Toggle skeleton', 20, y); y += 15;
+            text('--- Render Modes ---', 20, y); y += 15;
+            text('S: Skeleton  M: Muscle  F: Skin  C: Current', 20, y); y += 15;
+            text('Space: Switch modes', 20, y); y += 15;
+            text('--- Creatures ---', 20, y); y += 15;
+            text('1: Fish  2: Crane  3: Horse  4: Snake', 20, y); y += 15;
             text('Mouse: Head target', 20, y);
         }
         
@@ -1184,48 +1261,65 @@ class ModularCreatureBuilder {
     drawSkeleton() {
         push();
         
-        // Skeleton styling - thin lines like artist's underdrawing
-        stroke(120, 120, 120, 150); // Gray with transparency
-        strokeWeight(1);
-        noFill();
-        
-        // Draw bone chains as thin lines
-        this.chains.forEach((chain, chainIndex) => {
-            if (!chain || !chain.bones) return;
+        this.chains.forEach((chain, i) => {
+            const config = this.chainConfigs[i];
+            const colorArray = this.getChainColorArray(config.role);
             
-            const config = this.chainConfigs[chainIndex];
-            if (!config) return;
+            // Draw bones as lines
+            stroke(colorArray[0], colorArray[1], colorArray[2]);
+            strokeWeight(2);
             
-            // Draw chain as connected lines
-            if (chain.bones.length > 1) {
-                beginShape();
-                noFill();
+            chain.bones.forEach((bone, boneIndex) => {
+                // Draw bone line
+                line(bone.start.x, bone.start.y, bone.end.x, bone.end.y);
                 
-                chain.bones.forEach((bone) => {
-                    if (bone && bone.start) {
-                        vertex(bone.start.x, bone.start.y);
-                    }
-                });
+                // Draw joint circles
+                fill(colorArray[0], colorArray[1], colorArray[2]);
+                // noStroke();
+                circle(bone.start.x, bone.start.y, 6);
                 
-                // Add end point of last bone
-                const lastBone = chain.bones[chain.bones.length - 1];
-                if (lastBone && lastBone.end) {
-                    vertex(lastBone.end.x, lastBone.end.y);
-                }
-                
-                endShape();
-            }
-            
-            // Draw bone connection points as small dots
-            chain.bones.forEach((bone) => {
-                if (bone && bone.start) {
-                    fill(120, 120, 120, 180);
-                    noStroke();
-                    circle(bone.start.x, bone.start.y, 3);
+                // Draw end joint for last bone
+                if (boneIndex === chain.bones.length - 1) {
+                    circle(bone.end.x, bone.end.y, 6);
                 }
             });
+            
+            // Draw chain label
+            if (chain.bones.length > 0) {
+                const firstBone = chain.bones[0];
+                fill(colorArray[0], colorArray[1], colorArray[2]);
+                // noStroke();
+                textAlign(CENTER);
+                textSize(10);
+                text(config.role, firstBone.start.x, firstBone.start.y - 10);
+            }
         });
         
+        pop();
+    }
+    
+    // Placeholder methods for future phases
+    drawMuscleMasses() {
+        push();
+        fill(255, 100, 100, 50);
+        stroke(255, 100, 100);
+        strokeWeight(1);
+        textAlign(CENTER);
+        textSize(20);
+        fill(255, 100, 100);
+        text("MUSCLE LAYER - Coming in Phase 2", width/2, height/2);
+        pop();
+    }
+    
+    drawSkinLayer() {
+        push();
+        fill(100, 255, 100, 50);
+        stroke(100, 255, 100);
+        strokeWeight(1);
+        textAlign(CENTER);
+        textSize(20);
+        fill(100, 255, 100);
+        text("SKIN LAYER - Coming in Phase 3", width/2, height/2);
         pop();
     }
 

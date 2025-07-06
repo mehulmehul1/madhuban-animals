@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Simplified Mode is Working</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .status-panel { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .working { border-left: 5px solid #4caf50; }
+        .warning { border-left: 5px solid #ff9800; }
+        .error { border-left: 5px solid #f44336; }
+        .test-step { 
+            background: #e3f2fd; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+        }
+        code { 
+            background: #f0f0f0; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-family: 'Courier New', monospace;
+        }
+        .highlight { font-weight: bold; color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Simplified Quadruped Mode - Verification Guide</h1>
+    
+    <div class="status-panel working">
+        <h2>✅ Implementation Status: READY</h2>
+        <p><strong>Good News:</strong> Simplified mode is already implemented and enabled!</p>
+        <ul>
+            <li>✅ <code>QuadrupedWalkPattern</code> has simplified mode logic</li>
+            <li>✅ Horse config has <code>debugSimpleMode: true</code></li>
+            <li>✅ Lizard config has <code>debugSimpleMode: true</code></li>
+            <li>✅ Simplified foot placement logic implemented</li>
+            <li>✅ Crane-like movement logic implemented</li>
+        </ul>
+    </div>
+    
+    <div class="test-step">
+        <h3>🧪 Step 1: Open Main Application</h3>
+        <p>Open <code>index.html</code> in your browser</p>
+    </div>
+    
+    <div class="test-step">
+        <h3>🐎 Step 2: Test Horse (Press 3)</h3>
+        <p>Press <span class="highlight">3</span> key to load the horse</p>
+        <p><strong>Look for in console:</strong></p>
+        <code>🔧 DEBUG: Simple Mode ENABLED - Quadruped using crane-like movement</code>
+    </div>
+    
+    <div class="test-step">
+        <h3>🦎 Step 3: Test Lizard (Press 4)</h3>
+        <p>Press <span class="highlight">4</span> key to load the lizard</p>
+        <p><strong>Look for in console:</strong></p>
+        <code>🔧 DEBUG: Simple Mode ENABLED - Quadruped using crane-like movement</code>
+    </div>
+    
+    <div class="test-step">
+        <h3>🎮 Step 4: Test Movement</h3>
+        <p><strong>Move your mouse around the canvas and verify:</strong></p>
+        <ul>
+            <li>✅ Horse/Lizard follows mouse smoothly</li>
+            <li>✅ Movement works in ALL directions (up, down, diagonal)</li>
+            <li>✅ No jerky or restricted movement</li>
+            <li>✅ Responsive turning</li>
+            <li>✅ Similar smooth movement to the crane (press 2 to compare)</li>
+        </ul>
+    </div>
+    
+    <div class="status-panel warning">
+        <h2>⚠️ If Movement Still Seems Restricted</h2>
+        <p><strong>Possible issues to check:</strong></p>
+        <ol>
+            <li><strong>Check console for debug messages:</strong> Should see "Simple Mode ENABLED"</li>
+            <li><strong>Verify config:</strong> Both horse and lizard should have <code>debugSimpleMode: true</code></li>
+            <li><strong>Compare with crane:</strong> Press '2' for crane, then '3' for horse - movement should be very similar</li>
+            <li><strong>Check BiomechanicalQuadrupedGait vs QuadrupedWalkPattern:</strong> Make sure correct class is being used</li>
+        </ol>
+    </div>
+    
+    <div class="status-panel error">
+        <h2>🚨 If Simplified Mode Is Not Working</h2>
+        <p><strong>Debugging steps:</strong></p>
+        <ol>
+            <li>Open browser console (F12)</li>
+            <li>Look for the debug message when creating horse/lizard</li>
+            <li>If no debug message, the simplified mode isn't being triggered</li>
+            <li>Check if <code>BiomechanicalQuadrupedGait</code> or <code>QuadrupedWalkPattern</code> is being used</li>
+            <li>Verify the config object has <code>debugSimpleMode: true</code></li>
+        </ol>
+    </div>
+    
+    <div class="status-panel working">
+        <h2>🎯 Success Criteria</h2>
+        <p><strong>If simplified mode is working correctly, you should see:</strong></p>
+        <ul>
+            <li>🎮 <strong>Mouse responsiveness:</strong> Quadrupeds follow mouse as smoothly as crane</li>
+            <li>🌍 <strong>Full 2D movement:</strong> Can move up, down, diagonally anywhere on screen</li>
+            <li>🔄 <strong>Smooth turning:</strong> Natural rotation without getting "stuck"</li>
+            <li>👣 <strong>Natural foot placement:</strong> Feet step ahead of body in movement direction</li>
+            <li>📱 <strong>Console confirmation:</strong> Debug messages show simple mode is active</li>
+        </ul>
+        
+        <p><strong>This proves Task 1.2.1 foundation is working!</strong></p>
+    </div>
+    
+    <div class="test-step">
+        <h3>🚀 Next Steps After Verification</h3>
+        <ol>
+            <li><strong>If working:</strong> Simplified mode proves the concept! ✅</li>
+            <li><strong>Document success:</strong> Mark Task 1.2.1 as foundation complete</li>
+            <li><strong>Next phase:</strong> Gradually add gait complexity back using Document 2's approach</li>
+            <li><strong>Move forward:</strong> Complete Task 1.2 then move to Task 1.3</li>
+        </ol>
+    </div>
+    
+    <script>
+        // Simple test to verify configuration
+        console.log("🔧 Verification Guide Loaded");
+        console.log("📝 Instructions:");
+        console.log("1. Open index.html");
+        console.log("2. Press '3' for horse, '4' for lizard");
+        console.log("3. Look for debug messages confirming simple mode");
+        console.log("4. Test mouse movement in all directions");
+    </script>
+</body>
+</html>

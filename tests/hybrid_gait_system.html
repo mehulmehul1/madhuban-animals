@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🐎 Hybrid Gait System: Free Movement + Realistic Timing</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .system-card { padding: 20px; border-radius: 12px; border: 2px solid; }
+        .old-system { background: #ffe6e6; border-color: #ff6b6b; }
+        .new-system { background: #e6ffe6; border-color: #51cf66; }
+        .bipedal-system { background: #e6f3ff; border-color: #339af0; }
+        .movement-demo { font-family: monospace; font-size: 16px; text-align: center; margin: 15px 0; 
+                         background: white; padding: 15px; border-radius: 8px; }
+        .feature-list { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .feature-list li { margin: 8px 0; }
+        .checkmark { color: #51cf66; font-weight: bold; }
+        .cross { color: #ff6b6b; font-weight: bold; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        h2 { color: #495057; margin-bottom: 15px; }
+        .key-change { background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0; }
+        .test-section { background: #d1ecf1; padding: 20px; border-radius: 8px; border-left: 4px solid #17a2b8; margin: 20px 0; }
+        code { background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Hybrid Quadruped System: Best of Both Worlds</h1>
+        
+        <div class="comparison-grid">
+            <div class="system-card old-system">
+                <h2>❌ Old Quadruped System</h2>
+                <div class="movement-demo">
+                    Rectangle Formation:<br>
+                    🦶─────🦶<br>
+                    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    🦶─────🦶<br>
+                    (Side-view locked)
+                </div>
+                <div class="feature-list">
+                    <ul>
+                        <li><span class="checkmark">✅</span> Realistic gait timing</li>
+                        <li><span class="cross">❌</span> Rigid rectangular formation</li>
+                        <li><span class="cross">❌</span> Body-relative coordinates</li>
+                        <li><span class="cross">❌</span> Side-view constraint</li>
+                        <li><span class="cross">❌</span> Turn-then-walk behavior</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="system-card bipedal-system">
+                <h2>🦆 Bipedal System (Reference)</h2>
+                <div class="movement-demo">
+                    Free Placement:<br>
+                    &nbsp;&nbsp;🦶<br>
+                    🦶&nbsp;&nbsp;&nbsp;&nbsp;🦶<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🦶<br>
+                    (World-space freedom)
+                </div>
+                <div class="feature-list">
+                    <ul>
+                        <li><span class="checkmark">✅</span> Free 2D movement</li>
+                        <li><span class="checkmark">✅</span> World-space coordinates</li>
+                        <li><span class="checkmark">✅</span> Direct target movement</li>
+                        <li><span class="cross">❌</span> Simple timing (2 legs)</li>
+                        <li><span class="checkmark">✅</span> Top-view perspective</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="system-card new-system">
+                <h2>✨ NEW Hybrid System</h2>
+                <div class="movement-demo">
+                    Adaptive Formation:<br>
+                    &nbsp;&nbsp;🦶&nbsp;&nbsp;&nbsp;🦶<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↗️<br>
+                    🦶&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🦶<br>
+                    (Target-oriented)
+                </div>
+                <div class="feature-list">
+                    <ul>
+                        <li><span class="checkmark">✅</span> Realistic gait timing</li>
+                        <li><span class="checkmark">✅</span> Free 2D movement</li>
+                        <li><span class="checkmark">✅</span> Target-relative positioning</li>
+                        <li><span class="checkmark">✅</span> Top-view perspective</li>
+                        <li><span class="checkmark">✅</span> Direct target movement</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="key-change">
+            <h2>🔧 Key Technical Changes</h2>
+            <p><strong>1. Target-Relative Coordinates:</strong></p>
+            <code>dirToTarget = (mouseTarget - bodyPosition).normalised();</code><br>
+            <code>perpendicular = (-dirToTarget.y, dirToTarget.x);</code>
+            
+            <p><strong>2. Adaptive Foot Spacing:</strong></p>
+            <code>lateralOffset = perpendicular * (isLeft ? -spacing : spacing);</code><br>
+            <code>longitudinalOffset = dirToTarget * (isFront ? stride : -stride);</code>
+            
+            <p><strong>3. Bipedal-Style Movement:</strong></p>
+            <code>foot.target += (targetPosition - foot.target) * moveSpeed;</code>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 Test the New System</h2>
+            <ol>
+                <li><strong>Open your application</strong> and press <strong>3</strong> for Horse or <strong>4</strong> for Lizard</li>
+                <li><strong>Click in various directions</strong> - up, down, diagonal, all around</li>
+                <li><strong>Observe foot placement</strong> - feet should orient toward your click direction</li>
+                <li><strong>Compare with crane</strong> (press <strong>2</strong>) - movement should feel similarly free</li>
+                <li><strong>Test rapid direction changes</strong> - should respond smoothly</li>
+            </ol>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2>🎯 Expected Improvements</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Movement Freedom</h3>
+                    <ul>
+                        <li>Moves in any direction like crane</li>
+                        <li>No more perpendicular movement pattern</li>
+                        <li>Direct diagonal movement</li>
+                        <li>Top-view perspective working</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Gait Preservation</h3>
+                    <ul>
+                        <li>Maintains realistic timing</li>
+                        <li>Keeps diagonal pair coordination</li>
+                        <li>Preserves stance/swing phases</li>
+                        <li>Supports all gait types (walk/trot/gallop)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #e9ecef; border-radius: 8px;">
+            <h2>🚀 Result: Quadrupeds with Crane-Like Freedom + Realistic Gaits!</h2>
+            <p>Your horses and lizards should now move freely across the entire canvas while maintaining their sophisticated biomechanical gait patterns.</p>
+        </div>
+    </div>
+</body>
+</html>

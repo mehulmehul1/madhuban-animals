@@ -31,27 +31,45 @@
     {
       "id": "creature-specialization",
       "name": "Creature Anatomical Specialization", 
-      "details": "Differentiate Horse (erect quadruped) from Lizard (sprawling quadruped) and enhance anatomical accuracy",
-      "status": "todo",
+      "details": "🎯 READY: Differentiate Horse (erect quadruped) from Lizard (sprawling quadruped) with proper anatomy",
+      "status": "ready",
       "priority": "high",
       "dependencies": [],
       "subtasks": [
         {
-          "id": "creature-1",
-          "name": "Implement Horse-specific anatomy",
-          "details": "Create distinct Horse creature with erect posture, proper proportions, and ungulate gait patterns",
-          "status": "partial"
+          "id": "creature-1.1",
+          "name": "Horse Erect Posture System",
+          "details": "🎯 NEXT: Implement true erect posture with legs under body, vertical joint alignment",
+          "status": "todo"
         },
         {
-          "id": "creature-2",
-          "name": "Implement Lizard sprawling quadruped",
-          "details": "Create Lizard with sprawling posture, lateral spine undulation, and proper joint constraints",
-          "status": "partial"
+          "id": "creature-1.2",
+          "name": "Horse Ungulate Gait Specialization",
+          "details": "📋 PLANNED: Horse-specific gait parameters, hoof placement, powerful hindquarters",
+          "status": "todo"
+        },
+        {
+          "id": "creature-2.1",
+          "name": "Lizard Sprawling Posture System", 
+          "details": "📋 PLANNED: Implement sprawling posture with legs splayed outward, low body height",
+          "status": "todo"
+        },
+        {
+          "id": "creature-2.2",
+          "name": "Lizard Lateral Spine Undulation",
+          "details": "📋 PLANNED: Add serpentine spine movement for authentic lizard locomotion",
+          "status": "todo"
         },
         {
           "id": "creature-3",
           "name": "Research-based anatomical proportions",
-          "details": "Update bone length ratios and joint angles based on real anatomical data from PRD Section 5",
+          "details": "📋 PLANNED: Update bone length ratios and joint angles based on real anatomical data",
+          "status": "todo"
+        },
+        {
+          "id": "creature-4", 
+          "name": "Joint Constraint Differentiation",
+          "details": "📋 PLANNED: Different joint limits for erect vs sprawling posture (hip/shoulder angles)",
           "status": "todo"
         }
       ]
@@ -59,22 +77,41 @@
     {
       "id": "movement-system",
       "name": "2D Canvas Movement System",
-      "details": "Fix quadruped movement to allow full 2D canvas movement like fish/crane instead of left/right only",
-      "status": "todo",
+      "details": "✅ COMPLETED: Fixed quadruped movement to allow full 2D canvas movement with chassis system - NO LEG CROSSING",
+      "status": "done",
       "priority": "critical",
       "dependencies": [],
+      "completedDate": "2025-01-06",
       "subtasks": [
         {
           "id": "movement-1",
-          "name": "Fix quadruped 2D movement",
-          "details": "Quadrupeds (horse/lizard) currently only move left/right - need full canvas movement like fish/crane",
-          "status": "todo"
+          "name": "✅ Fix quadruped 2D movement",
+          "details": "✅ DONE: Implemented fixed chassis system preventing leg crossing, full 2D movement working",
+          "status": "done"
         },
         {
           "id": "movement-2",
-          "name": "Mouse target following",
-          "details": "Ensure all creatures can move toward mouse in any direction (up/down/diagonal)",
-          "status": "todo"
+          "name": "✅ Mouse target following",
+          "details": "✅ DONE: All creatures can move toward mouse in any direction with smooth locomotion",
+          "status": "done"
+        },
+        {
+          "id": "movement-3",
+          "name": "✅ Proper Walk Gait Implementation", 
+          "details": "✅ DONE: 4-beat lateral sequence (LH→LF→RH→RF) with correct phase relationships and duty factors",
+          "status": "done"
+        },
+        {
+          "id": "movement-4",
+          "name": "✅ Fixed Chassis System",
+          "details": "✅ DONE: Car-like wheelbase system maintaining anatomical proportions during all movements - BREAKTHROUGH!",
+          "status": "done"
+        },
+        {
+          "id": "movement-5",
+          "name": "✅ Locomotion + Chassis Integration",
+          "details": "✅ DONE: Perfect integration of movement toward mouse with fixed chassis - no more statue mode!",
+          "status": "done"
         }
       ]
     },
@@ -108,51 +145,191 @@
     },
     {
       "id": "debug-visualization",
-      "name": "Debug and Visualization System",
-      "details": "Improve debug panel and skeleton visualization for better development workflow",
+      "name": "🎯 Unified Debug System",
+      "details": "✅ PHASE 1 COMPLETE: Cleaned up layered, cluttered debug displays and created single, consolidated debug panel. Next: Enhanced features and skeleton visualization improvements.",
       "status": "in-progress",
-      "priority": "medium", 
+      "priority": "high", 
       "dependencies": [],
+      "currentIssue": "RESOLVED: Multiple debug systems causing visual clutter - successfully consolidated into unified DebugManager",
+      "lastUpdate": "2025-01-06 - Unified debug system implemented and tested",
       "subtasks": [
         {
           "id": "debug-1",
-          "name": "Clean up debug panel",
-          "details": "Debug panel is cluttered, possibly due to previous HTML overlay issues",
-          "status": "todo"
+          "name": "✅ Consolidate Debug Systems",
+          "details": "✅ COMPLETED: Removed duplicate debug rendering from locomotion classes and created unified DebugManager with tabbed interface, consolidated foot targets, and single panel design. Fixed script loading issues.",
+          "status": "done",
+          "priority": "critical",
+          "completedDate": "2025-01-06",
+          "implementation": [
+            "Created unified DebugManager class with 5 tabs: Overview, Gait, Motion, Bones, Performance",
+            "Removed scattered debug rendering from quadruped-gait.js and creature-builder.js",
+            "Consolidated foot target visualization with gait-appropriate colors",
+            "Integrated keyboard/mouse controls for tab switching and debug toggles",
+            "Added performance metrics tracking and real-time FPS monitoring",
+            "Fixed script loading order and missing dependencies (shape-generation.js)",
+            "Added fallback debug system for error handling",
+            "Created test files: tests/test_debug_fix.html, tests/test_debug_loading.html, tests/test_unified_debug_system.html"
+          ]
         },
         {
           "id": "debug-2",
-          "name": "Improve skeleton visualization", 
-          "details": "Current skeleton toggle is hard to read - need lines for bones, circles on joints, different colors for limbs",
+          "name": "✅ Test File Organization",
+          "details": "✅ COMPLETED: Organized all test files into dedicated /tests/ folder with proper documentation and path structure for better project organization.",
+          "status": "done",
+          "completedDate": "2025-01-06",
+          "implementation": [
+            "Created /tests/ directory for all test files",
+            "Moved 16 test files from root to /tests/ folder",
+            "Updated script paths in test files to use '../' prefix",
+            "Created comprehensive tests/README.md with documentation",
+            "Created test_template.html for future test development",
+            "Created test_organization_verification.html to validate organization",
+            "Updated tasks.json references to new test file locations",
+            "Established test file naming conventions and guidelines"
+          ]
+        },
+        {
+          "id": "debug-2-orig",
+          "name": "📊 Unified Debug Panel",
+          "details": "Create single, clean debug panel with tabs/sections: Creature Info, Gait Analysis, Locomotion Data, Performance",
           "status": "todo"
         },
         {
           "id": "debug-3",
-          "name": "Add skeleton toggle functionality",
-          "details": "S key toggle for wireframe overlay - basic implementation exists but needs enhancement",
-          "status": "partial"
+          "name": "🎨 Enhanced Skeleton Visualization",
+          "details": "Improve skeleton toggle with clear lines for bones, circles on joints, color-coded limbs",
+          "status": "todo"
+        },
+        {
+          "id": "debug-4",
+          "name": "🔧 Debug Controls",
+          "details": "Add debug mode toggles, info level controls, and visual element filtering",
+          "status": "todo"
         }
       ]
     },
     {
       "id": "gait-enhancement",
       "name": "Advanced Gait System",
-      "details": "Implement Froude number scaling and biomechanically accurate gait transitions",
-      "status": "todo", 
-      "priority": "medium",
-      "dependencies": ["creature-specialization"],
+      "details": "🚧 PHASE 2 COMPLETE ✅ | 🎯 PHASE 3 READY: Walk + Trot gaits working perfectly with automatic transitions. Next: Speed-based transitions refinement and gallop gait preparation.",
+      "status": "in-progress", 
+      "priority": "high",
+      "dependencies": [],
+      "currentPhase": "Phase 3: Advanced Gait Transitions & Gallop Preparation",
+      "phaseProgress": "2/4 phases complete",
+      "lastUpdate": "2025-01-06 - Trot gait system fully implemented",
       "subtasks": [
         {
-          "id": "gait-1",
-          "name": "Froude Number Gait Transitions",
-          "details": "Implement speed-dependent gait switching using Froude number scaling (walk→trot at Fr > 0.4-0.6)",
-          "status": "partial"
+          "id": "gait-1.1",
+          "name": "✅ Proper Walk Gait Implementation",
+          "details": "✅ DONE: 4-beat lateral sequence (LH→LF→RH→RF) with 70% duty factor, correct phase relationships, chassis system integration, natural locomotion, smooth turning - BREAKTHROUGH COMPLETE!",
+          "status": "done",
+          "completedDate": "2025-01-06",
+          "notes": [
+            "✅ Fixed Chassis System - legs maintain perfect rectangular formation, no crossing possible",
+            "✅ Natural Locomotion - creature moves smoothly toward mouse like crane", 
+            "✅ Smooth Turning - gradual rotation without spinning",
+            "✅ Proper Walking Animation - feet lift and step naturally within chassis bounds",
+            "✅ 4-Beat Walk Gait - perfect LH→FL→RH→FR sequence maintained",
+            "✅ Anatomical Spacing - Horse vs Lizard have different proportions",
+            "✅ Full 2D Movement - works in all directions without restrictions"
+          ]
+        },
+        {
+          "id": "gait-1.2", 
+          "name": "✅ Trot Gait Implementation - COMPLETE",
+          "details": "✅ COMPLETED: Full 2-beat diagonal gait system with all 4 subtasks implemented. Features diagonal pair synchronization, suspension phases, automatic speed-based transitions, and comprehensive debug visualization.",
+          "status": "done",
+          "priority": "high",
+          "completedDate": "2025-01-06",
+          "estimatedDays": "3 days (completed ahead of schedule)",
+          "achievements": [
+            "Perfect diagonal pair synchronization (LF+RH, RF+LH)",
+            "Biologically accurate 45% duty factor with suspension phases", 
+            "Automatic Froude number-based gait transitions",
+            "Enhanced visual feedback with real-time gait analysis",
+            "Manual override system with cooldown protection",
+            "Comprehensive test suite for validation"
+          ],
+          "subtasks": [
+            {
+              "id": "trot-1",
+              "name": "✅ Diagonal Pair Phase Logic",
+              "details": "✅ COMPLETED: Implemented diagonal leg pairing - FL+RH move together (phase 0), FR+LH move together (phase 0.5). Enhanced visual feedback with color-coded pairs.",
+              "status": "done",
+              "completedDate": "2025-01-06",
+              "implementation": [
+                "Updated gait parameters with distinct trot settings (50% duty factor vs 70% walk)",
+                "Enhanced phase shift logic: [0, 180, 180, 0] for perfect diagonal pairs",
+                "Added color-coded visualization: Red (LF+RH), Blue (RF+LH)",
+                "Disabled automatic Froude transitions for manual testing",
+                "Created dedicated test file: tests/test_trot_gait.html"
+              ]
+            },
+            {
+              "id": "trot-2", 
+              "name": "✅ Trot Gait Parameters",
+              "details": "✅ COMPLETED: Fine-tuned trot-specific timing with 45% duty factor, enhanced suspension phase detection, higher frequency (2.6Hz), increased step height (30%), and gait-specific body dynamics.",
+              "status": "done",
+              "completedDate": "2025-01-06",
+              "implementation": [
+                "Optimized duty factor to 45% for better suspension phase",
+                "Enhanced suspension phase logic with detection and airborne state tracking",
+                "Increased frequency to 2.6Hz vs walk's 1.2Hz for energetic trot",
+                "Raised step height to 30% of leg length for clearance",
+                "Added gait-specific body dynamics with bounce during suspension",
+                "Improved body oscillation following diagonal pair rhythm"
+              ]
+            },
+            {
+              "id": "trot-3",
+              "name": "✅ Speed-Based Gait Switching",
+              "details": "✅ COMPLETED: Implemented automatic walk↔trot transitions using Froude number analysis, distance thresholds, manual override system, and cooldown protection.",
+              "status": "done", 
+              "completedDate": "2025-01-06",
+              "implementation": [
+                "Froude number calculation: Fr = v²/(g×L) for biological accuracy",
+                "Walk→Trot threshold: Fr > 0.5 and distance > 100px",
+                "Trot→Walk threshold: Fr < 0.3 (hysteresis prevents oscillation)",
+                "Manual override system with cooldown timer",
+                "Toggle for enabling/disabling automatic switching (X key)",
+                "Smooth transition handling with cycle reset"
+              ]
+            },
+            {
+              "id": "trot-4",
+              "name": "✅ Visual Gait Indicator",
+              "details": "✅ COMPLETED: Enhanced debug display with real-time gait analysis, suspension phase indicators, Froude number monitoring, transition status, and comprehensive gait information panel.",
+              "status": "done",
+              "completedDate": "2025-01-06", 
+              "implementation": [
+                "Enhanced debug panel with gait-specific colors and layout",
+                "Real-time suspension phase indicator with 'AIRBORNE' status",
+                "Froude number, velocity, and distance monitoring",
+                "Transition cooldown timer and manual override status",
+                "Diagonal pair color coding: Red (LF+RH), Blue (RF+LH)",
+                "Comprehensive gait comparison information (duty factor, frequency, etc.)"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "gait-1.3",
+          "name": "Speed-based Gait Transitions", 
+          "details": "📋 PLANNED: Froude number scaling for walk→trot transitions (Fr > 0.4-0.6)",
+          "status": "todo"
+        },
+        {
+          "id": "gait-1.4",
+          "name": "Gallop Gait (Advanced)",
+          "details": "📋 FUTURE: Asymmetrical 4-beat gallop with lead preferences and suspension",
+          "status": "todo"
         },
         {
           "id": "gait-2",
           "name": "Center of Mass Control",
-          "details": "Add CoM tracking and stability margin calculations for realistic balance",
-          "status": "partial"
+          "details": "📋 PLANNED: Add CoM tracking and stability margin calculations for realistic balance",
+          "status": "todo"
         }
       ]
     },

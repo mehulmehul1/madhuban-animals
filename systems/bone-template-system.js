@@ -4,6 +4,15 @@ class BoneTemplateSystem {
         this.initializeTemplates();
     }
 
+    // Helper method to ensure bone lengths are always positive
+    validateBoneLength(length, minLength = 0.1) {
+        if (length <= 0) {
+            console.warn(`Invalid bone length ${length}, clamping to ${minLength}`);
+            return minLength;
+        }
+        return length;
+    }
+
     initializeTemplates() {
         // Fish templates - using anatomical data
         this.templates.set('fish-spine', (length, config) => {
@@ -37,8 +46,8 @@ class BoneTemplateSystem {
                     length: length,
                     direction: new FIK.V2(0, -1),
                     constraints: { 
-                        clockwise: config.flexibility === 'high' ? 30 : 10, 
-                        anticlockwise: config.flexibility === 'high' ? 30 : 20 
+                        clockwise: config.flexibility === 'medium' ? 30 : 10, 
+                        anticlockwise: config.flexibility === 'medium' ? 30 : 20 
                     }
                 });
             }
@@ -116,7 +125,7 @@ class BoneTemplateSystem {
             
             return [
                 { // Scapula/Shoulder - mostly hidden in body
-                    length: length * legData.scapula,
+                    length: this.validateBoneLength(length * legData.scapula),
                     direction: new FIK.V2(0.3, 1),
                     constraints: { 
                         clockwise: constraints.shoulder.flexion[1], 
@@ -126,7 +135,7 @@ class BoneTemplateSystem {
                     anatomicalRole: 'shoulder'
                 },
                 { // Humerus
-                    length: length * legData.humerus,
+                    length: this.validateBoneLength(length * legData.humerus),
                     direction: new FIK.V2(0, 1),
                     constraints: { 
                         clockwise: constraints.elbow.flexion[1], 
@@ -136,14 +145,14 @@ class BoneTemplateSystem {
                     anatomicalRole: 'elbow'
                 },
                 { // Radius/Forearm
-                    length: length * legData.radius,
+                    length: this.validateBoneLength(length * legData.radius),
                     direction: new FIK.V2(0, 1),
                     constraints: { clockwise: 45, anticlockwise: 15 },
                     jointType: 'hinge',
                     anatomicalRole: 'carpus'
                 },
                 { // Cannon bone (Metacarpus)
-                    length: length * legData.cannon,
+                    length: this.validateBoneLength(length * legData.cannon),
                     direction: new FIK.V2(0, 1),
                     constraints: { 
                         clockwise: constraints.fetlock.flexion[1], 
@@ -163,7 +172,7 @@ class BoneTemplateSystem {
             
             return [
                 { // Femur
-                    length: length * legData.femur,
+                    length: this.validateBoneLength(length * legData.femur),
                     direction: new FIK.V2(-0.2, 1), // Angled back slightly
                     constraints: { 
                         clockwise: constraints.hip.flexion[1], 
@@ -173,7 +182,7 @@ class BoneTemplateSystem {
                     anatomicalRole: 'hip'
                 },
                 { // Tibia
-                    length: length * legData.tibia,
+                    length: this.validateBoneLength(length * legData.tibia),
                     direction: new FIK.V2(0, 1),
                     constraints: { 
                         clockwise: constraints.stifle.flexion[1], 
@@ -183,7 +192,7 @@ class BoneTemplateSystem {
                     anatomicalRole: 'stifle'
                 },
                 { // Cannon bone (Metatarsus)
-                    length: length * legData.cannon,
+                    length: this.validateBoneLength(length * legData.cannon),
                     direction: new FIK.V2(0, 1),
                     constraints: { 
                         clockwise: constraints.hock.flexion[1], 
@@ -193,7 +202,7 @@ class BoneTemplateSystem {
                     anatomicalRole: 'hock'
                 },
                 { // Hoof
-                    length: length * legData.hoof,
+                    length: this.validateBoneLength(length * legData.hoof),
                     direction: new FIK.V2(0.2, 1),
                     constraints: { 
                         clockwise: constraints.fetlock.flexion[1], 
@@ -218,7 +227,7 @@ class BoneTemplateSystem {
             
             return [
                 { // Humerus/Femur - splayed outward
-                    length: length * legData.humerus,
+                    length: this.validateBoneLength(length * legData.humerus),
                     direction: new FIK.V2(sprawlDir * 0.8, 0.6), // Sprawling angle
                     constraints: { 
                         clockwise: constraints.shoulder.flexion[1], 
@@ -229,7 +238,7 @@ class BoneTemplateSystem {
                     sprawlAngle: sprawlAngle
                 },
                 { // Radius/Tibia
-                    length: length * legData.radius,
+                    length: this.validateBoneLength(length * legData.radius),
                     direction: new FIK.V2(sprawlDir * 0.4, 1),
                     constraints: { 
                         clockwise: constraints.elbow.flexion[1], 
@@ -239,14 +248,14 @@ class BoneTemplateSystem {
                     anatomicalRole: 'elbow'
                 },
                 { // Carpus/Tarsus
-                    length: length * legData.carpus,
+                    length: this.validateBoneLength(length * legData.carpus),
                     direction: new FIK.V2(sprawlDir * 0.2, 1),
                     constraints: { clockwise: 60, anticlockwise: 30 },
                     jointType: 'hinge',
                     anatomicalRole: 'wrist'
                 },
                 { // Digits (toes/claws)
-                    length: length * legData.digits,
+                    length: this.validateBoneLength(length * legData.digits),
                     direction: new FIK.V2(sprawlDir * 0.1, 1),
                     constraints: { clockwise: 45, anticlockwise: 20 },
                     jointType: 'hinge',
@@ -319,8 +328,12 @@ class BoneTemplateSystem {
         this.templates.set('vertebrate-tail', (length, config) => {
             const bones = [];
             for (let i = 0; i < config.segments; i++) {
+                // Safe taper calculation that prevents negative lengths
+                const taperFactor = config.taper ? Math.max(1 - i * 0.12, 0.15) : 1;
+                const boneLength = this.validateBoneLength(length * taperFactor);
+                
                 bones.push({
-                    length: length * (config.taper ? (1 - i * 0.2) : 1),
+                    length: boneLength,
                     direction: new FIK.V2(-0.8, 0.4),
                     constraints: { clockwise: 40, anticlockwise: 40 }
                 });

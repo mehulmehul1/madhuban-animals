@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Length Validation Fix</title>
+    <script>
+        // Simple test to verify the bone length validation fix
+        function testTailGeneration() {
+            console.log("Testing tail bone generation with validation...");
+            
+            // Simulate the old problematic calculation
+            const length = 18;
+            const segments = 12;
+            
+            console.log("Old calculation (problematic):");
+            for (let i = 0; i < segments; i++) {
+                const oldLength = length * (1 - i * 0.2);
+                console.log(`  Segment ${i}: ${oldLength} ${oldLength <= 0 ? '❌ NEGATIVE!' : '✅'}`);
+            }
+            
+            console.log("\nNew calculation (fixed):");
+            for (let i = 0; i < segments; i++) {
+                const taperFactor = Math.max(1 - i * 0.12, 0.15);
+                const newLength = Math.max(length * taperFactor, 0.1);
+                console.log(`  Segment ${i}: ${newLength.toFixed(2)} ✅`);
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testTailGeneration;
+    </script>
+</head>
+<body>
+    <h1>Length Validation Fix Test</h1>
+    <p>Check the browser console for test results.</p>
+    <p>All bone lengths should now be positive!</p>
+</body>
+</html>

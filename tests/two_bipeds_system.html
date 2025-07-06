@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🐎 "Two Bipeds" Quadruped System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .system-comparison { display: flex; gap: 30px; margin: 20px 0; }
+        .system { flex: 1; padding: 20px; border-radius: 10px; }
+        .biped { background: #e8f5e8; border: 2px solid #4caf50; }
+        .quadruped { background: #e3f2fd; border: 2px solid #2196f3; }
+        .demo { font-family: monospace; font-size: 16px; text-align: center; margin: 15px 0; }
+        .formation { background: #fff; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        h1 { color: #2c3e50; text-align: center; }
+        h2 { color: #34495e; margin-top: 0; }
+        .concept { background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0; }
+        .benefits { background: #d4edda; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; }
+        code { background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+        .arrow { color: #0066cc; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🐎 "Two Bipeds" Quadruped System Implementation</h1>
+    
+    <div class="concept">
+        <h2>💡 Core Concept: Quadruped = Two Coordinated Bipeds</h2>
+        <p><strong>Your Vision:</strong> Instead of rigid rectangular formation, think of quadrupeds as <strong>two biped systems</strong> working together:</p>
+        <ul>
+            <li><strong>Front Biped:</strong> Left-front + Right-front legs</li>
+            <li><strong>Back Biped:</strong> Left-hind + Right-hind legs</li>
+            <li><strong>Formation:</strong> Maintained but freely oriented in 2D space</li>
+            <li><strong>Movement:</strong> Direct toward target (like crane)</li>
+        </ul>
+    </div>
+    
+    <div class="system-comparison">
+        <div class="system biped">
+            <h2>🦆 Biped System (Crane)</h2>
+            <div class="demo">
+                🎯 Target<br>
+                ↗️ Direct movement<br>
+                🦶&nbsp;&nbsp;&nbsp;&nbsp;🦶<br>
+                &nbsp;&nbsp;&nbsp;🦆<br>
+            </div>
+            <div class="formation">
+                <strong>Foot Placement Logic:</strong><br>
+                • Calculate movement direction<br>
+                • Place feet relative to direction<br>
+                • Smooth interpolation to targets<br>
+                • Free 2D positioning
+            </div>
+        </div>
+        
+        <div class="system quadruped">
+            <h2>🐎 New Quadruped System</h2>
+            <div class="demo">
+                🎯 Target<br>
+                ↗️ Direct movement<br>
+                🦶─🦶&nbsp;&nbsp;(Front Biped)<br>
+                │&nbsp;&nbsp;&nbsp;│<br>
+                🦶─🦶&nbsp;&nbsp;(Back Biped)<br>
+                &nbsp;&nbsp;🐎<br>
+            </div>
+            <div class="formation">
+                <strong>Formation Logic:</strong><br>
+                • Front pair = One biped system<br>
+                • Back pair = Another biped system<br>
+                • Formation rotates with movement<br>
+                • Keeps gait timing patterns
+            </div>
+        </div>
+    </div>
+    
+    <div class="benefits">
+        <h2>✅ What This Achieves</h2>
+        <ul>
+            <li><strong>Free 2D Movement:</strong> Quadrupeds move directly toward target like crane</li>
+            <li><strong>Top-View Perspective:</strong> Formation visible from above, not just side-view</li>
+            <li><strong>Realistic Gaits Maintained:</strong> Keeps all the phase relationships and timing</li>
+            <li><strong>Dynamic Formation:</strong> Rectangle rotates to face movement direction</li>
+            <li><strong>Smooth Interpolation:</strong> Same responsive feel as biped system</li>
+        </ul>
+    </div>
+    
+    <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        <h2>🔧 Technical Implementation</h2>
+        
+        <h3>Step 1: Calculate "Biped Centers"</h3>
+        <code>
+        Front pair center = bodyPosition + moveDir * (+pairSpacing/2)<br>
+        Back pair center = bodyPosition + moveDir * (-pairSpacing/2)
+        </code>
+        
+        <h3>Step 2: Position Feet Within Each Pair</h3>
+        <code>
+        Left foot = pairCenter + rightVec * (-legSpacing)<br>
+        Right foot = pairCenter + rightVec * (+legSpacing)
+        </code>
+        
+        <h3>Step 3: Apply Biped-Style Stepping</h3>
+        <code>
+        Stance: foot slides backward as body moves forward<br>
+        Swing: foot steps forward toward landing zone<br>
+        Interpolation: smooth movement like crane system
+        </code>
+    </div>
+    
+    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+        <h2>🧪 Test Instructions</h2>
+        <ol>
+            <li><strong>Open your application</strong> and select horse (3) or lizard (4)</li>
+            <li><strong>Click around the canvas</strong> - should move directly toward clicks</li>
+            <li><strong>Notice the formation</strong> - feet maintain rectangle but oriented to movement</li>
+            <li><strong>Compare with crane</strong> - movement should feel similar</li>
+            <li><strong>Try diagonal movement</strong> - should work smoothly in all directions</li>
+        </ol>
+        
+        <p><strong>Expected Result:</strong> Quadrupeds now move like "two coordinated cranes" maintaining their formation! 🚀</p>
+    </div>
+    
+</body>
+</html>

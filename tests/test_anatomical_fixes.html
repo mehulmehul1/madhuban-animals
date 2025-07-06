@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anatomical Proportions & Anti-Spinning Fix - Test Guide</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f7fa;
+        }
+        .fix-section { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .fix-1 { border-left: 5px solid #28a745; } /* Green for anatomical fix */
+        .fix-2 { border-left: 5px solid #17a2b8; } /* Blue for anti-spinning fix */
+        .test-step { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .comparison-table th, .comparison-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .comparison-table th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .before { background-color: #fff5f5; }
+        .after { background-color: #f0fff4; }
+        code { 
+            background: #f8f9fa; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-family: 'Courier New', monospace;
+        }
+        .measurement { 
+            font-weight: bold; 
+            color: #d32f2f; 
+        }
+        .success-icon { 
+            color: #28a745; 
+            font-weight: bold; 
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Anatomical Proportions & Anti-Spinning Fixes</h1>
+    
+    <div class="fix-section fix-1">
+        <h2>🎯 Fix #1: Anatomically Correct Foot Placement</h2>
+        
+        <h3>📐 The Problem & Solution</h3>
+        <table class="comparison-table">
+            <tr>
+                <th>Aspect</th>
+                <th class="before">Before (Broken)</th>
+                <th class="after">After (Fixed)</th>
+            </tr>
+            <tr>
+                <td><strong>Front-Back Distance</strong></td>
+                <td class="before">Tiny arbitrary: <code>±15 units</code></td>
+                <td class="after">Anatomical: <code>±50% of body length</code></td>
+            </tr>
+            <tr>
+                <td><strong>Horse Body Length</strong></td>
+                <td class="before">200 units → foot gap: 30 units</td>
+                <td class="after">200 units → foot gap: <span class="measurement">100 units</span></td>
+            </tr>
+            <tr>
+                <td><strong>Lizard Body Length</strong></td>
+                <td class="before">180 units → foot gap: 30 units</td>
+                <td class="after">180 units → foot gap: <span class="measurement">90 units</span></td>
+            </tr>
+            <tr>
+                <td><strong>Leg Spacing (L/R)</strong></td>
+                <td class="before">Fixed: <code>30 units</code></td>
+                <td class="after">Proportional: <code>40% of leg length</code></td>
+            </tr>
+        </table>
+        
+        <h3>🧮 Anatomical Calculations</h3>
+        <ul>
+            <li><strong>Shoulder-Hip Distance:</strong> <code>bodyLength × 0.5</code></li>
+            <li><strong>Leg Spacing:</strong> <code>legLength × 0.4</code></li>
+            <li><strong>Lizard Adjustments:</strong> 30% wider stance, 20% shorter torso for sprawling</li>
+        </ul>
+    </div>
+    
+    <div class="fix-section fix-2">
+        <h2>🌪️ Fix #2: Anti-Spinning During Sharp Turns</h2>
+        
+        <h3>🎛️ Damping & Velocity Limits Added</h3>
+        <table class="comparison-table">
+            <tr>
+                <th>Control</th>
+                <th class="before">Before (Spinning)</th>
+                <th class="after">After (Smooth)</th>
+            </tr>
+            <tr>
+                <td><strong>Angular Velocity</strong></td>
+                <td class="before">Unlimited (instant snap)</td>
+                <td class="after">Limited: <code>0.15 rad/s max</code></td>
+            </tr>
+            <tr>
+                <td><strong>Heading Changes</strong></td>
+                <td class="before"><code>0.07</code> blend rate</td>
+                <td class="after"><code>0.05 × 0.8</code> damped rate</td>
+            </tr>
+            <tr>
+                <td><strong>Body Following</strong></td>
+                <td class="before"><code>0.1</code> immediate</td>
+                <td class="after"><code>0.05</code> slow damping</td>
+            </tr>
+        </table>
+        
+        <h3>🎚️ Damping Parameters</h3>
+        <ul>
+            <li><strong>Max Angular Velocity:</strong> <code>0.15</code> - prevents instant heading snaps</li>
+            <li><strong>Heading Damping:</strong> <code>0.8</code> - smoother turn response</li>
+            <li><strong>Body Follow Damping:</strong> <code>0.05</code> - body follows feet more slowly</li>
+        </ul>
+    </div>
+    
+    <div class="test-step">
+        <h3>🧪 Test 1: Verify Anatomical Proportions</h3>
+        <p><strong>Steps:</strong></p>
+        <ol>
+            <li>Open <code>index.html</code> and press <code>3</code> for horse</li>
+            <li><strong>Look for console output:</strong></li>
+            <div style="background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 3px;">
+                <code>📐 UPDATED ANATOMY for horse:</code><br>
+                <code>&nbsp;&nbsp;&nbsp;Body length: 200</code><br>
+                <code>&nbsp;&nbsp;&nbsp;Shoulder-Hip distance: 100.0</code><br>
+                <code>&nbsp;&nbsp;&nbsp;Leg spacing: 32.0</code>
+            </div>
+            <li><strong>Visual check:</strong> Front and hind feet should be much further apart!</li>
+            <li>Switch to lizard with <code>4</code> - should see different proportions</li>
+        </ol>
+        
+        <p><strong>Success Criteria:</strong></p>
+        <ul>
+            <li><span class="success-icon">✅</span> Horse shoulder-hip distance: ~100 units (not 30!)</li>
+            <li><span class="success-icon">✅</span> Lizard shoulder-hip distance: ~72 units (90 × 0.8)</li>
+            <li><span class="success-icon">✅</span> Feet positioned directly beneath where legs should attach</li>
+            <li><span class="success-icon">✅</span> Wider leg spacing for lizard (sprawling posture)</li>
+        </ul>
+    </div>
+    
+    <div class="test-step">
+        <h3>🌪️ Test 2: Verify Anti-Spinning Fix</h3>
+        <p><strong>Steps:</strong></p>
+        <ol>
+            <li>With horse or lizard active, move mouse <strong>rapidly in circles</strong></li>
+            <li>Move mouse <strong>quickly to opposite sides</strong> of the screen</li>
+            <li>Try <strong>sudden direction changes</strong></li>
+        </ol>
+        
+        <p><strong>Success Criteria:</strong></p>
+        <ul>
+            <li><span class="success-icon">✅</span> <strong>No spinning:</strong> Body rotates smoothly without wild spins</li>
+            <li><span class="success-icon">✅</span> <strong>Controlled turns:</strong> Heading changes gradually, not instantly</li>
+            <li><span class="success-icon">✅</span> <strong>Stable movement:</strong> Body follows feet smoothly without jerking</li>
+            <li><span class="success-icon">✅</span> <strong>Responsive but smooth:</strong> Still follows mouse but not erratically</li>
+        </ul>
+    </div>
+    
+    <div class="test-step">
+        <h3>🎮 Test 3: Overall Movement Quality</h3>
+        <p><strong>Comprehensive movement test:</strong></p>
+        <ol>
+            <li><strong>Slow movements:</strong> Should be very smooth and natural</li>
+            <li><strong>Fast movements:</strong> Should be controlled without spinning</li>
+            <li><strong>Direction changes:</strong> Should turn smoothly without overshooting</li>
+            <li><strong>Walk gait:</strong> Should maintain proper 4-beat rhythm throughout</li>
+        </ol>
+        
+        <p><strong>Overall Success:</strong></p>
+        <ul>
+            <li><span class="success-icon">✅</span> Anatomically proportioned foot placement</li>
+            <li><span class="success-icon">✅</span> Smooth, controlled turning</li>
+            <li><span class="success-icon">✅</span> Stable body movement</li>
+            <li><span class="success-icon">✅</span> Maintains proper walk gait pattern</li>
+            <li><span class="success-icon">✅</span> Works identically for both horse and lizard</li>
+        </ul>
+    </div>
+    
+    <div class="fix-section">
+        <h2>🔧 Technical Implementation Summary</h2>
+        
+        <h3>🏗️ Architecture Changes</h3>
+        <ul>
+            <li><strong>Added <code>setCreatureConfig()</code> method:</strong> Calculates proportions from body length</li>
+            <li><strong>Anatomical distance calculations:</strong> Based on real creature measurements</li>
+            <li><strong>Angular velocity limiting:</strong> Prevents instant heading changes</li>
+            <li><strong>Multi-level damping:</strong> Heading, body following, and interpolation damping</li>
+            <li><strong>Creature-specific adjustments:</strong> Lizard gets sprawling modifications</li>
+        </ul>
+        
+        <h3>🧬 This Makes Future Creatures Easy!</h3>
+        <p>Now any new creature type just needs to define:</p>
+        <ul>
+            <li><code>bodyLength</code> - automatic shoulder-hip calculation</li>
+            <li><code>legLength</code> - automatic leg spacing calculation</li>
+            <li>Special posture flags (like <code>sprawlAngle</code> for sprawling creatures)</li>
+        </ul>
+        
+        <p><strong>🎉 Result: Anatomically accurate, stable, scalable quadruped locomotion!</strong></p>
+    </div>
+    
+    <script>
+        console.log("🔧 Anatomical Proportions & Anti-Spinning Fix Test Loaded");
+        console.log("📐 Test anatomical proportions:");
+        console.log("  - Horse shoulder-hip distance should be ~100 units");
+        console.log("  - Lizard shoulder-hip distance should be ~72 units");
+        console.log("🌪️ Test anti-spinning:");
+        console.log("  - Move mouse rapidly in circles");
+        console.log("  - Should turn smoothly without wild spinning");
+    </script>
+</body>
+</html>

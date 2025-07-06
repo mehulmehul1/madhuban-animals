@@ -13,6 +13,7 @@ function draw() {
 
 function keyPressed() {
     switch (key.toLowerCase()) {
+        // Creature switching
         case '1':
             builder.buildFish();
             break;
@@ -25,32 +26,77 @@ function keyPressed() {
         case '4':
             builder.buildLizard();
             break;
+        
+        // Debug toggle
         case 'd':
+            // Let debug manager handle debug toggle
+            if (builder.handleKeyPress(key)) {
+                break; // Debug manager handled it
+            }
+            // Fallback to old system
             builder.showDebug = !builder.showDebug;
             break;
+            
+        // Render mode switching
         case 's':
-            // Toggle skeleton visualization
-            builder.showSkeleton = !builder.showSkeleton;
+            builder.setRenderMode('skeleton');
             break;
+        case 'm':
+            builder.setRenderMode('muscle');
+            break;
+        case 'f':
+            builder.setRenderMode('skin');
+            break;
+        case 'c':
+            builder.setRenderMode('current');
+            break;
+        case ' ':
+            builder.switchRenderMode();
+            break;
+            
         // Quadruped gait controls (works for horse and lizard)
         case 'w':
             if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
-                builder.activeLocomotion.transitionToGait('walk');
+                builder.activeLocomotion.transitionToGait('walk', true); // true = manual
             }
             break;
         case 't':
             if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
-                builder.activeLocomotion.transitionToGait('trot');
+                builder.activeLocomotion.transitionToGait('trot', true); // true = manual
             }
             break;
         case 'g':
             if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
-                builder.activeLocomotion.transitionToGait('gallop');
+                builder.activeLocomotion.transitionToGait('gallop', true); // true = manual
             }
             break;
         case 'p':
             if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
-                builder.activeLocomotion.transitionToGait('pace');
+                builder.activeLocomotion.transitionToGait('pace', true); // true = manual
+            }
+            break;
+            
+        // Toggle automatic gait switching for quadrupeds
+        case 'x':
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.toggleAutomaticGaitSwitching) {
+                const isEnabled = builder.activeLocomotion.toggleAutomaticGaitSwitching();
+                console.log(`🔄 Automatic Gait Switching: ${isEnabled ? 'ON (moves fast = trot)' : 'OFF (manual only)'}`);
+            }
+            break;
+            
+        // Toggle adaptive ground mode for quadrupeds
+        case 'a':
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.adaptiveGround !== undefined) {
+                builder.activeLocomotion.adaptiveGround = !builder.activeLocomotion.adaptiveGround;
+                console.log(`Adaptive Ground: ${builder.activeLocomotion.adaptiveGround ? 'ON (FREE Hybrid Movement)' : 'OFF (CONSTRAINED Traditional)'}`);
+            }
+            break;
+            
+        // Toggle simple mode for quadrupeds (🔧 DEBUG FEATURE)
+        case 'q':
+            if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.debugSimpleMode !== undefined) {
+                builder.activeLocomotion.debugSimpleMode = !builder.activeLocomotion.debugSimpleMode;
+                console.log(`🔧 Simple Mode: ${builder.activeLocomotion.debugSimpleMode ? 'ON (Crane-like)' : 'OFF (Complex Gait)'}`);
             }
             break;
     }
@@ -58,4 +104,11 @@ function keyPressed() {
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+}
+
+// *** MOUSE HANDLING FOR DEBUG SYSTEM ***
+function mousePressed() {
+    if (builder && builder.handleMouseClick) {
+        builder.handleMouseClick(mouseX, mouseY);
+    }
 }
