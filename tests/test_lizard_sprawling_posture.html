@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Lizard Sprawling Posture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="../FIK.js"></script>
+    <script src="../systems/anatomical-configs.js"></script>
+    <script src="../systems/bone-template-system.js"></script>
+    <script src="../systems/constraint-system.js"></script>
+    <script src="../systems/shape-profile-system.js"></script>
+    <script src="../locomotion/locomotion-system.js"></script>
+    <script src="../locomotion/quadruped-gait.js"></script>
+    <script src="../creature-builder.js"></script>
+    <script src="../sketch.js"></script>
+</head>
+<body>
+    <script>
+        function setup() {
+            createCanvas(800, 600);
+            // Override the default setup to only build the lizard
+            builder = new ModularCreatureBuilder();
+            builder.buildLizard();
+        }
+
+        function draw() {
+            background(220);
+            builder.update();
+            builder.draw();
+        }
+
+        function keyPressed() {
+            // Allow switching to horse to see the difference
+            if (key === 'h' || key === 'H') {
+                builder.buildHorse();
+            } else if (key === 'l' || key === 'L') {
+                builder.buildLizard();
+            }
+        }
+    </script>
+</body>
+</html>

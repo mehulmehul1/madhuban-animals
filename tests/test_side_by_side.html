@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse vs Lizard - Side by Side</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="../styling/ThemeManager.js"></script>
+    <script src="../styling/border.js"></script>
+    <script src="../styling/filler.js"></script>
+    <script src="../styling/segmenter.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="../systems/shape-generation.js"></script>
+    <script src="../systems/anatomical-data.js"></script>
+    <script src="../systems/anatomical-configs.js"></script>
+    <script src="../systems/constraint-system.js"></script>
+    <script src="../systems/gait-system.js"></script>
+    <script src="../systems/bone-template-system.js"></script>
+    <script src="../systems/shape-profile-system.js"></script>
+    <script src="../systems/debug-manager.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="../locomotion/locomotion-pattern.js"></script>
+    <script src="../locomotion/locomotion-system.js"></script>
+    <script src="../locomotion/undulate-pattern.js"></script>
+    <script src="../locomotion/serpentine-pattern.js"></script>
+    <script src="../locomotion/bipedal-walk-pattern.js"></script>
+    <script src="../locomotion/quadruped-gait.js"></script>
+    
+    <!-- Core Files -->
+    <script src="../FIK.js"></script>
+    <script src="../creature-builder.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+        
+        #canvas-container {
+            display: inline-block;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .creature-label {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐎 Horse (Erect) vs 🦎 Lizard (Sprawling) - Side by Side</h1>
+    
+    <div id="canvas-container"></div>
+    
+    <div class="info">
+        <p><strong>Key Differences to Observe:</strong></p>
+        <p>🐎 <strong>Horse:</strong> Legs under body • High off ground • Rigid spine • Vertical movement</p>
+        <p>🦎 <strong>Lizard:</strong> Legs splayed out • Low to ground • Flexible spine • Lateral undulation</p>
+    </div>
+    
+    <script>
+        let horse, lizard;
+        
+        function setup() {
+            createCanvas(1200, 600).parent('canvas-container');
+            
+            // Create horse
+            horse = new ModularCreatureBuilder();
+            horse.buildHorse();
+            horse.bodyPosition = new FIK.V2(300, 300);
+            
+            // Create lizard
+            lizard = new ModularCreatureBuilder();
+            lizard.buildLizard();
+            lizard.bodyPosition = new FIK.V2(900, 300);
+        }
+        
+        function draw() {
+            background(240);
+            
+            // Draw dividing line
+            stroke(200);
+            strokeWeight(2);
+            line(width/2, 0, width/2, height);
+            
+            // Draw ground lines
+            stroke(100);
+            line(0, height - 100, width, height - 100);
+            
+            // Update and draw horse
+            push();
+            horse.mouseTarget = new FIK.V2(mouseX < width/2 ? mouseX : 300, mouseY);
+            horse.update();
+            horse.draw();
+            
+            // Horse label
+            noStroke();
+            fill(139, 69, 19);
+            textAlign(CENTER);
+            textSize(24);
+            text("🐎 HORSE (Erect)", width/4, 50);
+            
+            // Horse body height indicator
+            stroke(255, 0, 0, 100);
+            strokeWeight(3);
+            line(horse.bodyPosition.x, horse.bodyPosition.y, 
+                 horse.bodyPosition.x, height - 100);
+            fill(255, 0, 0);
+            textSize(16);
+            text(`Height: ${Math.round(height - 100 - horse.bodyPosition.y)}px`, 
+                 horse.bodyPosition.x, height - 80);
+            pop();
+            
+            // Update and draw lizard
+            push();
+            lizard.mouseTarget = new FIK.V2(mouseX > width/2 ? mouseX : 900, mouseY);
+            lizard.update();
+            lizard.draw();
+            
+            // Lizard label
+            noStroke();
+            fill(85, 107, 47);
+            textAlign(CENTER);
+            textSize(24);
+            text("🦎 LIZARD (Sprawling)", 3*width/4, 50);
+            
+            // Lizard body height indicator
+            stroke(255, 0, 0, 100);
+            strokeWeight(3);
+            line(lizard.bodyPosition.x, lizard.bodyPosition.y, 
+                 lizard.bodyPosition.x, height - 100);
+            fill(255, 0, 0);
+            textSize(16);
+            text(`Height: ${Math.round(height - 100 - lizard.bodyPosition.y)}px`, 
+                 lizard.bodyPosition.x, height - 80);
+            pop();
+            
+            // Instructions
+            push();
+            noStroke();
+            fill(0);
+            textAlign(CENTER);
+            textSize(14);
+            text("Move mouse to control creatures", width/2, height - 30);
+            pop();
+        }
+    </script>
+</body>
+</html>

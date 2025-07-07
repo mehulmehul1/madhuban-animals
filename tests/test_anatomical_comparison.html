@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anatomical Comparison Test - Horse vs Lizard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="../styling/ThemeManager.js"></script>
+    <script src="../styling/border.js"></script>
+    <script src="../styling/filler.js"></script>
+    <script src="../styling/segmenter.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="../systems/shape-generation.js"></script>
+    <script src="../systems/anatomical-data.js"></script>
+    <script src="../systems/anatomical-configs.js"></script>
+    <script src="../systems/constraint-system.js"></script>
+    <script src="../systems/gait-system.js"></script>
+    <script src="../systems/bone-template-system.js"></script>
+    <script src="../systems/shape-profile-system.js"></script>
+    <script src="../systems/debug-manager.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="../locomotion/locomotion-pattern.js"></script>
+    <script src="../locomotion/locomotion-system.js"></script>
+    <script src="../locomotion/undulate-pattern.js"></script>
+    <script src="../locomotion/serpentine-pattern.js"></script>
+    <script src="../locomotion/bipedal-walk-pattern.js"></script>
+    <script src="../locomotion/quadruped-gait.js"></script>
+    
+    <!-- Core Files -->
+    <script src="../FIK.js"></script>
+    <script src="../creature-builder.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.active {
+            background-color: #2196F3;
+        }
+        
+        .info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .comparison-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        #canvas-container {
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .status {
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐎 Horse vs 🦎 Lizard - Anatomical Comparison</h1>
+        
+        <div class="controls">
+            <button id="horseBtn" onclick="switchToHorse()">🐎 Horse (Erect)</button>
+            <button id="lizardBtn" onclick="switchToLizard()">🦎 Lizard (Sprawling)</button>
+            <button onclick="toggleDebug()">Toggle Debug</button>
+            <button onclick="togglePause()">Pause/Resume</button>
+        </div>
+        
+        <div id="canvas-container"></div>
+        
+        <div class="info">
+            <h2>Current Creature: <span id="creatureType">Horse</span></h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Characteristic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Posture Type</td>
+                    <td id="postureType">Erect</td>
+                </tr>
+                <tr>
+                    <td>Body Height</td>
+                    <td id="bodyHeight">120</td>
+                </tr>
+                <tr>
+                    <td>Leg Length</td>
+                    <td id="legLength">100</td>
+                </tr>
+                <tr>
+                    <td>Leg Spacing</td>
+                    <td id="legSpacing">40</td>
+                </tr>
+                <tr>
+                    <td>Spine Flexibility</td>
+                    <td id="spineFlexibility">0.1 (Rigid)</td>
+                </tr>
+                <tr>
+                    <td>Step Height</td>
+                    <td id="stepHeight">30</td>
+                </tr>
+                <tr>
+                    <td>Lateral Undulation</td>
+                    <td id="lateralUndulation">No</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="status">
+            <strong>Test Objectives:</strong>
+            <ul>
+                <li>✓ Horse should have legs positioned UNDER the body (erect posture)</li>
+                <li>✓ Lizard should have legs SPLAYED outward (sprawling posture)</li>
+                <li>✓ Horse should be HIGH off the ground</li>
+                <li>✓ Lizard should be LOW to the ground</li>
+                <li>✓ Horse spine should be RIGID with minimal movement</li>
+                <li>✓ Lizard spine should be FLEXIBLE with visible undulation</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        let creature;
+        let isPaused = false;
+        let currentCreature = 'horse';
+        
+        function setup() {
+            const canvas = createCanvas(800, 600);
+            canvas.parent('canvas-container');
+            
+            // Create creature builder
+            creature = new ModularCreatureBuilder();
+            creature.buildHorse();
+            
+            updateInfo();
+        }
+        
+        function draw() {
+            background(240);
+            
+            if (!isPaused) {
+                creature.update();
+            }
+            creature.draw();
+            
+            // Draw ground line for reference
+            stroke(100);
+            strokeWeight(2);
+            line(0, height - 100, width, height - 100);
+            
+            // Draw posture indicators
+            drawPostureIndicators();
+        }
+        
+        function drawPostureIndicators() {
+            push();
+            
+            // Show body height indicator
+            if (creature.bodyPosition) {
+                stroke(255, 0, 0, 100);
+                strokeWeight(3);
+                line(creature.bodyPosition.x - 50, creature.bodyPosition.y, 
+                     creature.bodyPosition.x + 50, creature.bodyPosition.y);
+                
+                // Height measurement
+                stroke(0, 0, 255, 100);
+                line(creature.bodyPosition.x, creature.bodyPosition.y, 
+                     creature.bodyPosition.x, height - 100);
+                
+                // Label
+                noStroke();
+                fill(0, 0, 255);
+                textAlign(CENTER);
+                text(`Height: ${Math.round(height - 100 - creature.bodyPosition.y)}px`, 
+                     creature.bodyPosition.x, height - 80);
+            }
+            
+            // Show leg spacing indicators for each foot
+            if (creature.activeLocomotion && creature.activeLocomotion.footTargets) {
+                creature.activeLocomotion.footTargets.forEach((foot, i) => {
+                    if (foot.target) {
+                        stroke(0, 255, 0, 100);
+                        strokeWeight(2);
+                        circle(foot.target.x, foot.target.y, 20);
+                        
+                        // Label foot
+                        noStroke();
+                        fill(0);
+                        textAlign(CENTER);
+                        text(['FL', 'FR', 'BL', 'BR'][i], foot.target.x, foot.target.y - 15);
+                    }
+                });
+            }
+            
+            pop();
+        }
+        
+        function switchToHorse() {
+            creature.buildHorse();
+            currentCreature = 'horse';
+            document.getElementById('horseBtn').classList.add('active');
+            document.getElementById('lizardBtn').classList.remove('active');
+            updateInfo();
+        }
+        
+        function switchToLizard() {
+            creature.buildLizard();
+            currentCreature = 'lizard';
+            document.getElementById('lizardBtn').classList.add('active');
+            document.getElementById('horseBtn').classList.remove('active');
+            updateInfo();
+        }
+        
+        function toggleDebug() {
+            creature.showDebug = !creature.showDebug;
+        }
+        
+        function togglePause() {
+            isPaused = !isPaused;
+        }
+        
+        function updateInfo() {
+            const config = creature.anatomicalConfig;
+            if (!config) return;
+            
+            document.getElementById('creatureType').textContent = 
+                currentCreature.charAt(0).toUpperCase() + currentCreature.slice(1);
+            document.getElementById('postureType').textContent = config.postureType;
+            document.getElementById('bodyHeight').textContent = config.bodyHeight;
+            document.getElementById('legLength').textContent = config.legLength;
+            document.getElementById('legSpacing').textContent = config.legSpacing;
+            document.getElementById('spineFlexibility').textContent = 
+                `${config.spineFlexibility} (${config.spineFlexibility < 0.5 ? 'Rigid' : 'Flexible'})`;
+            document.getElementById('stepHeight').textContent = 
+                Math.round(config.gaitParameters.stepHeight * config.legLength);
+            document.getElementById('lateralUndulation').textContent = 
+                config.gaitParameters.lateralUndulation ? 'Yes' : 'No';
+        }
+        
+        function mouseMoved() {
+            if (creature && creature.mouseTarget) {
+                creature.mouseTarget.x = mouseX;
+                creature.mouseTarget.y = mouseY;
+            }
+        }
+        
+        // Set initial active button
+        document.getElementById('horseBtn').classList.add('active');
+    </script>
+</body>
+</html>

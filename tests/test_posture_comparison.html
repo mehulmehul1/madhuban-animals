@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posture Comparison Test - Horse vs Lizard</title>
+    
+    <!-- Include all necessary scripts in the same order as index.html -->
+    <script src="../FIK.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="../styling/ThemeManager.js"></script>
+    <script src="../styling/border.js"></script>
+    <script src="../styling/filler.js"></script>
+    <script src="../styling/segmenter.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="../systems/shape-generation.js"></script>
+    <script src="../systems/anatomical-data.js"></script>
+    <script src="../systems/anatomical-configs.js"></script>
+    <script src="../systems/constraint-system.js"></script>
+    <script src="../systems/gait-system.js"></script>
+    <script src="../systems/bone-template-system.js"></script>
+    <script src="../systems/shape-profile-system.js"></script>
+    <script src="../systems/debug-manager.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="../locomotion/locomotion-pattern.js"></script>
+    <script src="../locomotion/locomotion-system.js"></script>
+    <script src="../locomotion/undulate-pattern.js"></script>
+    <script src="../locomotion/bipedal-walk-pattern.js"></script>
+    <script src="../locomotion/quadruped-gait.js"></script>
+    <script src="../locomotion/serpentine-pattern.js"></script>
+    
+    <!-- Main Application -->
+    <script src="../creature-builder.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .comparison-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .creature-section {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .skeleton-btn {
+            background: #2196F3;
+        }
+        .skeleton-btn:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Anatomical Posture Comparison: Horse vs Lizard</h1>
+    
+    <div class="comparison-container">
+        <div class="creature-section">
+            <h2>🐎 Horse (Erect Posture)</h2>
+            <div class="info">Legs positioned under body • High stance • Rigid spine</div>
+            <div id="horse-canvas"></div>
+        </div>
+        
+        <div class="creature-section">
+            <h2>🦎 Lizard (Sprawling Posture)</h2>
+            <div class="info">Legs splayed outward • Low stance • Flexible spine</div>
+            <div id="lizard-canvas"></div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="toggleSkeletonView()">Toggle Skeleton View (S)</button>
+        <button onclick="resetPositions()">Reset Positions</button>
+    </div>
+    
+    <script>
+        let horseBuilder, lizardBuilder;
+        let horseCanvas, lizardCanvas;
+        
+        // Create horse canvas
+        new p5((p) => {
+            p.setup = function() {
+                horseCanvas = p.createCanvas(400, 400);
+                horseCanvas.parent('horse-canvas');
+                
+                horseBuilder = new ModularCreatureBuilder();
+                horseBuilder.buildHorse();
+                horseBuilder.bodyPosition.set(200, 200);
+            };
+            
+            p.draw = function() {
+                p.background(245);
+                
+                // Update with local mouse position
+                const mousePos = {
+                    x: p.mouseX,
+                    y: p.mouseY
+                };
+                
+                if (p.mouseX > 0 && p.mouseX < p.width && 
+                    p.mouseY > 0 && p.mouseY < p.height) {
+                    horseBuilder.mouseTarget.set(mousePos.x, mousePos.y);
+                }
+                
+                // Update and draw
+                horseBuilder.update();
+                
+                p.push();
+                horseBuilder.draw();
+                p.pop();
+                
+                // Draw info
+                p.push();
+                p.fill(0);
+                p.noStroke();
+                p.textAlign(p.LEFT, p.TOP);
+                p.text(`Body Height: ${horseBuilder.anatomicalConfig.bodyHeight}px`, 10, 10);
+                p.text(`Leg Spacing: ${horseBuilder.anatomicalConfig.legPositioning.spacing}px`, 10, 25);
+                p.text(`Spine Flexibility: ${horseBuilder.anatomicalConfig.spineCharacteristics.flexibility}`, 10, 40);
+                p.pop();
+            };
+            
+            p.keyPressed = function() {
+                if (p.key === 's' || p.key === 'S') {
+                    horseBuilder.showSkeleton = !horseBuilder.showSkeleton;
+                }
+            };
+        });
+        
+        // Create lizard canvas
+        new p5((p) => {
+            p.setup = function() {
+                lizardCanvas = p.createCanvas(400, 400);
+                lizardCanvas.parent('lizard-canvas');
+                
+                lizardBuilder = new ModularCreatureBuilder();
+                lizardBuilder.buildLizard();
+                lizardBuilder.bodyPosition.set(200, 200);
+            };
+            
+            p.draw = function() {
+                p.background(245);
+                
+                // Update with local mouse position
+                const mousePos = {
+                    x: p.mouseX,
+                    y: p.mouseY
+                };
+                
+                if (p.mouseX > 0 && p.mouseX < p.width && 
+                    p.mouseY > 0 && p.mouseY < p.height) {
+                    lizardBuilder.mouseTarget.set(mousePos.x, mousePos.y);
+                }
+                
+                // Update and draw
+                lizardBuilder.update();
+                
+                p.push();
+                lizardBuilder.draw();
+                p.pop();
+                
+                // Draw info
+                p.push();
+                p.fill(0);
+                p.noStroke();
+                p.textAlign(p.LEFT, p.TOP);
+                p.text(`Body Height: ${lizardBuilder.anatomicalConfig.bodyHeight}px`, 10, 10);
+                p.text(`Leg Spacing: ${lizardBuilder.anatomicalConfig.legPositioning.spacing}px`, 10, 25);
+                p.text(`Spine Flexibility: ${lizardBuilder.anatomicalConfig.spineCharacteristics.flexibility}`, 10, 40);
+                p.text(`Lateral Undulation: ${lizardBuilder.anatomicalConfig.spineCharacteristics.undulationEnabled}`, 10, 55);
+                p.pop();
+            };
+            
+            p.keyPressed = function() {
+                if (p.key === 's' || p.key === 'S') {
+                    lizardBuilder.showSkeleton = !lizardBuilder.showSkeleton;
+                }
+            };
+        });
+        
+        function toggleSkeletonView() {
+            if (horseBuilder && lizardBuilder) {
+                horseBuilder.showSkeleton = !horseBuilder.showSkeleton;
+                lizardBuilder.showSkeleton = horseBuilder.showSkeleton;
+            }
+        }
+        
+        function resetPositions() {
+            if (horseBuilder && lizardBuilder) {
+                horseBuilder.bodyPosition.set(200, 200);
+                lizardBuilder.bodyPosition.set(200, 200);
+                horseBuilder.mouseTarget.set(200, 200);
+                lizardBuilder.mouseTarget.set(200, 200);
+            }
+        }
+    </script>
+</body>
+</html>
