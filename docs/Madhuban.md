@@ -689,3 +689,22 @@ OK so the skinning system works, uh. By taking a function called width profile a
 Mujhe to likhna hi pdega kese pahuchu kese sochu ka koi alternative to h nhi na right, right baby. I love you. Ghar banana chahti h mere saath, ye dekho, beech m ye bhi nikal rha h to niklega kya krenge ye batao. Yahi h jo h. tum kro na, krna h kya tho.  
 
 on my 2d skeletons the visual view is very cluttered and makes it hard to understand what behaviour is happening even. The skin shape profiles we are using just keep on. i am looking at refs, I know every limb consists of 4 bones only, the proportions in them vary only.I should first of all have a visually readable creature. Lines for bones, circles on all joints. All limbs different color like animals m h. Ab uske upar tumne skinning system integrate to krdia, but i dont think ki ye skinning system kaam krega, sure you need organic flowing forms to fill in, but they are moving, the movement itself mutates the form significantly and very beautiful. The power of anatomical accuracy I want to see. Ab aise dekhenge to i have been coding like i would draw creatures, because i know how to draw, gedture first, block shapes, refine forms, render. The skeleton i made gave structure, and motion provided gesture, thats a very nice way to put it tho, dont stop likhte rho.  Ek fish ka tail samjhaya tha mene upar, Like we draw, on a line draw decreasing in size circles, making line on both side connecting the tangent. For a horse torso, or another animal, the body is broken down into simple shapes, now on our 2d canvas, if you have two ovals for the chest and pelvis of the horse, through the spine chain. This simple model of ovals for torso and pelvis connected with the spine can be adapted to all. Now somehow if we are able to connect merge the moving 3 as one form that would be visually read as a whole body, that is moving, twisting with the skeleton. I was thinking of metaballs but hopefully there are better solution. Wha tis a metaball tho, it has something. There is a skeleton layer, lets call this layer made of simple shapes like circles, ellipses, cubes, triangles, trapezius depicting the main masses as the muscle layer. When we connect the muscle layer shapes to make unified forms to move as one and render as our style - thats the skin layer. We have to figure out how to break down and define these form shapes in order for them to be reusable on bones of different lengths, angle constrainsts. We dont need to go detailed on the muscle layer, but think of it as how artists draw. 
+
+lets think harder on the muscle system, can you explain your approach. I was thinking a single bone is a straight line of some length and direction on which we will add shapes like circles, ellipses, squares. Think of a torso, traditionally how artists draw is that they draw a line for the spine and attach two muscle mass for the chest and pelvis. Every aanimals torso should be able to handle different mass shape. A tail or snake body would be circles along a line. we have to look at references and figure out this shapes to be placed along the skeleton. the skinning system will be layer on top of this informed by the skeleton and mass.
+
+# 9 july
+
+Hello, 
+
+- simple snap points
+- parametric positioning
+- A first, then a hybrid approach
+- shape has to stay attached to th bone as its set regardless of how the bones itself move then
+- 
+
+i have a tool now, i can see my four skeletons from the code, they configs are defined as static points like start from x:300 to end x:360. the creature are also in a fixed side view which is not helpful for this mass design at all. I want to be able to view the creature skeleton from different angles by rotating it around in our 2d world. The whole skeleton has FABRIK implementation so if I click on a chain and have a move tool gizmo, updating the end position of that chain should result in correct fabrik chain solving and give me a pose. The creature now is not walking towards the mouse, but the same principal of target position of a chain can be used to create poses and test in our tool.
+
+
+Now that i am thinking about it, our system has a single monolithic class called modular builder which has buildHorse, buildBiped, functions that are being called and passed their anatomical data. 
+
+

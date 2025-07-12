@@ -138,20 +138,21 @@ class AnatomicalData {
         return {
             // Skeletal Structure - Erect Quadruped
             legs: {
-                segments: 4,
-                // Front leg proportions
+                segments: 5,        // NOW 5 segments for complete legs
+                // Front leg proportions - KEEP EXISTING LENGTHS, ADD HOOF
                 front: {
                     scapula: 0.6,       // Hidden in body
                     humerus: 0.5,      
                     radius: 0.6,        // Forearm
-                    cannon: 0.26        // Metacarpus to hoof
+                    cannon: 0.26,       // Metacarpus 
+                    hoof: 0.05          // NEW: Ground contact point
                 },
-                // Hind leg proportions  
+                // Hind leg proportions - KEEP EXISTING
                 hind: {
                     femur: 0.6,
                     tibia: 0.6,        // Main lower leg
                     cannon: 0.26,       // Metatarsus
-                    hoof: 0.05
+                    hoof: 0.05         // Keep existing hoof
                 }
             },
             
@@ -165,27 +166,46 @@ class AnatomicalData {
                 flexibility: 'medium'
             },
             
-            // Joint Constraints (degrees) - Erect posture
+            // Joint Constraints (degrees) - REALISTIC HORSE ANGLES
             constraints: {
                 shoulder: {
-                    flexion: [-30, 45],     // Forward/back swing
-                    abduction: [-10, 10]    // Limited lateral
+                    flexion: [-25, 55],     // Realistic forward/back swing
+                    abduction: [-8, 12],    // Limited lateral movement  
+                    rotation: [-5, 5]       // Minimal rotation
                 },
                 hip: {
-                    flexion: [-20, 50],
-                    abduction: [-5, 15]
+                    flexion: [-15, 65],     // Powerful hip for propulsion
+                    abduction: [-8, 18],    // Limited lateral movement
+                    rotation: [-10, 10]     // Slight rotation allowed
                 },
                 elbow: {
-                    flexion: [0, 150]       // Strong flexion
+                    flexion: [0, 160],      // Strong flexion capability
+                    extension: 0            // No hyperextension
                 },
-                stifle: {                   // Horse knee
-                    flexion: [0, 140]
+                stifle: {                   // Horse knee (hind leg)
+                    flexion: [0, 155],      // Full flexion for galloping
+                    extension: 0
                 },
-                hock: {                     // Horse ankle
-                    flexion: [-30, 60]
+                carpus: {                   // Horse "knee" (front leg wrist)
+                    flexion: [-10, 75],     // Forward flexion, slight extension
+                    deviation: [-5, 5]      // Minimal lateral deviation
                 },
-                fetlock: {                  // Pastern joint
-                    flexion: [-15, 45]
+                hock: {                     // Horse ankle (hind leg)
+                    flexion: [-20, 85],     // Dorsal/plantar flexion
+                    rotation: [-3, 3]       // Very limited rotation
+                },
+                fetlock: {                  // CRITICAL: Fetlock joint (both legs)
+                    flexion: [-25, 65],     // Flexion + HYPEREXTENSION
+                    hyperextension: 25,     // Natural shock absorption
+                    lateral: [-3, 3]        // Minimal lateral movement
+                },
+                pastern: {                  // Pastern joint (if present)
+                    flexion: [-15, 45],     // Fine movement control
+                    lateral: [-3, 3]        // Very limited lateral
+                },
+                coffin: {                   // Inside hoof (minimal movement)
+                    flexion: [-8, 25],      // Shock absorption only
+                    lateral: [-2, 2]
                 }
             },
             

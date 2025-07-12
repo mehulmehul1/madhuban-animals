@@ -397,7 +397,7 @@ class ModularCreatureBuilder {
                 attachmentIndex: 6, // Front of body
                 color: [139, 69, 19], // Match body color
                 bones: this.boneTemplateSystem.generateBones('horse-front-leg', 50, {
-                    segments: 4,
+                    segments: 5,        // ← UPDATED: Now 5 segments (added hoof)
                     side: side,
                     erectPosture: true
                 }),
@@ -424,7 +424,7 @@ class ModularCreatureBuilder {
                 attachmentIndex: 2, // Back of body
                 color: [139, 69, 19], // Match body color
                 bones: this.boneTemplateSystem.generateBones('horse-hind-leg', 65, {
-                    segments: 4,
+                    segments: 5,        // ← UPDATED: Keep 5 segments (already had hoof)
                     side: side,
                     erectPosture: true,
                     powerfulHindquarters: true

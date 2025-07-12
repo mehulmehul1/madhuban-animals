@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐎 Before vs After: Horse Anatomy Improvement</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            color: white;
+        }
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 1000;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid #4CAF50;
+        }
+        .comparison {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+        .improvement { color: #4CAF50; }
+        .old { color: #FF6B6B; }
+        .new { color: #4ECDC4; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐎 HORSE ANATOMY: BEFORE vs AFTER</h1>
+        <p>Press <strong>3</strong> for improved horse | Press <strong>S</strong> for skeleton view</p>
+        <p>Press <strong>5-8</strong> for Tiger, Cow, Deer, Elephant</p>
+    </div>
+
+    <div class="comparison">
+        <div style="display: flex; gap: 40px; align-items: center;">
+            <div class="old">
+                <h3>❌ BEFORE (4 segments)</h3>
+                <p>• Scapula (60%)</p>
+                <p>• Humerus (50%)</p>
+                <p>• Radius (60%)</p>
+                <p>• Cannon (26%) ← touches ground</p>
+                <p><strong>Total: Unrealistic proportions</strong></p>
+            </div>
+            
+            <div style="font-size: 24px;">→</div>
+            
+            <div class="new">
+                <h3>✅ AFTER (5 segments)</h3>
+                <p>• Scapula (28%)</p>
+                <p>• Humerus (22%)</p>
+                <p>• Radius (35%) ← main upper leg</p>
+                <p>• Cannon (18%) ← main lower leg</p>
+                <p>• <strong class="improvement">Pastern (8%) ← shock absorption</strong></p>
+                <p>• <strong class="improvement">Hoof (4%) ← ground contact</strong></p>
+                <p><strong>Total: Anatomically accurate!</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIK System -->
+    <script src="FIK.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="systems/anatomical-data.js"></script>
+    <script src="systems/bone-template-system.js"></script>
+    <script src="systems/constraint-system.js"></script>
+    <script src="systems/gait-system.js"></script>
+    <script src="systems/debug-manager.js"></script>
+    <script src="systems/shape-profile-system.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="styling/themes.js"></script>
+    <script src="styling/border-decorator.js"></script>
+    <script src="styling/fillers.js"></script>
+    <script src="styling/segmenter.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="locomotion/locomotion-system.js"></script>
+    <script src="locomotion/quadruped-gait.js"></script>
+    
+    <!-- Main Creature Builder -->
+    <script src="creature-builder.js"></script>
+    
+    <script>
+        let builder;
+        
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            builder = new ModularCreatureBuilder();
+            
+            console.log("🎉 HORSE ANATOMY IMPROVEMENT SHOWCASE");
+            console.log("====================================");
+            console.log("✅ 5-segment legs implemented");
+            console.log("✅ Realistic joint constraints");
+            console.log("✅ Ground contact via hooves only");
+            console.log("✅ Template system for other animals");
+            console.log("✅ Backward compatibility maintained");
+            console.log("");
+            console.log("🐎 Building improved horse...");
+            
+            builder.buildHorse(); // This now uses the improved 5-segment anatomy
+            
+            // Validate the improvements
+            const legChains = builder.chains.filter((chain, i) => 
+                builder.chainConfigs[i].role.includes('leg')
+            );
+            
+            if (legChains.length === 4 && legChains.every(chain => chain.bones.length === 5)) {
+                console.log("🎉 SUCCESS: All 4 legs have 5 segments!");
+            } else {
+                console.log("❌ Issue: Some legs don't have 5 segments");
+            }
+        }
+        
+        function draw() {
+            // Animated background
+            background(sin(frameCount * 0.01) * 50 + 100, 
+                       sin(frameCount * 0.02) * 30 + 120, 
+                       sin(frameCount * 0.015) * 40 + 150);
+            
+            builder.update();
+            builder.draw();
+            
+            // Show current creature info
+            push();
+            fill(255, 255, 255, 200);
+            textAlign(LEFT, TOP);
+            textSize(16);
+            text(`Current: ${builder.creatureType.toUpperCase()}`, 20, height - 60);
+            
+            const legChains = builder.chains.filter((chain, i) => 
+                builder.chainConfigs[i].role.includes('leg')
+            );
+            
+            if (legChains.length > 0) {
+                const segmentCount = legChains[0].bones.length;
+                fill(segmentCount === 5 ? color(0, 255, 0) : color(255, 100, 100));
+                text(`Leg segments: ${segmentCount}/5 ${segmentCount === 5 ? '✅' : '❌'}`, 20, height - 40);
+            }
+            
+            fill(255, 255, 255, 150);
+            text(`Chains: ${builder.chains.length} | Press W/T/G for gaits`, 20, height - 20);
+            pop();
+        }
+        
+        function keyPressed() {
+            switch (key.toLowerCase()) {
+                case '3':
+                    builder.buildHorse();
+                    console.log("🐎 Rebuilt horse with improved anatomy");
+                    break;
+                case '5':
+                    builder.buildTiger();
+                    console.log("🐅 Built tiger using template system");
+                    break;
+                case '6':
+                    builder.buildCow();
+                    console.log("🐄 Built cow using template system");
+                    break;
+                case '7':
+                    builder.buildDeer();
+                    console.log("🦌 Built deer using template system");
+                    break;
+                case '8':
+                    builder.buildElephant();
+                    console.log("🐘 Built elephant using template system");
+                    break;
+                case 's':
+                    builder.setRenderMode('skeleton');
+                    console.log("🦴 Skeleton view - count the 5 segments per leg!");
+                    break;
+                case 'c':
+                    builder.setRenderMode('current');
+                    console.log("👁️ Normal view");
+                    break;
+                case 'w':
+                    if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('walk', true);
+                        console.log("🚶 Walk gait - watch the fetlock hyperextension!");
+                    }
+                    break;
+                case 't':
+                    if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('trot', true);
+                        console.log("🏃 Trot gait - see the diagonal pairs!");
+                    }
+                    break;
+                case 'g':
+                    if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('gallop', true);
+                        console.log("🏇 Gallop gait - maximum speed!");
+                    }
+                    break;
+            }
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

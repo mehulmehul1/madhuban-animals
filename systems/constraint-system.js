@@ -78,17 +78,19 @@ class ConstraintSystem {
             }
         });
 
-        // Horse joint profiles
+        // Horse joint profiles - UPDATED WITH REALISTIC CONSTRAINTS
         this.jointProfiles.set('horse', {
             shoulder: {
                 type: 'ball-socket',
                 flexion: AnatomicalData.HORSE.constraints.shoulder.flexion,
-                abduction: AnatomicalData.HORSE.constraints.shoulder.abduction
+                abduction: AnatomicalData.HORSE.constraints.shoulder.abduction,
+                rotation: AnatomicalData.HORSE.constraints.shoulder.rotation
             },
             hip: {
                 type: 'ball-socket',
                 flexion: AnatomicalData.HORSE.constraints.hip.flexion,
-                abduction: AnatomicalData.HORSE.constraints.hip.abduction
+                abduction: AnatomicalData.HORSE.constraints.hip.abduction,
+                rotation: AnatomicalData.HORSE.constraints.hip.rotation
             },
             elbow: {
                 type: 'hinge',
@@ -98,13 +100,31 @@ class ConstraintSystem {
                 type: 'hinge',
                 flexion: AnatomicalData.HORSE.constraints.stifle.flexion
             },
+            carpus: {  // NEW: Horse "knee" (front leg wrist)
+                type: 'hinge',
+                flexion: AnatomicalData.HORSE.constraints.carpus.flexion,
+                deviation: AnatomicalData.HORSE.constraints.carpus.deviation
+            },
             hock: {
                 type: 'hinge',
-                flexion: AnatomicalData.HORSE.constraints.hock.flexion
+                flexion: AnatomicalData.HORSE.constraints.hock.flexion,
+                rotation: AnatomicalData.HORSE.constraints.hock.rotation
             },
-            fetlock: {
+            fetlock: {  // CRITICAL: Updated with hyperextension
                 type: 'hinge',
-                flexion: AnatomicalData.HORSE.constraints.fetlock.flexion
+                flexion: AnatomicalData.HORSE.constraints.fetlock.flexion,
+                hyperextension: AnatomicalData.HORSE.constraints.fetlock.hyperextension,
+                lateral: AnatomicalData.HORSE.constraints.fetlock.lateral
+            },
+            pastern: {  // NEW: Fine movement control
+                type: 'hinge',
+                flexion: AnatomicalData.HORSE.constraints.pastern.flexion,
+                lateral: AnatomicalData.HORSE.constraints.pastern.lateral
+            },
+            coffin: {   // NEW: Minimal hoof movement
+                type: 'hinge',
+                flexion: AnatomicalData.HORSE.constraints.coffin.flexion,
+                lateral: AnatomicalData.HORSE.constraints.coffin.lateral
             }
         });
 

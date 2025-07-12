@@ -1,6 +1,7 @@
 class BoneTemplateSystem {
     constructor() {
         this.templates = new Map();
+        this.quadrupedTemplateSystem = new QuadrupedTemplateSystem();  // NEW: Add quadruped templating
         this.initializeTemplates();
     }
 
@@ -117,7 +118,7 @@ class BoneTemplateSystem {
             ];
         });
 
-        // Horse front leg - erect quadruped with unguligrade stance
+        // Horse front leg - erect quadruped with unguligrade stance (NOW 5 SEGMENTS)
         this.templates.set('horse-front-leg', (length, config) => {
             const horseData = AnatomicalData.HORSE;
             const legData = horseData.legs.front;
@@ -147,7 +148,10 @@ class BoneTemplateSystem {
                 { // Radius/Forearm
                     length: this.validateBoneLength(length * legData.radius),
                     direction: new FIK.V2(0, 1),
-                    constraints: { clockwise: 45, anticlockwise: 15 },
+                    constraints: { 
+                        clockwise: constraints.carpus.flexion[1], 
+                        anticlockwise: Math.abs(constraints.carpus.flexion[0])
+                    },
                     jointType: 'hinge',
                     anatomicalRole: 'carpus'
                 },
@@ -160,11 +164,22 @@ class BoneTemplateSystem {
                     },
                     jointType: 'hinge',
                     anatomicalRole: 'fetlock'
+                },
+                { // NEW: Hoof - GROUND CONTACT POINT
+                    length: this.validateBoneLength(length * legData.hoof),
+                    direction: new FIK.V2(0.2, 1),    // Angled forward for natural stance
+                    constraints: { 
+                        clockwise: constraints.coffin.flexion[1], 
+                        anticlockwise: Math.abs(constraints.coffin.flexion[0])
+                    },
+                    jointType: 'hinge',
+                    anatomicalRole: 'coffin',
+                    groundContact: true    // This touches the ground
                 }
             ];
         });
 
-        // Horse hind leg - powerful hindquarters
+        // Horse hind leg - powerful hindquarters (KEEP 5 SEGMENTS, UPDATE CONSTRAINTS)
         this.templates.set('horse-hind-leg', (length, config) => {
             const horseData = AnatomicalData.HORSE;
             const legData = horseData.legs.hind;
@@ -209,7 +224,9 @@ class BoneTemplateSystem {
                         anticlockwise: Math.abs(constraints.fetlock.flexion[0])
                     },
                     jointType: 'hinge',
-                    anatomicalRole: 'pastern'
+                    anatomicalRole: 'fetlock',
+                    groundContact: true,    // Ground contact point
+                    propulsionPoint: true   // Main power generation
                 }
             ];
         });
@@ -359,11 +376,55 @@ class BoneTemplateSystem {
     }
 
     generateBones(templateName, scale, config) {
+        // Check if it's a quadruped template request
+        if (templateName.includes('quadruped-')) {
+            return this.generateQuadrupedBones(templateName, scale, config);
+        }
+        
+        // Use existing template system
         const template = this.templates.get(templateName);
         if (template) {
             return template(scale, config);
         }
         console.warn(`Bone template ${templateName} not found`);
         return [];
+    }
+
+    /**
+     * Generate bones using the quadruped template system
+     * Example: generateQuadrupedBones('quadruped-deer-front-leg', 50, { side: 'left' })
+     */
+    generateQuadrupedBones(templateName, scale, config = {}) {
+        // Parse template name: quadruped-[species]-[front/hind]-leg
+        const parts = templateName.split('-');
+        if (parts.length < 4) {
+            console.warn(`Invalid quadruped template name: ${templateName}`);
+            return [];
+        }
+
+        const species = parts[1];     // e.g., 'deer', 'cow', 'dog'
+        const legType = parts[2];     // 'front' or 'hind'
+
+        // Get or create the quadruped template
+        let template;
+        if (QuadrupedTemplateSystem.PRESETS[species.toUpperCase()]) {
+            const preset = QuadrupedTemplateSystem.PRESETS[species.toUpperCase()];
+            if (typeof preset === 'string') {
+                template = this.quadrupedTemplateSystem.templates.get(preset);
+            } else {
+                template = this.quadrupedTemplateSystem.createQuadruped(preset.base, preset.modifications);
+            }
+        } else {
+            console.warn(`Quadruped preset ${species} not found, using erect-quadruped`);
+            template = this.quadrupedTemplateSystem.templates.get('erect-quadruped');
+        }
+
+        if (!template) {
+            console.warn(`Could not create template for ${species}`);
+            return [];
+        }
+
+        // Generate bones using the template
+        return this.quadrupedTemplateSystem.generateQuadrupedLeg(template, legType, scale, config);
     }
 }

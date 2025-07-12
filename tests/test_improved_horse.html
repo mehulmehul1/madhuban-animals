@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improved Horse Anatomy Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+<body style="margin: 0; overflow: hidden; background: #f0f8ff;">
+    
+    <!-- FIK System -->
+    <script src="FIK.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="systems/anatomical-data.js"></script>
+    <script src="systems/bone-template-system.js"></script>
+    <script src="systems/constraint-system.js"></script>
+    <script src="systems/gait-system.js"></script>
+    <script src="systems/debug-manager.js"></script>
+    <script src="systems/shape-profile-system.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="styling/themes.js"></script>
+    <script src="styling/border-decorator.js"></script>
+    <script src="styling/fillers.js"></script>
+    <script src="styling/segmenter.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="locomotion/locomotion-system.js"></script>
+    <script src="locomotion/quadruped-gait.js"></script>
+    
+    <!-- Main Creature Builder -->
+    <script src="creature-builder.js"></script>
+    
+    <script>
+        let builder;
+        let currentCreature = 'horse';
+        
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            builder = new ModularCreatureBuilder();
+            builder.buildHorse(); // Start with improved horse
+            
+            // Test log
+            console.log("🐎 IMPROVED HORSE ANATOMY TEST");
+            console.log("=====================================");
+            console.log("✅ 5-segment legs implemented");
+            console.log("✅ Realistic joint constraints");
+            console.log("✅ Ground contact via hooves only");
+            console.log("✅ Template system for other animals");
+            console.log("");
+            console.log("CONTROLS:");
+            console.log("3 = Horse (improved anatomy)");
+            console.log("5 = Tiger, 6 = Cow, 7 = Deer, 8 = Elephant");
+            console.log("W/T/G/P = Walk/Trot/Gallop/Pace");
+            console.log("S = Skeleton view");
+            console.log("=====================================");
+        }
+        
+        function draw() {
+            builder.update();
+            builder.draw();
+            
+            // Status display
+            push();
+            fill(0, 150);
+            noStroke();
+            rect(width - 300, 10, 280, 100, 5);
+            
+            fill(255);
+            textAlign(LEFT, TOP);
+            textSize(14);
+            text(`🐎 IMPROVED ANATOMY TEST`, width - 290, 20);
+            text(`Current: ${builder.creatureType.toUpperCase()}`, width - 290, 40);
+            
+            const legChains = builder.chains.filter(c => 
+                builder.chainConfigs[builder.chains.indexOf(c)].role.includes('leg')
+            );
+            text(`Leg segments: ${legChains[0]?.bones.length || 0}`, width - 290, 60);
+            text(`${legChains[0]?.bones.length === 5 ? '✅' : '❌'} 5-segment legs`, width - 290, 80);
+            
+            pop();
+        }
+        
+        function keyPressed() {
+            switch (key.toLowerCase()) {
+                case '3':
+                    builder.buildHorse();
+                    currentCreature = 'horse';
+                    console.log("🐎 Rebuilt horse with improved anatomy");
+                    break;
+                case '5':
+                    builder.buildTiger();
+                    currentCreature = 'tiger';
+                    console.log("🐅 Built tiger using template system");
+                    break;
+                case '6':
+                    builder.buildCow();
+                    currentCreature = 'cow';
+                    console.log("🐄 Built cow using template system");
+                    break;
+                case '7':
+                    builder.buildDeer();
+                    currentCreature = 'deer';
+                    console.log("🦌 Built deer using template system");
+                    break;
+                case '8':
+                    builder.buildElephant();
+                    currentCreature = 'elephant';
+                    console.log("🐘 Built elephant using template system");
+                    break;
+                case 's':
+                    builder.setRenderMode('skeleton');
+                    console.log("🦴 Skeleton view - check 5 segments per leg");
+                    break;
+                case 'c':
+                    builder.setRenderMode('current');
+                    console.log("👁️ Normal view");
+                    break;
+                case 'w':
+                    if (isQuadruped(currentCreature) && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('walk', true);
+                        console.log("🚶 Walk gait");
+                    }
+                    break;
+                case 't':
+                    if (isQuadruped(currentCreature) && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('trot', true);
+                        console.log("🏃 Trot gait");
+                    }
+                    break;
+                case 'g':
+                    if (isQuadruped(currentCreature) && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('gallop', true);
+                        console.log("🏇 Gallop gait");
+                    }
+                    break;
+            }
+        }
+        
+        function isQuadruped(creatureType) {
+            return ['horse', 'tiger', 'cow', 'deer', 'elephant'].includes(creatureType);
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

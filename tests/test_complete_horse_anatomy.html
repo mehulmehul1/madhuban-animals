@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Horse Anatomy Test - 5-Segment Legs</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #f0f8ff;
+            font-family: 'Arial', sans-serif;
+        }
+        .status-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 350px;
+            z-index: 1000;
+        }
+        .status-good { color: #4CAF50; }
+        .status-warning { color: #FF9800; }
+        .status-error { color: #F44336; }
+        .test-section { 
+            margin: 8px 0; 
+            border-left: 3px solid #555; 
+            padding-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-panel" id="statusPanel">
+        <div><strong>🐎 HORSE ANATOMY TEST</strong></div>
+        <div id="anatomyStatus">Loading...</div>
+        <div id="movementStatus">Initializing...</div>
+        <div id="validationStatus">Validating...</div>
+    </div>
+
+    <!-- FIK System -->
+    <script src="FIK.js"></script>
+    
+    <!-- Core Systems -->
+    <script src="systems/anatomical-data.js"></script>
+    <script src="systems/bone-template-system.js"></script>
+    <script src="systems/constraint-system.js"></script>
+    <script src="systems/gait-system.js"></script>
+    <script src="systems/debug-manager.js"></script>
+    <script src="systems/shape-profile-system.js"></script>
+    
+    <!-- Styling Systems -->
+    <script src="styling/themes.js"></script>
+    <script src="styling/border-decorator.js"></script>
+    <script src="styling/fillers.js"></script>
+    <script src="styling/segmenter.js"></script>
+    
+    <!-- Locomotion Systems -->
+    <script src="locomotion/locomotion-system.js"></script>
+    <script src="locomotion/quadruped-gait.js"></script>
+    
+    <!-- Main Creature Builder -->
+    <script src="creature-builder.js"></script>
+    
+    <script>
+        let builder;
+        let testResults = {
+            anatomy: { passed: 0, total: 0, issues: [] },
+            movement: { passed: 0, total: 0, issues: [] },
+            validation: { passed: 0, total: 0, issues: [] }
+        };
+        
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            
+            console.log("🧪 COMPREHENSIVE HORSE ANATOMY TEST");
+            console.log("====================================");
+            
+            builder = new ModularCreatureBuilder();
+            
+            // Test the improved horse anatomy
+            runAnatomyTests();
+            
+            // Build the horse
+            builder.buildHorse();
+            
+            // Run post-build validation
+            runValidationTests();
+            
+            updateStatusDisplay();
+            
+            console.log("🧪 All tests completed - check status panel");
+        }
+        
+        function runAnatomyTests() {
+            console.log("\n🔬 ANATOMY TESTS");
+            console.log("================");
+            
+            // Test 1: Check anatomical data
+            testResults.anatomy.total++;
+            const horseData = AnatomicalData.HORSE;
+            if (horseData && horseData.legs && horseData.legs.segments === 5) {
+                console.log("✅ HORSE anatomical data has 5 segments");
+                testResults.anatomy.passed++;
+            } else {
+                console.error("❌ HORSE anatomical data missing or incorrect segments");
+                testResults.anatomy.issues.push("Missing/incorrect anatomical data");
+            }
+            
+            // Test 2: Check front leg proportions
+            testResults.anatomy.total++;
+            const frontLeg = horseData.legs.front;
+            const requiredBones = ['scapula', 'humerus', 'radius', 'cannon', 'pastern', 'hoof'];
+            const hasFrontBones = requiredBones.every(bone => frontLeg[bone] !== undefined);
+            if (hasFrontBones) {
+                console.log("✅ Front leg has all required bone segments");
+                testResults.anatomy.passed++;
+                
+                // Check proportions sum
+                const frontSum = Object.values(frontLeg).reduce((sum, val) => sum + val, 0);
+                console.log(`   Front leg proportion sum: ${frontSum.toFixed(2)}`);
+            } else {
+                console.error("❌ Front leg missing required bone segments");
+                testResults.anatomy.issues.push("Front leg incomplete");
+            }
+            
+            // Test 3: Check hind leg proportions  
+            testResults.anatomy.total++;
+            const hindLeg = horseData.legs.hind;
+            const hindRequiredBones = ['femur', 'tibia', 'cannon', 'pastern', 'hoof'];
+            const hasHindBones = hindRequiredBones.every(bone => hindLeg[bone] !== undefined);
+            if (hasHindBones) {
+                console.log("✅ Hind leg has all required bone segments");
+                testResults.anatomy.passed++;
+                
+                const hindSum = Object.values(hindLeg).reduce((sum, val) => sum + val, 0);
+                console.log(`   Hind leg proportion sum: ${hindSum.toFixed(2)}`);
+            } else {
+                console.error("❌ Hind leg missing required bone segments");
+                testResults.anatomy.issues.push("Hind leg incomplete");
+            }
+            
+            // Test 4: Check joint constraints
+            testResults.anatomy.total++;
+            const constraints = horseData.constraints;
+            const requiredJoints = ['shoulder', 'elbow', 'carpus', 'fetlock', 'pastern', 'coffin', 'hip', 'stifle', 'hock'];
+            const hasConstraints = requiredJoints.every(joint => constraints[joint] !== undefined);
+            if (hasConstraints) {
+                console.log("✅ All required joint constraints defined");
+                testResults.anatomy.passed++;
+            } else {
+                console.error("❌ Missing joint constraints");
+                testResults.anatomy.issues.push("Missing joint constraints");
+            }
+        }
+        
+        function runValidationTests() {
+            console.log("\n🔍 VALIDATION TESTS");
+            console.log("===================");
+            
+            // Test 1: Check chain count
+            testResults.validation.total++;
+            const expectedChains = 7; // body, neck, 4 legs, tail
+            if (builder.chains.length === expectedChains) {
+                console.log(`✅ Correct number of chains: ${builder.chains.length}`);
+                testResults.validation.passed++;
+            } else {
+                console.error(`❌ Expected ${expectedChains} chains, got ${builder.chains.length}`);
+                testResults.validation.issues.push(`Wrong chain count: ${builder.chains.length}`);
+            }
+            
+            // Test 2: Check leg segment counts
+            testResults.validation.total++;
+            const legChains = builder.chains.filter((chain, i) => 
+                builder.chainConfigs[i].role.includes('leg')
+            );
+            
+            if (legChains.length === 4) {
+                const segmentCounts = legChains.map(chain => chain.bones.length);
+                const allHave5Segments = segmentCounts.every(count => count === 5);
+                
+                if (allHave5Segments) {
+                    console.log(`✅ All 4 legs have 5 segments: ${segmentCounts.join(', ')}`);
+                    testResults.validation.passed++;
+                } else {
+                    console.error(`❌ Incorrect leg segments: ${segmentCounts.join(', ')}`);
+                    testResults.validation.issues.push(`Wrong segment counts: ${segmentCounts.join(', ')}`);
+                }
+            } else {
+                console.error(`❌ Expected 4 legs, found ${legChains.length}`);
+                testResults.validation.issues.push(`Wrong leg count: ${legChains.length}`);
+            }
+            
+            // Test 3: Check ground contact bones
+            testResults.validation.total++;
+            const legConfigs = builder.chainConfigs.filter(config => config.role.includes('leg'));
+            const groundContactBones = legConfigs.map(config => 
+                config.bones.find(bone => bone.groundContact)
+            ).filter(bone => bone);
+            
+            if (groundContactBones.length === 4) {
+                console.log(`✅ All 4 legs have ground contact bones`);
+                testResults.validation.passed++;
+                
+                const contactRoles = groundContactBones.map(b => b.anatomicalRole);
+                console.log(`   Contact points: ${contactRoles.join(', ')}`);
+            } else {
+                console.error(`❌ Expected 4 ground contact bones, found ${groundContactBones.length}`);
+                testResults.validation.issues.push(`Missing ground contact bones`);
+            }
+            
+            // Test 4: Check locomotion system
+            testResults.validation.total++;
+            if (builder.activeLocomotion && builder.activeLocomotion.footSteps) {
+                console.log(`✅ Locomotion system initialized with ${builder.activeLocomotion.footSteps.length} feet`);
+                testResults.validation.passed++;
+            } else {
+                console.error(`❌ Locomotion system not properly initialized`);
+                testResults.validation.issues.push("Locomotion system failure");
+            }
+        }
+        
+        function updateStatusDisplay() {
+            const anatomyEl = document.getElementById('anatomyStatus');
+            const movementEl = document.getElementById('movementStatus');
+            const validationEl = document.getElementById('validationStatus');
+            
+            // Anatomy status
+            const anatomyPct = Math.round((testResults.anatomy.passed / testResults.anatomy.total) * 100);
+            anatomyEl.innerHTML = `
+                <div class="test-section">
+                    <strong>🔬 ANATOMY TESTS</strong><br>
+                    <span class="${anatomyPct === 100 ? 'status-good' : 'status-warning'}">
+                        ${testResults.anatomy.passed}/${testResults.anatomy.total} passed (${anatomyPct}%)
+                    </span>
+                    ${testResults.anatomy.issues.length > 0 ? '<br>Issues: ' + testResults.anatomy.issues.join(', ') : ''}
+                </div>
+            `;
+            
+            // Movement status  
+            movementEl.innerHTML = `
+                <div class="test-section">
+                    <strong>🚶 MOVEMENT SYSTEM</strong><br>
+                    <span class="status-good">
+                        Locomotion: ${builder.activeLocomotion ? 'Active' : 'Inactive'}<br>
+                        Foot targets: ${builder.activeLocomotion?.footSteps?.length || 0}/4<br>
+                        Current gait: Walk
+                    </span>
+                </div>
+            `;
+            
+            // Validation status
+            const validationPct = Math.round((testResults.validation.passed / testResults.validation.total) * 100);
+            validationEl.innerHTML = `
+                <div class="test-section">
+                    <strong>🔍 VALIDATION</strong><br>
+                    <span class="${validationPct === 100 ? 'status-good' : 'status-error'}">
+                        ${testResults.validation.passed}/${testResults.validation.total} passed (${validationPct}%)
+                    </span>
+                    ${testResults.validation.issues.length > 0 ? '<br>Issues: ' + testResults.validation.issues.join(', ') : ''}
+                </div>
+            `;
+            
+            // Overall status
+            const overallPassed = testResults.anatomy.passed + testResults.validation.passed;
+            const overallTotal = testResults.anatomy.total + testResults.validation.total;
+            const overallPct = Math.round((overallPassed / overallTotal) * 100);
+            
+            console.log(`\n🎯 OVERALL TEST RESULTS: ${overallPassed}/${overallTotal} (${overallPct}%)`);
+            if (overallPct === 100) {
+                console.log("🎉 ALL TESTS PASSED! Horse anatomy is fully implemented!");
+            } else {
+                console.log("⚠️ Some tests failed - check status panel for details");
+            }
+        }
+        
+        function draw() {
+            builder.update();
+            builder.draw();
+            
+            // Draw test indicators
+            push();
+            textAlign(LEFT, TOP);
+            textSize(16);
+            fill(0, 150);
+            noStroke();
+            rect(10, 10, 300, 80, 5);
+            
+            fill(255);
+            text("🐎 HORSE ANATOMY TEST", 20, 25);
+            text("Press S for skeleton view", 20, 45);
+            text("Press W/T/G for gait testing", 20, 65);
+            
+            // Show leg segment count
+            const legChains = builder.chains.filter((chain, i) => 
+                builder.chainConfigs[i].role.includes('leg')
+            );
+            if (legChains.length > 0) {
+                text(`Leg segments: ${legChains[0].bones.length}/5`, 180, 45);
+                const allCorrect = legChains.every(chain => chain.bones.length === 5);
+                fill(allCorrect ? color(0, 255, 0) : color(255, 0, 0));
+                text(allCorrect ? "✅" : "❌", 280, 45);
+            }
+            
+            pop();
+        }
+        
+        function keyPressed() {
+            switch (key.toLowerCase()) {
+                case 's':
+                    builder.setRenderMode('skeleton');
+                    console.log("🦴 Skeleton view - check 5 segments per leg");
+                    break;
+                case 'c':
+                    builder.setRenderMode('current');
+                    console.log("👁️ Normal view");
+                    break;
+                case 'w':
+                    if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('walk', true);
+                        console.log("🚶 Testing walk gait with 5-segment legs");
+                    }
+                    break;
+                case 't':
+                    if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('trot', true);
+                        console.log("🏃 Testing trot gait with 5-segment legs");
+                    }
+                    break;
+                case 'g':
+                    if (builder.activeLocomotion && builder.activeLocomotion.transitionToGait) {
+                        builder.activeLocomotion.transitionToGait('gallop', true);
+                        console.log("🏇 Testing gallop gait with 5-segment legs");
+                    }
+                    break;
+                case 'r':
+                    // Rebuild and retest
+                    console.log("🔄 Rebuilding horse for retest...");
+                    builder.buildHorse();
+                    runValidationTests();
+                    updateStatusDisplay();
+                    break;
+            }
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>
