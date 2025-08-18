@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Debug</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.js"></script>
+</head>
+<body>
+    <h1>Editor Component Debug</h1>
+    <div id="debug-output"></div>
+    
+    <script>
+        // Debug script to test component loading
+        function setup() {
+            noCanvas();
+            
+            const debugOutput = document.getElementById('debug-output');
+            let output = '<h2>Component Availability Check:</h2>';
+            
+            // Check if classes exist
+            const components = [
+                'CollapsibleSection',
+                'PropertySlider', 
+                'IconButton',
+                'SelectionHighlight',
+                'TemplateSelector',
+                'SkeletonEditor',
+                'PropertyPanel',
+                'EditorSystem',
+                'ConfigManager',
+                'OperationHistory'
+            ];
+            
+            components.forEach(component => {
+                try {
+                    const exists = typeof window[component] !== 'undefined';
+                    output += `<p>${component}: ${exists ? '✅ Available' : '❌ Missing'}</p>`;
+                    
+                    if (exists) {
+                        // Try to inspect the constructor
+                        const constructor = window[component];
+                        output += `<p style="margin-left: 20px;">Constructor length: ${constructor.length} parameters</p>`;
+                    }
+                } catch (error) {
+                    output += `<p>${component}: ❌ Error - ${error.message}</p>`;
+                }
+            });
+            
+            debugOutput.innerHTML = output;
+        }
+    </script>
+    
+    <!-- Load components one by one to isolate issues -->
+    <script>
+        console.log('Starting component loading...');
+    </script>
+    
+    <script src="editor/ui-components.js"></script>
+    <script>
+        console.log('ui-components.js loaded');
+    </script>
+    
+    <script src="editor/config-manager.js"></script>
+    <script>
+        console.log('config-manager.js loaded');
+    </script>
+    
+    <script src="editor/operation-history.js"></script>
+    <script>
+        console.log('operation-history.js loaded');
+    </script>
+    
+    <script src="editor/template-selector.js"></script>
+    <script>
+        console.log('template-selector.js loaded');
+    </script>
+    
+    <script src="editor/skeleton-editor.js"></script>
+    <script>
+        console.log('skeleton-editor.js loaded');
+    </script>
+    
+    <script src="editor/property-panel.js"></script>
+    <script>
+        console.log('property-panel.js loaded');
+    </script>
+    
+    <script src="editor/editor-system.js"></script>
+    <script>
+        console.log('editor-system.js loaded');
+    </script>
+</body>
+</html>

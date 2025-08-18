@@ -1,0 +1,31 @@
+{
+  "hooks": [
+    {
+      "name": "prp-auto-generate",
+      "description": "Auto-generate PRPs from specs using .claude/commands methodology",
+      "trigger": "file:created",
+      "pattern": "**/*.spec.md",
+      "command": "node",
+      "args": [".kiro/scripts/prp-generator.js", "${filePath}"],
+      "autoApprove": false
+    },
+    {
+      "name": "prp-validation-check",
+      "description": "Run PRP validation gates after PRP creation",
+      "trigger": "file:saved",
+      "pattern": "PRPs/*.md",
+      "command": "node",
+      "args": [".kiro/scripts/validate-prp.js", "${filePath}"],
+      "autoApprove": true
+    },
+    {
+      "name": "claude-command-sync",
+      "description": "Sync changes to .claude/commands with Kiro steering files",
+      "trigger": "file:saved",
+      "pattern": ".claude/commands/**/*.md",
+      "command": "node",
+      "args": [".kiro/scripts/sync-commands.js", "${filePath}"],
+      "autoApprove": true
+    }
+  ]
+}

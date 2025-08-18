@@ -1,17 +1,70 @@
 let builder;
+let editorSystem;
+let editorActive = false;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
     builder = new ModularCreatureBuilder();
     builder.buildHorse(); // Start with the horse
+    
+    // Initialize editor
+    editorSystem = new EditorSystem(builder);
 }
 
 function draw() {
-    builder.update();
-    builder.draw();
+    background(240);
+    
+    if (editorActive) {
+        editorSystem.update();
+        builder.update(); // Update builder but locomotion paused
+        builder.draw();
+        editorSystem.draw(); // Draw editor overlay
+    } else {
+        builder.update();
+        builder.draw();
+    }
 }
 
 function keyPressed() {
+    // Check for editor keyboard shortcuts first
+    if (editorActive && editorSystem && editorSystem.handleKeyboard) {
+        if (editorSystem.handleKeyboard({
+            ctrlKey: keyIsDown(CONTROL),
+            key: key.toLowerCase(),
+            shiftKey: keyIsDown(SHIFT),
+            preventDefault: () => {}
+        })) {
+            return; // Shortcut handled, don't process other keys
+        }
+    }
+    
+    // Editor toggle
+    if (key === 'E' || key === 'e') {
+        console.time('editor-toggle');
+        
+        editorActive = !editorActive;
+        builder.editorActive = editorActive;
+        
+        if (editorActive) {
+            builder.pauseForEditor();
+            editorSystem.show();
+        } else {
+            editorSystem.hide();
+            builder.resumeFromEditor();
+        }
+        
+        console.timeEnd('editor-toggle');
+        return;
+    }
+    
+    // SKELETON EDITING EXTENSIONS - IK Test Mode toggle
+    if ((key === 'I' || key === 'i') && editorActive) {
+        if (editorSystem.skeletonEditor) {
+            editorSystem.skeletonEditor.toggleIKTestMode();
+        }
+        return;
+    }
+    
     switch (key.toLowerCase()) {
         // Creature switching
         case '1':
@@ -25,6 +78,9 @@ function keyPressed() {
             break;
         case '4':
             builder.buildLizard();
+            break;
+        case '5':
+            builder.buildOctopus();
             break;
         
         // Debug toggle
@@ -54,6 +110,14 @@ function keyPressed() {
             builder.switchRenderMode();
             break;
             
+        // Octopus gait toggle (crawl/swim)
+        case 'o':
+            if (builder.creatureType === 'octopus' && builder.activeLocomotion.toggleMode) {
+                const mode = builder.activeLocomotion.toggleMode();
+                console.log(`Octopus mode: ${mode}`);
+            }
+            break;
+
         // Quadruped gait controls (works for horse and lizard)
         case 'w':
             if ((builder.creatureType === 'horse' || builder.creatureType === 'lizard') && builder.activeLocomotion.transitionToGait) {
@@ -106,9 +170,27 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 }
 
-// *** MOUSE HANDLING FOR DEBUG SYSTEM ***
+// *** MOUSE HANDLING FOR DEBUG SYSTEM AND EDITOR ***
 function mousePressed() {
+    // Let editor handle mouse clicks first if active
+    if (editorActive && editorSystem && editorSystem.handleMouseClick) {
+        if (editorSystem.handleMouseClick(mouseX, mouseY)) {
+            return; // Editor handled the click
+        }
+    }
+    
+    // Fallback to builder mouse handling
     if (builder && builder.handleMouseClick) {
         builder.handleMouseClick(mouseX, mouseY);
+    }
+}
+
+// SKELETON EDITING EXTENSIONS - Mouse drag support
+function mouseDragged() {
+    // Let editor handle mouse dragging first if active
+    if (editorActive && editorSystem && editorSystem.handleMouseDrag) {
+        if (editorSystem.handleMouseDrag(mouseX, mouseY)) {
+            return; // Editor handled the drag
+        }
     }
 }

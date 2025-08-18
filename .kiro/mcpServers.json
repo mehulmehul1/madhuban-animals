@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "claude-commands-bridge": {
+      "command": "node",
+      "args": [".kiro/mcp-servers/claude-commands-server.js"],
+      "env": {
+        "CLAUDE_COMMANDS_PATH": ".claude/commands",
+        "PRP_TEMPLATES_PATH": "PRPs/templates"
+      },
+      "disabled": false,
+      "autoApprove": ["prp:generate", "prp:validate", "command:list"]
+    },
+    "prp-validator": {
+      "command": "node", 
+      "args": [".kiro/mcp-servers/prp-validation-server.js"],
+      "env": {
+        "VALIDATION_COMMANDS": "ruff check --fix && mypy . && uv run pytest tests/ -v"
+      },
+      "disabled": false,
+      "autoApprove": ["validate:syntax", "validate:tests"]
+    }
+  }
+}

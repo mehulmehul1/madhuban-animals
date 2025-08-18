@@ -708,3 +708,54 @@ i have a tool now, i can see my four skeletons from the code, they configs are d
 Now that i am thinking about it, our system has a single monolithic class called modular builder which has buildHorse, buildBiped, functions that are being called and passed their anatomical data. 
 
 
+OK so I now have generated all the 8 PRPS required. What is the next step from here? Let's research and make a whole context engineering package for. Accurate development. The list of things that I'm thinking of including in this package are the current code base. Then these eight PRPS. Detailed project architecture documentation that explains every class and module and function from the code base. In English and. Then we'll, then we, then we will have other documents from our code. Base explaining the fabric implementation and the creature. Modular creature. Builder architecture. Uh, we will now have to see the PRP Agentech framework and figure out what the next step from here is. Do we create a final PRP consolidating all these PRPS or do we start implementing one by 1 and update each with? That developed current development progress. Or do we like? Create a prompt to create a consolidated project implementation plan and then create tasks. Detailed tasks. PRPS based on the templates provided in that original Github. What, what, what should? What should I do basically? 
+
+I have 8 prps, sabse pehle we are creating the planning prp, then we will use prp1 and planning to create base prp. i atleast have all 8 to look at a glance, we will execute prps one by one, making sure the phase is complete and then move to the next only then. I know my templates might be just very off, but we will figure that out. editor UI banne k baad, edit templates in the code, see how what is being called etc. after I execute one prp, i have to thorougly check if everything is as intended, ask grok, clarify, understand vision and requirement. break everything down into clear intent
+
+to make the intital templates - they should have the 5 creature types skeletons with proper length, constraints, angles. And a basic set of muscle mass, once we start putting some up on our bones and understand how the muscle config is working we will research, make grok understand the creature builder and suggest base values for our templates. based on the force books classification why not.
+
+move, rotate, scale we dont need on the bones or chains at all. Understand what really a creature is, you have IK pose testing which is great. Understand how the template config is working here. Hogya fir context muddy. Clear all current UI, do proper UX wireframe based on user stories for the editor. Make the creature template configs based on force. Load them. Then lets work on the creature config as a whole, selecting a chain - i should see its properties, its attachment point, simple UI to drag and drop on other attachment. Click on chain, see its bones in zoom, with base pose length, angle etc. Click on individual bone and with sliders update length, while making sure the connections of our chain does not break. On clicking a joint I should be able to add another chain. ON a joint I should also be able to visually set, or with sliders set min/max constraints. first lets go thorugh the whole /PRPs:prp-spec-create is running…  research all the code files which describe how the modular creatures are made and defined, their anatomy, constraints, length etc. and based on this lets brainstrom the editor UX to be intuitive and clean and great for our whole use case
+
+next wapas aake ek baar execute ux prp create spec prp, execute it. first go think aaram se come back fir. see the whole creature config f anatomical, constraints, locomtion whatever linked to a single animal everything
+
+when I click chain, i should be able to see its properties, drag it to reattach to another snap point. I should also see an exact zoomed in view of that chain, with all bones and joints drawn. 
+when I click bone, i should be able to change its length, angle constraints for clock/anticlock
+When I click Joint, set joint type angle constraints.
+
+
+active locomotion is based on creature config, but it can be based on set of limbs - for, these should be the limb templates then, we should make a list of animals in these types and modularize. 
+plantigrades - feet planted on ground, 
+digitrades - walking on toes, 
+unguligrade - hooves on ground
+aquatic
+arthropod maybe later
+The locomotion system defines a type of walking for each type of creature, if a creature has two bear legs and two horse legs, the front and hind pairs of these grades can be locomotion archetypes, you move from a species-specific system to a behavior-specific one. template digitrade legs will always have default values for lengths and constraints, that we might be able to edit when customizing a template creature by clicking on a chain.
+
+chain, I should be able to change
+- attachment and attachment point
+- targetMode
+- Bones template
+  - spine, leg, tail etc are role and types, they are the templates only
+- locomotion role
+- constraint template
+
+every chain solves for a target, foot chain solves for targetMode footposition, then the spine chain just has to follow, so we set upright, vertical, constraints. I also need to understand how the constraint system works, these hase angles for different joints. On every bone of a chain of a creature, a type of jointprofile is added - hinge, ballsocket, these have default values
+
+anatomical configs -character, essence, visual difference
+- posture
+- legpositioning
+- spinecharacterics
+- joint override
+- gait
+
+anatomical-data
+- chain segments, bone lengths, flexibility
+- constraints values
+- proportions
+
+Now we have to understand this config structure, what does an individual creature consists of and has. Then based on the force book classification, we will create a template for each type of creature. 
+
+
+comment section of a post is not a feature, any commom internet area where more than two users exchange information or thoughts is a space, a section.
+
+> ok so i had questions and got answers for them too, was able to get base configs. the base config has creatures, no anatomical data that we need to 

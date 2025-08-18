@@ -265,11 +265,11 @@ class AnatomicalData {
             // Skeletal Structure - Sprawling Quadruped
             legs: {
                 segments: 4,
-                // Sprawling posture proportions
-                humerus: 0.35,          // Relatively short
-                radius: 0.35,           // Short forearm
-                carpus: 0.15,           // Wrist
-                digits: 0.15            // Toes/claws
+                // Sprawling posture proportions (longer lateral reach)
+                humerus: 0.45,          // Long lateral humerus
+                radius: 0.45,           // Long forearm
+                carpus: 0.18,           // Wrist/hand
+                digits: 0.22            // Toes/claws with reach
             },
             
             spine: {
@@ -313,11 +313,11 @@ class AnatomicalData {
             
             // Body Proportions - Low, elongated
             proportions: {
-                legToBody: 0.4,         // Short legs relative to body
-                tailToBody: 1.2,        // Long tail
-                bodyWidth: 0.6,         // Relatively wide, low body
-                legWidth: 0.12,         // Thin limbs
-                sprawlAngle: 45         // Leg splay angle
+                legToBody: 0.55,        // Longer legs for pronounced sprawl reach
+                tailToBody: 1.2,
+                bodyWidth: 0.6,
+                legWidth: 0.14,
+                sprawlAngle: 55         // Strong splay
             },
             
             // Width Profiles

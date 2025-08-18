@@ -9,6 +9,9 @@ class LocomotionSystem {
         this.patterns.set('bipedal-walk', BipedalWalkPattern);
         this.patterns.set('quadruped-walk', QuadrupedWalkPattern);
         this.patterns.set('serpentine', SerpentinePattern);
+        if (typeof SprawlingQuadrupedGaitController !== 'undefined') {
+            this.patterns.set('sprawling-quadruped', SprawlingQuadrupedGaitController);
+        }
     }
 
     createPattern(type, config) {

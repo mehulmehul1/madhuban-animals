@@ -243,9 +243,9 @@ class BoneTemplateSystem {
             const sprawlDir = side === 'left' ? -1 : 1;
             
             return [
-                { // Humerus/Femur - splayed outward
+                { // Humerus/Femur - strongly splayed outward, low vertical
                     length: this.validateBoneLength(length * legData.humerus),
-                    direction: new FIK.V2(sprawlDir * 0.8, 0.6), // Sprawling angle
+                    direction: new FIK.V2(sprawlDir * Math.cos(sprawlAngle * Math.PI/180), 0.35),
                     constraints: { 
                         clockwise: constraints.shoulder.flexion[1], 
                         anticlockwise: Math.abs(constraints.shoulder.flexion[0])
@@ -254,9 +254,9 @@ class BoneTemplateSystem {
                     anatomicalRole: 'shoulder',
                     sprawlAngle: sprawlAngle
                 },
-                { // Radius/Tibia
+                { // Radius/Tibia - forward sweep with slight downward
                     length: this.validateBoneLength(length * legData.radius),
-                    direction: new FIK.V2(sprawlDir * 0.4, 1),
+                    direction: new FIK.V2(sprawlDir * 0.6, 0.9),
                     constraints: { 
                         clockwise: constraints.elbow.flexion[1], 
                         anticlockwise: 0 
@@ -264,16 +264,16 @@ class BoneTemplateSystem {
                     jointType: 'hinge',
                     anatomicalRole: 'elbow'
                 },
-                { // Carpus/Tarsus
+                { // Carpus/Tarsus - mostly forward
                     length: this.validateBoneLength(length * legData.carpus),
-                    direction: new FIK.V2(sprawlDir * 0.2, 1),
+                    direction: new FIK.V2(sprawlDir * 0.5, 0.9),
                     constraints: { clockwise: 60, anticlockwise: 30 },
                     jointType: 'hinge',
                     anatomicalRole: 'wrist'
                 },
-                { // Digits (toes/claws)
+                { // Digits (toes/claws) - forward reach
                     length: this.validateBoneLength(length * legData.digits),
-                    direction: new FIK.V2(sprawlDir * 0.1, 1),
+                    direction: new FIK.V2(sprawlDir * 0.8, 0.6),
                     constraints: { clockwise: 45, anticlockwise: 20 },
                     jointType: 'hinge',
                     anatomicalRole: 'digits'

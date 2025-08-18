@@ -122,8 +122,10 @@ class DebugManager {
             const isActive = this.currentTab === tab.id;
             
             // Tab background
-            fill(isActive ? ...this.colors.activeTab : ...this.colors.inactiveTab);
-            stroke(...this.colors.border);
+            const tabColor = isActive ? this.colors.activeTab : this.colors.inactiveTab;
+            fill(tabColor[0], tabColor[1], tabColor[2]);
+            const borderColor = this.colors.border;
+            stroke(borderColor[0], borderColor[1], borderColor[2]);
             strokeWeight(1);
             rect(x, y, tabWidth, this.tabHeight);
             

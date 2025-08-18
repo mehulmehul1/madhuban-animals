@@ -109,34 +109,7 @@ class BipedalWalkPattern extends LocomotionPattern {
         return this.footSteps.filter(f => !f.isLifted).length;
     }
 
-    drawFootTargets() {
-        this.footSteps.forEach((foot, i) => {
-            push();
-            
-            if (foot.isLifted) {
-                fill(255, 200, 100);
-                noStroke();
-                const liftHeight = Math.sin(foot.phase) * this.stepHeight;
-                circle(foot.target.x, foot.target.y - liftHeight, 8);
-                
-                stroke(255, 200, 100, 100);
-                strokeWeight(1);
-                noFill();
-                circle(foot.target.x, foot.target.y, 12);
-            } else {
-                fill(100, 200, 255);
-                noStroke();
-                circle(foot.target.x, foot.target.y, 10);
-            }
-            
-            fill(0);
-            textAlign(CENTER);
-            textSize(9);
-            text(foot.side, foot.target.x, foot.target.y - 15);
-            
-            pop();
-        });
-    }
+    // Removed per-pattern foot HUD; unified DebugManager renders these
 
     getTailTarget(tailRole, context) {
         const direction = context.parentBone.getDirectionUV();

@@ -49,6 +49,13 @@ class ModularCreatureBuilder {
         this.creatureConfig = null;
         this.activeLocomotion = null;
         
+        // Help overlay (legacy controls panel) – disabled by default to avoid clutter
+        this.showHelpOverlay = false;
+        
+        // Editor integration
+        this.editorActive = false;
+        this.editorSavedState = null;
+        
         // Skeleton visualization colors
         this.chainColors = {
             'spine': [100, 150, 255],      // Blue
@@ -479,15 +486,14 @@ class ModularCreatureBuilder {
         };
         
         // Set up sprawling quadruped locomotion with lateral undulation
-        this.activeLocomotion = new QuadrupedWalkPattern({
-            stepLength: 20,          // Shorter steps for lizard
-            stepHeight: 8,           // Lower lift for sprawling posture
-            adaptiveGround: true,    // Enable free movement like crane
-            debugSimpleMode: true,   // Enable simplified mode
-            useProperWalkGait: true, // 🔧 ENABLE PROPER WALK GAIT
-            shoulderHipDistance: 80, // Lizard shoulder-to-hip distance (shorter body)
-            legSpacing: 35,          // Lizard leg spacing (narrower than horse)
-            creatureConfig: this.creatureConfig  // 📐 PASS ANATOMICAL PROPORTIONS
+        this.activeLocomotion = new SprawlingQuadrupedGaitController({
+            stepLength: 18,
+            stepHeight: 6,
+            frequency: 0.9,
+            dutyFactor: 0.8,
+            shoulderHipDistance: 70,
+            legSpacing: 50,
+            creatureConfig: this.creatureConfig
         });
         
         // Set creature configuration for anatomical calculations
@@ -502,7 +508,7 @@ class ModularCreatureBuilder {
             attachment: 'free',
             targetMode: 'calculated',
             color: [85, 107, 47], // Olive green lizard color
-            bones: this.boneTemplateSystem.generateBones('vertebrate-spine', 12, {
+            bones: this.boneTemplateSystem.generateBones('vertebrate-spine', 14, {
                 segments: 15, // More segments for flexibility
                 flexibility: 'very-high'
             }),
@@ -527,7 +533,7 @@ class ModularCreatureBuilder {
                 attachmentPoint: 'bone-index',
                 attachmentIndex: 11, // Front of body
                 color: [85, 107, 47], // Match body color
-                bones: this.boneTemplateSystem.generateBones('lizard-leg', 30, {
+                bones: this.boneTemplateSystem.generateBones('lizard-leg', 42, {
                     segments: 4,
                     side: side,
                     sprawlAngle: 45,
@@ -553,7 +559,7 @@ class ModularCreatureBuilder {
                 attachmentPoint: 'bone-index',
                 attachmentIndex: 4, // Back of body
                 color: [85, 107, 47], // Match body color
-                bones: this.boneTemplateSystem.generateBones('lizard-leg', 35, {
+                bones: this.boneTemplateSystem.generateBones('lizard-leg', 48, {
                     segments: 4,
                     side: side,
                     sprawlAngle: 45,
@@ -581,7 +587,7 @@ class ModularCreatureBuilder {
             attachmentPoint: 'bone-index',
             attachmentIndex: 0,
             color: [75, 96, 42], // Darker green for tail
-            bones: this.boneTemplateSystem.generateBones('vertebrate-tail', 18, {
+            bones: this.boneTemplateSystem.generateBones('vertebrate-tail', 22, {
                 segments: 12, // More segments for snake-like movement
                 taper: true,
                 flexibility: 'very-high'
@@ -596,6 +602,40 @@ class ModularCreatureBuilder {
         this.addChain(tailConfig);
         
         console.log("Built modular lizard with " + this.chains.length + " chains");
+    }
+
+    buildOctopus() {
+        this.clearCreature();
+        this.creatureType = 'octopus';
+
+        this.creatureConfig = {
+            mantleSegments: 5,
+            mantleLength: 20,
+            armSegments: 10,
+            armLength: 15,
+            numArms: 8
+        };
+
+        this.activeLocomotion = new OctopusCrawlPattern(this);
+
+        const octopusTemplate = new OctopusTemplateSystem(this);
+
+        const mantle = octopusTemplate.createMantle({
+            length: this.creatureConfig.mantleLength,
+            segments: this.creatureConfig.mantleSegments,
+            position: this.bodyPosition
+        });
+
+        for (let i = 0; i < this.creatureConfig.numArms; i++) {
+            const attachmentIndex = Math.round((i / (this.creatureConfig.numArms - 1)) * (this.creatureConfig.mantleSegments - 1));
+            const roleName = `arm-${i}`;
+            octopusTemplate.createArm({
+                length: this.creatureConfig.armLength,
+                segments: this.creatureConfig.armSegments,
+                attachmentIndex,
+                role: roleName
+            });
+        }
     }
     
     buildSnake() {
@@ -635,6 +675,29 @@ class ModularCreatureBuilder {
         console.log("Built pure snake with " + this.chains.length + " chains");
     }
     
+    createCreature(type) {
+        switch (type) {
+            case 'fish':
+                this.buildFish();
+                break;
+            case 'crane':
+                this.buildBipedalCrane();
+                break;
+            case 'horse':
+                this.buildHorse();
+                break;
+            case 'lizard':
+                this.buildLizard();
+                break;
+            case 'snake':
+                this.buildSnake();
+                break;
+            case 'octopus':
+                this.buildOctopus();
+                break;
+        }
+    }
+
     // Legacy method - redirect to horse
     buildQuadruped() {
         this.buildHorse();
@@ -706,6 +769,135 @@ class ModularCreatureBuilder {
         
         this.chains.push(chain);
         this.chainConfigs.push(config);
+        return chain;
+    }
+
+    // CREATE CHAIN FROM CONFIGURATION (for ConfigManager integration)
+    createChainFromConfig(config) {
+        const chain = new FIK.Chain2D(this.rgbToHex(config.color));
+        
+        // Create first bone
+        if (config.bones.length > 0) {
+            const firstBone = config.bones[0];
+            let startPos;
+            
+            // Determine start position based on attachment
+            if (config.basePosition) {
+                startPos = new FIK.V2(config.basePosition.x, config.basePosition.y);
+            } else if (config.attachment === 'parent' && config.parentRole) {
+                startPos = this.getAttachmentPoint(config.parentRole, config.attachmentPoint, config.attachmentIndex);
+            } else {
+                startPos = new FIK.V2(300, 300); // Default position
+            }
+            
+            // Calculate end position
+            let direction;
+            if (firstBone.direction) {
+                direction = firstBone.direction.normalised();
+            } else {
+                direction = new FIK.V2(1, 0); // Default right direction
+            }
+            
+            const endPos = new FIK.V2(
+                startPos.x + direction.x * firstBone.length,
+                startPos.y + direction.y * firstBone.length
+            );
+            
+            const bone = new FIK.Bone2D(startPos, endPos);
+            
+            // Apply constraints
+            const constraints = this.getConstraintsForBone(firstBone, config);
+            bone.setClockwiseConstraintDegs(constraints.clockwise);
+            bone.setAnticlockwiseConstraintDegs(constraints.anticlockwise);
+            
+            chain.addBone(bone);
+            
+            // Add remaining bones
+            for (let i = 1; i < config.bones.length; i++) {
+                const boneConfig = config.bones[i];
+                const boneConstraints = this.getConstraintsForBone(boneConfig, config);
+                
+                let boneDirection;
+                if (boneConfig.direction) {
+                    boneDirection = boneConfig.direction.normalised();
+                } else {
+                    boneDirection = new FIK.V2(1, 0); // Default direction
+                }
+                
+                chain.addConsecutiveBone(
+                    boneDirection,
+                    boneConfig.length,
+                    boneConstraints.clockwise,
+                    boneConstraints.anticlockwise
+                );
+            }
+        }
+        
+        // Configure chain properties
+        chain.setFixedBaseMode(config.attachment !== 'free');
+        
+        // Add to builder arrays
+        this.chains.push(chain);
+        this.chainConfigs.push(config);
+        
+        console.log(`Created chain from config: ${config.role} (${config.bones.length} bones)`);
+        return chain;
+    }
+    
+    // Helper method to get constraints for a bone
+    getConstraintsForBone(boneConfig, chainConfig) {
+        let constraints;
+        
+        if (boneConfig.anatomicalRole && this.creatureType) {
+            constraints = this.constraintSystem.getAnatomicalConstraints(
+                this.creatureType, 
+                boneConfig.anatomicalRole, 
+                boneConfig
+            );
+        } else if (boneConfig.constraints) {
+            // Use explicit constraints from bone config
+            constraints = {
+                clockwise: boneConfig.constraints.clockwise || 45,
+                anticlockwise: boneConfig.constraints.anticlockwise || 45
+            };
+        } else {
+            // Use template constraints
+            constraints = this.constraintSystem.getConstraints(
+                chainConfig.constraintTemplate || 'default', 
+                boneConfig.constraints || {}
+            );
+        }
+        
+        return constraints;
+    }
+    
+    // Helper method to get attachment point for parent chains
+    getAttachmentPoint(parentRole, attachmentPoint, attachmentIndex) {
+        // Find parent chain by role
+        const parentChainIndex = this.chainConfigs.findIndex(config => config.role === parentRole);
+        
+        if (parentChainIndex !== -1 && parentChainIndex < this.chains.length) {
+            const parentChain = this.chains[parentChainIndex];
+            
+            switch (attachmentPoint) {
+                case 'start':
+                    return parentChain.bones[0].start;
+                case 'end':
+                    const lastBone = parentChain.bones[parentChain.numBones - 1];
+                    return lastBone.end;
+                case 'bone-index':
+                    if (attachmentIndex < parentChain.numBones) {
+                        return parentChain.bones[attachmentIndex].start;
+                    }
+                    break;
+                case 'middle':
+                    const middleIndex = Math.floor(parentChain.numBones / 2);
+                    return parentChain.bones[middleIndex].start;
+            }
+        }
+        
+        // Fallback to default position
+        return new FIK.V2(300, 300);
     }
 
     clearCreature() {
@@ -718,7 +910,10 @@ class ModularCreatureBuilder {
 
     // UPDATE SYSTEM
     update() {
-        this.mouseTarget.set(mouseX, mouseY);
+        // Only update mouse target if NOT in editor mode to prevent unwanted mouse following
+        if (!this.editorActive) {
+            this.mouseTarget.set(mouseX, mouseY);
+        }
         
         // Update locomotion system
         if (this.activeLocomotion) {
@@ -726,7 +921,10 @@ class ModularCreatureBuilder {
         }
         
         // Update all chains with enhanced strategies
-        this.updateChains();
+        // Skip chain updates in editor mode to keep creatures static for selection
+        if (!this.editorActive) {
+            this.updateChains();
+        }
         
         // *** UPDATE UNIFIED DEBUG SYSTEM ***
         this.debugManager.update(this);
@@ -737,7 +935,20 @@ class ModularCreatureBuilder {
         switch (config.type) {
             case 'spine':
                 return (chain, cfg, ctx) => {
-                    if (this.creatureType === 'crane') {
+                    if (this.creatureType === 'octopus') {
+                        chain.setBaseLocation(this.bodyPosition);
+                        chain.baseboneConstraintUV = new FIK.V2(Math.cos(this.bodyHeading), Math.sin(this.bodyHeading));
+                        // If controller provides a mantle swim wave, apply it in swim mode
+                        if (this.activeLocomotion && this.activeLocomotion.applyMantleSwimWave && this.activeLocomotion.getMode && this.activeLocomotion.getMode() === 'swim') {
+                            this.activeLocomotion.applyMantleSwimWave(chain, cfg);
+                        }
+                        const dir = chain.baseboneConstraintUV;
+                        const target = new FIK.V2(
+                            this.bodyPosition.x + dir.x * 40,
+                            this.bodyPosition.y + dir.y * 10
+                        );
+                        chain.solveForTarget(target);
+                    } else if (this.creatureType === 'crane') {
                         // Crane - upright posture, flexible neck movement
                         chain.setBaseLocation(this.bodyPosition);
                         chain.baseboneConstraintUV = new FIK.V2(Math.cos(this.bodyHeading), Math.sin(this.bodyHeading));
@@ -761,16 +972,14 @@ class ModularCreatureBuilder {
                         // Lizard - low sprawling posture with lateral undulation
                         chain.setBaseLocation(this.bodyPosition);
                         chain.baseboneConstraintUV = new FIK.V2(Math.cos(this.bodyHeading), Math.sin(this.bodyHeading));
+                        // Couple spine undulation to gait if available
+                        if (this.activeLocomotion && this.activeLocomotion.applySpineUndulation) {
+                            this.activeLocomotion.applySpineUndulation(chain, cfg);
+                        }
                         const dir = chain.baseboneConstraintUV;
-                        
-                        // Enhanced lateral undulation with body wave
-                        const time = Date.now() * 0.002;
-                        const lateralWave = Math.sin(time) * 20;
-                        const forwardWave = Math.sin(time + Math.PI/2) * 10;
-                        
                         const target = new FIK.V2(
-                            this.bodyPosition.x + dir.x * (40 + forwardWave) + lateralWave,
-                            this.bodyPosition.y + dir.y * 15 // Lower to ground
+                            this.bodyPosition.x + dir.x * 40,
+                            this.bodyPosition.y + dir.y * 12 // Low to ground
                         );
                         chain.solveForTarget(target);
                     } else if (this.creatureType === 'fish') {
@@ -779,29 +988,62 @@ class ModularCreatureBuilder {
                         if (this.activeLocomotion && this.activeLocomotion.applyBodyWave) {
                             this.activeLocomotion.applyBodyWave(chain, cfg);
                         }
-                        chain.solveForTarget(this.mouseTarget);
+                        // Don't follow mouse in editor mode - keep static for selection
+                        if (!this.editorActive) {
+                            chain.solveForTarget(this.mouseTarget);
+                        }
                     } else if (this.creatureType === 'snake') {
                         chain.setBaseLocation(this.bodyPosition);
                         if (this.activeLocomotion && this.activeLocomotion.applySerpentineMotion) {
                             this.activeLocomotion.applySerpentineMotion(chain, cfg);
                         }
-                        chain.solveForTarget(this.mouseTarget);
+                        // Don't follow mouse in editor mode - keep static for selection
+                        if (!this.editorActive) {
+                            chain.solveForTarget(this.mouseTarget);
+                        }
                     }
                 };
             
             case 'neck':
                 return (chain, cfg, ctx) => {
-                    chain.solveForTarget(this.mouseTarget);
+                    // Don't follow mouse in editor mode - keep static for selection
+                    if (!this.editorActive) {
+                        chain.solveForTarget(this.mouseTarget);
+                    }
                 };
             
             case 'leg':
                 return (chain, cfg, ctx) => {
+                    // Prefer outward-lateral bending for sprawling lizard
+                    if (this.creatureType === 'lizard') {
+                        const side = cfg.role.includes('left') ? -1 : 1;
+                        const base = new FIK.V2(side * 1.0, 0.3).normalised();
+                        chain.baseboneConstraintUV = base;
+                    }
                     // Use locomotion system for foot targeting
                     if (this.activeLocomotion && this.activeLocomotion.getFootTarget) {
                         const footIndex = cfg.footIndex;
                         const footTarget = this.activeLocomotion.getFootTarget(footIndex);
                         if (footTarget) {
                             chain.solveForTarget(footTarget);
+                        }
+                    }
+                };
+            
+            case 'arm':
+                return (chain, cfg, ctx) => {
+                    // Cephalopod/arm controller targeting
+                    if (this.activeLocomotion && this.activeLocomotion.getArmTarget) {
+                        const armTarget = this.activeLocomotion.getArmTarget(cfg.role, ctx);
+                        if (armTarget) {
+                            chain.solveForTarget(armTarget);
+                        }
+                    } else {
+                        // Fallback: hover near attachment point with slight oscillation
+                        if (ctx.attachPoint) {
+                            const t = Date.now() * 0.002;
+                            const offset = new FIK.V2(Math.sin(t) * 20, 30 + Math.cos(t) * 10);
+                            chain.solveForTarget(new FIK.V2(ctx.attachPoint.x + offset.x, ctx.attachPoint.y + offset.y));
                         }
                     }
                 };
@@ -873,7 +1115,10 @@ class ModularCreatureBuilder {
             
             default:
                 return (chain, cfg, ctx) => {
-                    chain.solveForTarget(this.mouseTarget);
+                    // Don't follow mouse in editor mode - keep static for selection
+                    if (!this.editorActive) {
+                        chain.solveForTarget(this.mouseTarget);
+                    }
                 };
         }
     }
@@ -1046,8 +1291,10 @@ class ModularCreatureBuilder {
         // *** UNIFIED DEBUG SYSTEM - Replaces all scattered debug rendering ***
         this.debugManager.draw(this);
         
-        // Draw controls
-        this.drawControls();
+        // Optional help panel (disabled by default to reduce clutter)
+        if (this.showHelpOverlay) {
+            this.drawControls();
+        }
     }
 
     drawBodyIndicator() {
@@ -1192,6 +1439,13 @@ class ModularCreatureBuilder {
         }
         
         // Handle other creature builder keys
+        switch (key.toLowerCase()) {
+            case 'h':
+                // Toggle legacy help overlay panel
+                this.showHelpOverlay = !this.showHelpOverlay;
+                console.log(`Help overlay: ${this.showHelpOverlay ? 'ON' : 'OFF'}`);
+                return true;
+        }
         return false;
     }
     
@@ -1337,5 +1591,29 @@ class ModularCreatureBuilder {
 
     rgbToHex(rgb) {
         return (rgb[0] << 16) | (rgb[1] << 8) | rgb[2];
+    }
+
+    getBonesByRole(role) {
+        return this.chains.filter((chain, i) => this.chainConfigs[i].role === role);
+    }
+    
+    // *** EDITOR INTEGRATION METHODS ***
+    
+    pauseForEditor() {
+        this.editorSavedState = {
+            locomotion: this.activeLocomotion,
+            renderMode: this.renderMode
+        };
+        this.activeLocomotion = null;
+        this.editorActive = true;
+    }
+    
+    resumeFromEditor() {
+        if (this.editorSavedState) {
+            this.activeLocomotion = this.editorSavedState.locomotion;
+            this.renderMode = this.editorSavedState.renderMode;
+            this.editorSavedState = null;
+        }
+        this.editorActive = false;
     }
 }

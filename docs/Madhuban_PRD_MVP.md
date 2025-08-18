@@ -74,7 +74,7 @@ The decoration system is composed of two main parts: `BorderDecorator` and `Fill
         *   **Bead Styling:** Each bead can have its own `fill`, `stroke`, `hatch`, and even a `small_border`.
         *   **Bead Placement:** Beads can be placed at regular intervals or in custom patterns.
 
-#### 2.4.2. `Filler`
+#### 2.4.2 `Filler`
 
 *   **Requirement:** The system must be able to fill any enclosed area (a shape segment or the area within a border) with a variety of patterns.
 *   **Details:**
