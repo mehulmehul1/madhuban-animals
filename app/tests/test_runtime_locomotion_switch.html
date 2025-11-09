@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧪 Runtime Locomotion Switch Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; background:#1f1f1f; color:white; font-family:Arial;">
+  <div style="position:absolute; top:10px; left:10px; z-index:1000; background:rgba(0,0,0,0.9); padding:16px; border-radius:8px; max-width:420px;">
+    <h2>🧪 Test: Runtime Locomotion Switch</h2>
+    <p>Purpose: Verify builder can switch active locomotion by ID at runtime and quadruped gait hotkeys work.</p>
+    <p><strong>Controls:</strong></p>
+    <ul>
+      <li>D — Toggle debug panel</li>
+      <li>3 — Build Horse (quadruped)</li>
+      <li>4 — Build Lizard (sprawling quadruped)</li>
+      <li>W/T/G/P — Walk/Trot/Gallop/Pace (when quadruped gait is active)</li>
+      <li>L — Cycle locomotion for current creature</li>
+      <li>O — Toggle automatic gait switching (if supported)</li>
+    </ul>
+    <p><strong>Expected:</strong></p>
+    <ul>
+      <li>Pressing L cycles: Horse → quadruped-walk → sprawling-quadruped; Lizard → sprawling-quadruped → quadruped-walk.</li>
+      <li>W/T/G/P trigger gait transitions when a quadruped gait is active.</li>
+    </ul>
+  </div>
+
+  <!-- Project Scripts -->
+  <script src="../FIK.js"></script>
+  <script src="../styling/ThemeManager.js"></script>
+  <script src="../styling/border.js"></script>
+  <script src="../styling/filler.js"></script>
+  <script src="../styling/segmenter.js"></script>
+
+  <script src="../systems/shape-generation.js"></script>
+  <script src="../systems/anatomical-data.js"></script>
+  <script src="../systems/constraint-system.js"></script>
+  <script src="../systems/gait-system.js"></script>
+  <script src="../systems/bone-template-system.js"></script>
+  <script src="../systems/shape-profile-system.js"></script>
+  <script src="../systems/debug-manager.js"></script>
+
+  <script src="../systems/locomotion/locomotion-system.js"></script>
+  <script src="../systems/locomotion/undulate-pattern.js"></script>
+  <script src="../systems/locomotion/bipedal-walk-pattern.js"></script>
+  <script src="../systems/locomotion/quadruped-gait.js"></script>
+  <script src="../systems/locomotion/serpentine-pattern.js"></script>
+  <script src="../systems/locomotion/sprawling-quadruped-gait.js"></script>
+  <script src="../systems/locomotion/octopus-crawl-pattern.js"></script>
+
+  <script src="../creature-builder.js"></script>
+
+  <script>
+    let builder;
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      builder = new ModularCreatureBuilder();
+      builder.buildHorse();
+    }
+
+    function draw() {
+      background(30);
+      builder.update();
+      builder.draw();
+    }
+
+    function nextLocomotionIdForCreature() {
+      // Limit patterns to sensible choices per creature
+      if (builder.creatureType === 'horse') {
+        return builder.activeLocomotion?.name === 'sprawling-quadruped' ? 'quadruped-walk' : 'sprawling-quadruped';
+      }
+      if (builder.creatureType === 'lizard') {
+        return builder.activeLocomotion?.name === 'quadruped-walk' ? 'sprawling-quadruped' : 'quadruped-walk';
+      }
+      if (builder.creatureType === 'crane') return 'bipedal-walk';
+      if (builder.creatureType === 'fish') return 'undulate';
+      if (builder.creatureType === 'snake') return 'serpentine';
+      return 'quadruped-walk';
+    }
+
+    function keyPressed() {
+      if (builder && builder.handleKeyPress && builder.handleKeyPress(key)) return;
+      switch (key.toLowerCase()) {
+        case '3': builder.buildHorse(); break;
+        case '4': builder.buildLizard(); break;
+        case 'l': {
+          const id = nextLocomotionIdForCreature();
+          const ok = builder.setLocomotionPatternById(id);
+          console.log('Switch locomotion →', id, ok ? 'OK' : 'FAILED');
+          break;
+        }
+      }
+    }
+
+    function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+  </script>
+</body>
+</html>
