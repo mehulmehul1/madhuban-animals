@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story 2.1 - Force Analyzer Tests</title>
+    <script src="../FIK.js"></script>
+    <script src="../systems/force-analyzer.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        
+        .test-group {
+            background: white;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #e7f3ff;
+            color: #0066cc;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .summary {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #666;
+            font-weight: bold;
+        }
+        
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .debug-info {
+            background: #fffacd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Story 2.1 - Force Analyzer Unit Tests</h1>
+    <p>Tests for the ForceAnalyzer class that calculates muscle force metrics from skeleton state.</p>
+    <div id="results"></div>
+
+    <script>
+        const results = [];
+        let testCount = 0;
+        let passCount = 0;
+        
+        function test(name, fn) {
+            testCount++;
+            try {
+                fn();
+                results.push({ name, passed: true, error: null });
+                passCount++;
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                results.push({ name, passed: false, error: error.message });
+                console.error(`✗ ${name}: ${error.message}`);
+            }
+        }
+        
+        function assert(condition, message) {
+            if (!condition) throw new Error(message || 'Assertion failed');
+        }
+        
+        function assertEqual(actual, expected, message) {
+            if (Math.abs(actual - expected) > 0.001) {
+                throw new Error(message || `Expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function assertAlmostEqual(actual, expected, tolerance, message) {
+            if (Math.abs(actual - expected) > tolerance) {
+                throw new Error(message || `Expected ~${expected} (±${tolerance}), got ${actual}`);
+            }
+        }
+
+        // ========================================
+        // HELPER: Mock Objects
+        // ========================================
+
+        function createMockBone(id, x, y, angle = 0) {
+            return {
+                id: id,
+                name: id,
+                x: x,
+                y: y,
+                pos: { x: x, y: y },
+                angle: angle,
+                rotation: angle
+            };
+        }
+
+        function createMockSkeleton(bones) {
+            const skeleton = {
+                bones: bones,
+                getBoneById: function(id) {
+                    return this.bones.find(b => b.id === id) || null;
+                }
+            };
+            return skeleton;
+        }
+
+        function createMockMuscle(id, startJointId, endJointId, restLength = 100, type = 'extending_limb_muscle') {
+            return {
+                id: id,
+                startJoint: startJointId,
+                endJoint: endJointId,
+                restLength: restLength,
+                width: 10,
+                type: type,
+                deformationRules: {}
+            };
+        }
+
+        // ========================================
+        // TEST SUITE 1: Ratio Calculation
+        // ========================================
+
+        test('ForceAnalyzer class instantiates', () => {
+            const analyzer = new ForceAnalyzer();
+            assert(analyzer instanceof ForceAnalyzer, 'Should create ForceAnalyzer instance');
+            assert(typeof analyzer.calculateMuscleForce === 'function', 'Should have calculateMuscleForce method');
+        });
+
+        test('Ratio = 1.0 when muscle at rest length', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 100, 0);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.ratio, 1.0, 0.01, 'Ratio should be 1.0 at rest length');
+            assert(!force.compression, 'Should not be compressed at rest');
+        });
+
+        test('Ratio < 1.0 when muscle compressed', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 60, 0);  // 60 units instead of 100
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.ratio, 0.6, 0.01, 'Ratio should be 0.6 when compressed');
+            assert(force.compression, 'Should be compressed');
+            assert(force.isCompressed, 'isCompressed flag should be true');
+        });
+
+        test('Ratio > 1.0 when muscle extended', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 150, 0);  // 150 units instead of 100
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.ratio, 1.5, 0.01, 'Ratio should be 1.5 when extended');
+            assert(!force.compression, 'Should not be compressed');
+            assert(force.isExtended, 'isExtended flag should be true');
+        });
+
+        // ========================================
+        // TEST SUITE 2: Distance Calculation
+        // ========================================
+
+        test('Distance calculation with diagonal bones', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 3, 4);  // 3-4-5 right triangle
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 5);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.ratio, 1.0, 0.01, 'Ratio should be 1.0 for 3-4-5 triangle with rest length 5');
+        });
+
+        test('Bone distance helper method works', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('b1', 0, 0);
+            const bone2 = createMockBone('b2', 10, 0);
+            
+            const dist = analyzer.calculateBoneDistance(bone1, bone2);
+            assertEqual(dist, 10, 'Distance should be 10');
+        });
+
+        // ========================================
+        // TEST SUITE 3: Twist Angle Calculation
+        // ========================================
+
+        test('Twist angle extracted from bone angle property', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0, 0);
+            const bone2 = createMockBone('end', 100, 0, Math.PI / 4);  // 45 degrees
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.twistAngle, Math.PI / 4, 0.01, 'Twist angle should be ~45 degrees');
+        });
+
+        test('Twist angle = 0 when no rotation', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0, 0);
+            const bone2 = createMockBone('end', 100, 0, 0);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.twistAngle, 0, 0.01, 'Twist angle should be 0');
+        });
+
+        // ========================================
+        // TEST SUITE 4: Force Vector Calculation
+        // ========================================
+
+        test('Force vector points from start to end bone', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 100, 0);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.forceVector.x, 1.0, 0.01, 'Force vector X should be 1.0 (right)');
+            assertAlmostEqual(force.forceVector.y, 0.0, 0.01, 'Force vector Y should be 0.0');
+            assertAlmostEqual(force.forceVector.magnitude, 100, 0.1, 'Magnitude should be 100');
+        });
+
+        test('Force vector normalized for diagonal', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 3, 4);  // 3-4-5 triangle
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 5);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assertAlmostEqual(force.forceVector.x, 0.6, 0.01, 'Force vector X should be 0.6');
+            assertAlmostEqual(force.forceVector.y, 0.8, 0.01, 'Force vector Y should be 0.8');
+            assertAlmostEqual(force.forceVector.magnitude, 5, 0.1, 'Magnitude should be 5');
+        });
+
+        // ========================================
+        // TEST SUITE 5: Error Handling
+        // ========================================
+
+        test('Returns safe defaults when muscle is null', () => {
+            const analyzer = new ForceAnalyzer();
+            const force = analyzer.calculateMuscleForce(null, null);
+            assert(force.ratio === 1.0, 'Should return ratio 1.0');
+            assert(force.twistAngle === 0, 'Should return twist angle 0');
+            assert(!force.compression, 'Should not be compressed');
+        });
+
+        test('Returns safe defaults when skeleton is null', () => {
+            const analyzer = new ForceAnalyzer();
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+            const force = analyzer.calculateMuscleForce(muscle, null);
+            assert(force.ratio === 1.0, 'Should return safe defaults');
+        });
+
+        test('Returns safe defaults when bones missing from skeleton', () => {
+            const analyzer = new ForceAnalyzer();
+            const skeleton = createMockSkeleton([]);  // Empty skeleton
+            const muscle = createMockMuscle('test', 'missing1', 'missing2', 100);
+            
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assert(force.ratio === 1.0, 'Should return safe defaults');
+            assert(!force.compression, 'Should not be compressed');
+        });
+
+        test('Ratio clamped to reasonable range', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 10, 0);  // Very compressed
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assert(force.ratio >= 0.3, 'Ratio should be clamped to minimum 0.3');
+            assert(force.ratio <= 2.0, 'Ratio should be clamped to maximum 2.0');
+        });
+
+        // ========================================
+        // TEST SUITE 6: Bone Lookup Methods
+        // ========================================
+
+        test('getBoneFromSkeleton uses getBoneById method', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone = createMockBone('test', 0, 0);
+            const skeleton = {
+                getBoneById: function(id) {
+                    return id === 'test' ? bone : null;
+                }
+            };
+
+            const found = analyzer.getBoneFromSkeleton(skeleton, 'test');
+            assert(found === bone, 'Should find bone via getBoneById method');
+        });
+
+        test('getBoneFromSkeleton uses bones array as fallback', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone = createMockBone('test', 0, 0);
+            const skeleton = {
+                bones: [bone]
+            };
+
+            const found = analyzer.getBoneFromSkeleton(skeleton, 'test');
+            assert(found === bone, 'Should find bone in bones array');
+        });
+
+        // ========================================
+        // TEST SUITE 7: Output Structure Validation
+        // ========================================
+
+        test('Force output has all required fields', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 100, 0);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assert(typeof force.ratio === 'number', 'Should have ratio');
+            assert(typeof force.twistAngle === 'number', 'Should have twistAngle');
+            assert(typeof force.compression === 'boolean', 'Should have compression');
+            assert(force.forceVector && typeof force.forceVector.x === 'number', 'Should have forceVector');
+            assert(typeof force.isExtended === 'boolean', 'Should have isExtended flag');
+            assert(typeof force.isCompressed === 'boolean', 'Should have isCompressed flag');
+            assert(typeof force.intensity === 'number', 'Should have intensity');
+        });
+
+        test('Intensity calculated as absolute deviation from rest', () => {
+            const analyzer = new ForceAnalyzer();
+            
+            // Test compressed state
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 50, 0);  // 50% of rest length
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assert(force.intensity > 0, 'Intensity should be > 0 when deformed');
+        });
+
+        // ========================================
+        // TEST SUITE 8: Performance (should be fast)
+        // ========================================
+
+        test('Single calculation completes in <5ms', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 100, 0);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100);
+
+            const start = performance.now();
+            analyzer.calculateMuscleForce(muscle, skeleton);
+            const end = performance.now();
+
+            const duration = end - start;
+            assert(duration < 5, `Calculation should be <5ms, took ${duration.toFixed(2)}ms`);
+        });
+
+        test('Batch calculation for 20 muscles completes in <50ms', () => {
+            const analyzer = new ForceAnalyzer();
+            const bones = [];
+            for (let i = 0; i < 21; i++) {
+                bones.push(createMockBone(`bone${i}`, i * 10, 0));
+            }
+            const skeleton = createMockSkeleton(bones);
+
+            const muscles = [];
+            for (let i = 0; i < 20; i++) {
+                muscles.push(createMockMuscle(`muscle${i}`, `bone${i}`, `bone${i+1}`, 10));
+            }
+
+            const start = performance.now();
+            for (const muscle of muscles) {
+                analyzer.calculateMuscleForce(muscle, skeleton);
+            }
+            const end = performance.now();
+
+            const duration = end - start;
+            assert(duration < 50, `20 muscle calculations should be <50ms, took ${duration.toFixed(2)}ms`);
+        });
+
+        // ========================================
+        // TEST SUITE 9: Multiple Muscle Types
+        // ========================================
+
+        test('Works with extending_limb_muscle', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 100, 0);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100, 'extending_limb_muscle');
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assert(force !== null, 'Should handle extending_limb_muscle');
+        });
+
+        test('Works with rotation_joint', () => {
+            const analyzer = new ForceAnalyzer();
+            const bone1 = createMockBone('start', 0, 0);
+            const bone2 = createMockBone('end', 100, 0, Math.PI / 6);
+            const skeleton = createMockSkeleton([bone1, bone2]);
+            const muscle = createMockMuscle('test', 'start', 'end', 100, 'rotation_joint');
+
+            const force = analyzer.calculateMuscleForce(muscle, skeleton);
+            assert(force !== null, 'Should handle rotation_joint');
+            assert(force.twistAngle !== 0, 'Should capture twist for rotation_joint');
+        });
+
+        // ========================================
+        // Display Results
+        // ========================================
+
+        function displayResults() {
+            const resultsContainer = document.getElementById('results');
+            
+            let html = '';
+            const categories = {
+                'Ratio Calculation': [],
+                'Distance Calculation': [],
+                'Twist Angle': [],
+                'Force Vector': [],
+                'Error Handling': [],
+                'Bone Lookup': [],
+                'Output Validation': [],
+                'Performance': [],
+                'Multiple Types': []
+            };
+
+            results.forEach(result => {
+                const category = result.name.includes('Distance') ? 'Distance Calculation' :
+                                result.name.includes('Twist') ? 'Twist Angle' :
+                                result.name.includes('vector') ? 'Force Vector' :
+                                result.name.includes('Error') || result.name.includes('null') || result.name.includes('missing') ? 'Error Handling' :
+                                result.name.includes('getBone') ? 'Bone Lookup' :
+                                result.name.includes('output') || result.name.includes('fields') || result.name.includes('Intensity') ? 'Output Validation' :
+                                result.name.includes('ms') || result.name.includes('Performance') ? 'Performance' :
+                                result.name.includes('_') && (result.name.includes('extending') || result.name.includes('rotation')) ? 'Multiple Types' :
+                                'Ratio Calculation';
+                
+                if (!categories[category]) categories[category] = [];
+                categories[category].push(result);
+            });
+
+            // Display by category
+            Object.entries(categories).forEach(([category, categoryResults]) => {
+                if (categoryResults.length === 0) return;
+                
+                html += `<div class="test-group"><h2>${category}</h2>`;
+                categoryResults.forEach(result => {
+                    const className = result.passed ? 'pass' : 'fail';
+                    const icon = result.passed ? '✓' : '✗';
+                    const message = result.error ? `: ${result.error}` : '';
+                    html += `<div class="test-result ${className}">${icon} ${result.name}${message}</div>`;
+                });
+                html += '</div>';
+            });
+
+            // Summary
+            const failCount = testCount - passCount;
+            const summary = `
+                <div class="summary">
+                    <strong>Test Summary</strong><br>
+                    Total: ${testCount} | Passed: ${passCount} | Failed: ${failCount}<br>
+                    ${failCount === 0 ? '✓ All tests passed!' : '✗ Some tests failed. See above for details.'}
+                </div>
+            `;
+
+            resultsContainer.innerHTML = summary + html;
+        }
+
+        // Run all tests when page loads
+        window.addEventListener('load', displayResults);
+    </script>
+</body>
+</html>

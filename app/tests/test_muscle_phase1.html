@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Phase 1: Muscle Layer Data Foundation Tests</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f5f5f5; }
+        .test-container { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .test-pass { color: #2ecc71; font-weight: bold; }
+        .test-fail { color: #e74c3c; font-weight: bold; }
+        .test-info { color: #3498db; margin-top: 5px; }
+        .section { margin-top: 20px; padding: 10px; background: #ecf0f1; border-left: 4px solid #34495e; }
+        h2 { margin-top: 0; }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧬 Phase 1: Muscle Layer Data Foundation Tests</h1>
+    <p>Testing muscle template configuration, schema, and accessor API.</p>
+    
+    <div id="results"></div>
+
+    <script src="../systems/anatomical-configs.js"></script>
+    <script>
+        const results = [];
+        
+        // Test 1: MUSCLE_TEMPLATES object exists
+        function test_muscleTemplatesExist() {
+            const pass = typeof MUSCLE_TEMPLATES === 'object' && MUSCLE_TEMPLATES !== null;
+            results.push({
+                name: 'MUSCLE_TEMPLATES object exists',
+                pass,
+                details: pass ? `MUSCLE_TEMPLATES defined with creatures: ${Object.keys(MUSCLE_TEMPLATES).join(', ')}` : 'MUSCLE_TEMPLATES not defined'
+            });
+        }
+        
+        // Test 2: Horse muscle templates exist and have correct structure
+        function test_horseMuscleStructure() {
+            const horseMuscles = MUSCLE_TEMPLATES.horse?.muscle_templates;
+            const pass = Array.isArray(horseMuscles) && horseMuscles.length > 0;
+            
+            if (pass) {
+                const sample = horseMuscles[0];
+                const hasAllFields = 
+                    sample.id && sample.name && sample.startJoint && sample.endJoint &&
+                    typeof sample.restLength === 'number' &&
+                    typeof sample.restAngle === 'number' &&
+                    typeof sample.width === 'number' &&
+                    typeof sample.sensitivity === 'number' &&
+                    sample.group;
+                
+                results.push({
+                    name: 'Horse muscle templates have correct structure',
+                    pass: hasAllFields,
+                    details: `${horseMuscles.length} muscles defined. Sample: ${JSON.stringify(sample)}`
+                });
+            } else {
+                results.push({
+                    name: 'Horse muscle templates exist',
+                    pass: false,
+                    details: 'Horse muscle templates not found or not an array'
+                });
+            }
+        }
+        
+        // Test 3: Lizard muscle templates exist
+        function test_lizardMuscleStructure() {
+            const lizardMuscles = MUSCLE_TEMPLATES.lizard?.muscle_templates;
+            const pass = Array.isArray(lizardMuscles) && lizardMuscles.length > 0;
+            
+            results.push({
+                name: 'Lizard muscle templates exist',
+                pass,
+                details: pass ? `${lizardMuscles.length} muscles defined` : 'Lizard muscle templates not found'
+            });
+        }
+        
+        // Test 4: getAllMuscles() function works
+        function test_getAllMuscles() {
+            const horseMuscles = getAllMuscles('horse');
+            const pass = Array.isArray(horseMuscles) && horseMuscles.length > 0;
+            
+            results.push({
+                name: 'getAllMuscles() retrieves muscle array',
+                pass,
+                details: pass ? `Retrieved ${horseMuscles.length} horse muscles` : 'getAllMuscles() failed'
+            });
+        }
+        
+        // Test 5: getMuscleTemplate() function works
+        function test_getMuscleTemplate() {
+            const muscle = getMuscleTemplate('horse', 'frontLeftQuadriceps');
+            const pass = muscle && muscle.id === 'frontLeftQuadriceps' && muscle.name && muscle.startJoint;
+            
+            results.push({
+                name: 'getMuscleTemplate() retrieves single muscle by ID',
+                pass,
+                details: pass ? `Retrieved muscle: ${muscle.name}` : 'getMuscleTemplate() failed'
+            });
+        }
+        
+        // Test 6: getMusclesByGroup() function works
+        function test_getMusclesByGroup() {
+            const legMuscles = getMusclesByGroup('horse', 'frontLeftLeg');
+            const pass = Array.isArray(legMuscles) && legMuscles.length > 0;
+            
+            results.push({
+                name: 'getMusclesByGroup() filters muscles by group',
+                pass,
+                details: pass ? `Retrieved ${legMuscles.length} muscles in frontLeftLeg group` : 'getMusclesByGroup() failed'
+            });
+        }
+        
+        // Test 7: Muscle data types validation
+        function test_muscleDataTypes() {
+            const muscles = getAllMuscles('horse');
+            let pass = true;
+            const errors = [];
+            
+            muscles.forEach((muscle, idx) => {
+                if (typeof muscle.id !== 'string') errors.push(`Muscle ${idx}: id is not string`);
+                if (typeof muscle.name !== 'string') errors.push(`Muscle ${idx}: name is not string`);
+                if (typeof muscle.startJoint !== 'string') errors.push(`Muscle ${idx}: startJoint is not string`);
+                if (typeof muscle.endJoint !== 'string') errors.push(`Muscle ${idx}: endJoint is not string`);
+                if (typeof muscle.restLength !== 'number') errors.push(`Muscle ${idx}: restLength is not number`);
+                if (typeof muscle.restAngle !== 'number') errors.push(`Muscle ${idx}: restAngle is not number`);
+                if (typeof muscle.width !== 'number') errors.push(`Muscle ${idx}: width is not number`);
+                if (typeof muscle.sensitivity !== 'number') errors.push(`Muscle ${idx}: sensitivity is not number (${muscle.sensitivity})`);
+                if (typeof muscle.group !== 'string') errors.push(`Muscle ${idx}: group is not string`);
+            });
+            
+            pass = errors.length === 0;
+            results.push({
+                name: 'All muscle fields have correct data types',
+                pass,
+                details: pass ? 'All muscles validated' : `Validation errors: ${errors.join('; ')}`
+            });
+        }
+        
+        // Test 8: Sensitivity values in reasonable range
+        function test_sensitivityRange() {
+            const horseMuscles = getAllMuscles('horse');
+            const outOfRange = horseMuscles.filter(m => m.sensitivity < 0.5 || m.sensitivity > 2.0);
+            const pass = outOfRange.length === 0;
+            
+            results.push({
+                name: 'Muscle sensitivity values in range 0.5-2.0',
+                pass,
+                details: pass ? 'All sensitivities in valid range' : `Out of range: ${outOfRange.map(m => m.id).join(', ')}`
+            });
+        }
+        
+        // Test 9: Muscle groups are consistent
+        function test_muscleGroups() {
+            const horseMuscles = getAllMuscles('horse');
+            const groups = new Set(horseMuscles.map(m => m.group));
+            const pass = groups.size > 0;
+            
+            results.push({
+                name: 'Muscle groups defined',
+                pass,
+                details: `Groups: ${Array.from(groups).join(', ')}`
+            });
+        }
+        
+        // Test 10: Non-existent creature returns null
+        function test_invalidCreatureType() {
+            const invalid = getAllMuscles('unicorn');
+            const pass = invalid === null;
+            
+            results.push({
+                name: 'Invalid creature type returns null (safe fallback)',
+                pass,
+                details: pass ? 'Correctly returned null' : 'Should return null for invalid creatures'
+            });
+        }
+        
+        // Run all tests
+        function runAllTests() {
+            test_muscleTemplatesExist();
+            test_horseMuscleStructure();
+            test_lizardMuscleStructure();
+            test_getAllMuscles();
+            test_getMuscleTemplate();
+            test_getMusclesByGroup();
+            test_muscleDataTypes();
+            test_sensitivityRange();
+            test_muscleGroups();
+            test_invalidCreatureType();
+            
+            renderResults();
+        }
+        
+        // Render results
+        function renderResults() {
+            const container = document.getElementById('results');
+            const passed = results.filter(r => r.pass).length;
+            const total = results.length;
+            
+            let html = `<div class="section"><h2>Test Summary: ${passed}/${total} Passed</h2>`;
+            
+            results.forEach(test => {
+                const statusClass = test.pass ? 'test-pass' : 'test-fail';
+                const statusText = test.pass ? '✓ PASS' : '✗ FAIL';
+                html += `
+                    <div class="test-container">
+                        <span class="${statusClass}">${statusText}</span> ${test.name}
+                        <div class="test-info">${test.details}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="section">
+                    <h2>Success Criteria</h2>
+                    <p>${passed === total ? '<span class="test-pass">✓ All tests passed! Phase 1 complete.</span>' : '<span class="test-fail">✗ Some tests failed. Review details above.</span>'}</p>
+                    <p><strong>Acceptance Criteria Met:</strong></p>
+                    <ul>
+                        <li>${results[1].pass ? '✓' : '✗'} Story 1: Schema extended with muscle_templates (all fields defined)</li>
+                        <li>${results[1].pass && results[2].pass ? '✓' : '✗'} Story 2: Horse & Lizard muscle templates populated</li>
+                        <li>${results[3].pass && results[4].pass && results[5].pass ? '✓' : '✗'} Story 3: Accessor API working (getAllMuscles, getMuscleTemplate, getMusclesByGroup)</li>
+                    </ul>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            console.log('Phase 1 Tests Complete:', { passed, total, details: results });
+        }
+        
+        // Run tests on load
+        runAllTests();
+    </script>
+</body>
+</html>

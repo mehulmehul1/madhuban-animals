@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story 2.3 - Shape Renderer Tests</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="../FIK.js"></script>
+    <script src="../systems/muscle-shape-types.js"></script>
+    <script src="../systems/force-analyzer.js"></script>
+    <script src="../systems/deformation-rules.js"></script>
+    <script src="../systems/shape-renderer.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        
+        .test-container {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .canvas-container {
+            background: white;
+            border: 2px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            flex: 1;
+        }
+        
+        .test-info {
+            background: white;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .summary {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #666;
+            font-weight: bold;
+        }
+        
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        canvas {
+            border: 1px solid #999;
+            background: white;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Story 2.3 - Shape Renderer Engine Tests</h1>
+    <p>Tests for the MuscleShapeRenderer class that renders deformed muscle shapes using p5.js.</p>
+    
+    <div class="summary" id="summary"></div>
+    <div id="testResults"></div>
+    <div id="visualTests"></div>
+
+    <script>
+        const results = [];
+        let testCount = 0;
+        let passCount = 0;
+        let p5Instance = null;
+
+        function test(name, fn) {
+            testCount++;
+            try {
+                fn();
+                results.push({ name, passed: true, error: null });
+                passCount++;
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                results.push({ name, passed: false, error: error.message });
+                console.error(`✗ ${name}: ${error.message}`);
+            }
+        }
+
+        function assert(condition, message) {
+            if (!condition) throw new Error(message || 'Assertion failed');
+        }
+
+        // ========================================
+        // HELPER: Mock Objects
+        // ========================================
+
+        function createMockForceMetrics(ratio = 1.0, twistAngle = 0, compression = false) {
+            return {
+                ratio: ratio,
+                twistAngle: twistAngle,
+                compression: compression,
+                forceVector: { x: 1, y: 0, magnitude: 1 },
+                isExtended: ratio > 1.0,
+                isCompressed: ratio < 1.0,
+                intensity: Math.abs(ratio - 1.0)
+            };
+        }
+
+        function createMockMuscle(id, type = 'extending_limb_muscle', width = 10, startJoint = 'j1', endJoint = 'j2') {
+            const muscle = {
+                id: id,
+                type: type,
+                width: width,
+                startJoint: startJoint,
+                endJoint: endJoint,
+                twistSensitivity: 0.8,
+                deformationRules: {}
+            };
+
+            if (typeof MUSCLE_SHAPE_TYPES !== 'undefined' && MUSCLE_SHAPE_TYPES[type]) {
+                muscle.deformationRules = MUSCLE_SHAPE_TYPES[type].deformationRules;
+                muscle.twistSensitivity = MUSCLE_SHAPE_TYPES[type].twistSensitivity || 0.8;
+            }
+
+            return muscle;
+        }
+
+        function createMockDeformation(width = 1.0, bulgeFactor = 1.0, thinFactor = 1.0, spiralOffset = 0) {
+            return {
+                width: width,
+                bulgeFactor: bulgeFactor,
+                thinFactor: thinFactor,
+                spiralOffset: spiralOffset,
+                striations: false,
+                deformationIntensity: 0,
+                shapeType: 'unknown'
+            };
+        }
+
+        function createMockBone(id, x, y) {
+            return {
+                id: id,
+                posX: x,
+                posY: y,
+                pos: { x, y }
+            };
+        }
+
+        function createMockSkeleton(bones = []) {
+            const boneMap = new Map();
+            bones.forEach(bone => boneMap.set(bone.id, bone));
+            
+            return {
+                bones: bones,
+                boneMap: boneMap,
+                getBoneById: (id) => boneMap.get(id)
+            };
+        }
+
+        // ========================================
+        // TEST SUITE 1: Class Instantiation
+        // ========================================
+
+        test('MuscleShapeRenderer class instantiates', () => {
+            const renderer = new MuscleShapeRenderer();
+            assert(renderer instanceof MuscleShapeRenderer, 'Should create renderer instance');
+            assert(typeof renderer.renderMuscle === 'function', 'Should have renderMuscle method');
+            assert(typeof renderer.renderAllMuscles === 'function', 'Should have renderAllMuscles method');
+        });
+
+        test('Renderer accepts options', () => {
+            const options = { strokeWeight: 2, debugMode: true, colorIntensity: 0.8 };
+            const renderer = new MuscleShapeRenderer(options);
+            assert(renderer.debugMode === true, 'Should set debugMode');
+            assert(renderer.strokeWeight === 2, 'Should set strokeWeight');
+            assert(renderer.colorIntensity === 0.8, 'Should set colorIntensity');
+        });
+
+        // ========================================
+        // TEST SUITE 2: Color Management
+        // ========================================
+
+        test('Base colors defined for all muscle types', () => {
+            const renderer = new MuscleShapeRenderer();
+            const types = ['extending_limb_muscle', 'compression_mass', 'rotation_joint', 
+                          'undulation_segment', 'propulsion_foot', 'balance_tail', 'flight_wing'];
+            
+            types.forEach(type => {
+                const color = renderer.getColorForType(type);
+                assert(color, `Should have color for ${type}`);
+                assert(typeof color.r === 'number', `Color should have r component`);
+                assert(typeof color.g === 'number', `Color should have g component`);
+                assert(typeof color.b === 'number', `Color should have b component`);
+            });
+        });
+
+        test('Unknown muscle type returns fallback color', () => {
+            const renderer = new MuscleShapeRenderer();
+            const color = renderer.getColorForType('unknown_type');
+            assert(color, 'Should return fallback color');
+            assert(typeof color.r === 'number', 'Fallback color should have r component');
+        });
+
+        test('setColorForType updates muscle color', () => {
+            const renderer = new MuscleShapeRenderer();
+            const newColor = { r: 100, g: 200, b: 50 };
+            renderer.setColorForType('extending_limb_muscle', newColor);
+            const retrieved = renderer.getColorForType('extending_limb_muscle');
+            assert(retrieved.r === 100, 'Should update r component');
+            assert(retrieved.g === 200, 'Should update g component');
+            assert(retrieved.b === 50, 'Should update b component');
+        });
+
+        // ========================================
+        // TEST SUITE 3: Deformation Handling
+        // ========================================
+
+        test('Handles bulged muscle (compression)', () => {
+            const renderer = new MuscleShapeRenderer();
+            const muscle = createMockMuscle('m1', 'compression_mass', 10);
+            const deformation = createMockDeformation(1.4, 1.5); // Compressed
+            
+            const startPos = { x: 10, y: 10 };
+            const endPos = { x: 50, y: 50 };
+            
+            // Should not throw
+            renderer.renderMuscle(null, muscle, deformation, startPos, endPos);
+            assert(true, 'Should handle bulged muscle');
+        });
+
+        test('Handles thinned muscle (extension)', () => {
+            const renderer = new MuscleShapeRenderer();
+            const muscle = createMockMuscle('m1', 'extending_limb_muscle', 10);
+            const deformation = createMockDeformation(0.7, 1.0, 0.7); // Extended
+            
+            const startPos = { x: 10, y: 10 };
+            const endPos = { x: 80, y: 10 };
+            
+            // Should not throw
+            renderer.renderMuscle(null, muscle, deformation, startPos, endPos);
+            assert(true, 'Should handle thinned muscle');
+        });
+
+        test('Handles spiraled muscle (twist)', () => {
+            const renderer = new MuscleShapeRenderer();
+            const muscle = createMockMuscle('m1', 'rotation_joint', 10);
+            const deformation = createMockDeformation(1.0, 1.0, 1.0, 25); // Twisted 25 degrees
+            
+            const startPos = { x: 10, y: 10 };
+            const endPos = { x: 10, y: 60 };
+            
+            // Should not throw
+            renderer.renderMuscle(null, muscle, deformation, startPos, endPos);
+            assert(true, 'Should handle spiraled muscle');
+        });
+
+        // ========================================
+        // TEST SUITE 4: Input Validation
+        // ========================================
+
+        test('Gracefully handles null p5 context', () => {
+            const renderer = new MuscleShapeRenderer();
+            const muscle = createMockMuscle('m1');
+            const deformation = createMockDeformation();
+            
+            // Should not throw
+            renderer.renderMuscle(null, muscle, deformation, { x: 10, y: 10 }, { x: 50, y: 50 });
+            assert(true, 'Should handle null p5');
+        });
+
+        test('Gracefully handles null muscle', () => {
+            const renderer = new MuscleShapeRenderer();
+            const deformation = createMockDeformation();
+            
+            // Should not throw
+            renderer.renderMuscle({}, null, deformation, { x: 10, y: 10 }, { x: 50, y: 50 });
+            assert(true, 'Should handle null muscle');
+        });
+
+        test('Gracefully handles degenerate muscle (zero length)', () => {
+            const renderer = new MuscleShapeRenderer();
+            const muscle = createMockMuscle('m1');
+            const deformation = createMockDeformation();
+            
+            const mockP5 = {
+                fill: () => {},
+                stroke: () => {},
+                strokeWeight: () => {},
+                beginShape: () => {},
+                vertex: () => {},
+                endShape: () => {},
+                curveVertex: () => {}
+            };
+            
+            // Should not throw
+            renderer.renderMuscle(mockP5, muscle, deformation, { x: 10, y: 10 }, { x: 10, y: 10 });
+            assert(true, 'Should handle zero-length muscle');
+        });
+
+        // ========================================
+        // TEST SUITE 5: Debug Mode
+        // ========================================
+
+        test('setDebugMode enables debug overlay', () => {
+            const renderer = new MuscleShapeRenderer();
+            assert(renderer.debugMode === false, 'Debug mode should be off by default');
+            renderer.setDebugMode(true);
+            assert(renderer.debugMode === true, 'Debug mode should be enabled');
+        });
+
+        // ========================================
+        // TEST SUITE 6: Batch Rendering
+        // ========================================
+
+        test('renderAllMuscles handles empty creature', () => {
+            const renderer = new MuscleShapeRenderer();
+            const creature = { muscles: [], skeleton: null };
+            const deformations = new Map();
+            
+            // Should not throw
+            renderer.renderAllMuscles({}, creature, deformations);
+            assert(true, 'Should handle empty creature');
+        });
+
+        test('renderAllMuscles skips muscles without deformations', () => {
+            const renderer = new MuscleShapeRenderer();
+            const bones = [
+                createMockBone('j1', 10, 10),
+                createMockBone('j2', 50, 50)
+            ];
+            const creature = {
+                muscles: [createMockMuscle('m1', 'extending_limb_muscle', 10, 'j1', 'j2')],
+                skeleton: createMockSkeleton(bones)
+            };
+            const deformations = new Map(); // Empty
+            
+            // Should not throw
+            renderer.renderAllMuscles({}, creature, deformations);
+            assert(true, 'Should skip muscles without deformations');
+        });
+
+        test('renderAllMuscles handles multiple muscles', () => {
+            const renderer = new MuscleShapeRenderer();
+            const bones = [
+                createMockBone('j1', 10, 10),
+                createMockBone('j2', 50, 50),
+                createMockBone('j3', 80, 20)
+            ];
+            const creature = {
+                muscles: [
+                    createMockMuscle('m1', 'extending_limb_muscle', 10, 'j1', 'j2'),
+                    createMockMuscle('m2', 'compression_mass', 12, 'j2', 'j3')
+                ],
+                skeleton: createMockSkeleton(bones)
+            };
+            const deformations = new Map();
+            deformations.set('m1', createMockDeformation(1.0, 1.0, 1.0, 0));
+            deformations.set('m2', createMockDeformation(1.4, 1.5, 1.0, 0));
+            
+            // Should not throw
+            renderer.renderAllMuscles({}, creature, deformations);
+            assert(true, 'Should render multiple muscles');
+        });
+
+        // ========================================
+        // TEST SUITE 7: Integration with Deformation Pipeline
+        // ========================================
+
+        test('Renderer integrates with ForceAnalyzer output', () => {
+            const renderer = new MuscleShapeRenderer();
+            const forceAnalyzer = new ForceAnalyzer();
+            
+            // Create mock skeleton and muscle
+            const bones = [
+                createMockBone('j1', 10, 10),
+                createMockBone('j2', 50, 50)
+            ];
+            const muscle = createMockMuscle('m1', 'extending_limb_muscle', 10, 'j1', 'j2');
+            
+            // Calculate force
+            const forceMetrics = forceAnalyzer.calculateMuscleForce(muscle, { bones, getBoneById: (id) => bones.find(b => b.id === id) });
+            
+            // Should have valid force metrics
+            assert(typeof forceMetrics.ratio === 'number', 'Force should have ratio');
+            assert(typeof forceMetrics.twistAngle === 'number', 'Force should have twistAngle');
+            assert(true, 'Should integrate with ForceAnalyzer');
+        });
+
+        test('Renderer integrates with DeformationEngine output', () => {
+            const renderer = new MuscleShapeRenderer();
+            const deformationEngine = new DeformationEngine();
+            
+            const muscle = createMockMuscle('m1', 'extending_limb_muscle', 10);
+            const forceMetrics = createMockForceMetrics(1.3, 0, false); // Extended
+            
+            // Calculate deformation
+            const deformation = deformationEngine.applyDeformationRules(muscle, forceMetrics);
+            
+            // Should have valid deformation
+            assert(typeof deformation.width === 'number', 'Deformation should have width');
+            assert(typeof deformation.bulgeFactor === 'number', 'Deformation should have bulgeFactor');
+            assert(true, 'Should integrate with DeformationEngine');
+        });
+
+        // ========================================
+        // TEST SUITE 8: Performance
+        // ========================================
+
+        test('Single muscle render <5ms', () => {
+            const renderer = new MuscleShapeRenderer();
+            const muscle = createMockMuscle('m1');
+            const deformation = createMockDeformation();
+            
+            const mockP5 = {
+                fill: () => {},
+                stroke: () => {},
+                strokeWeight: () => {},
+                beginShape: () => {},
+                vertex: () => {},
+                endShape: () => {},
+                curveVertex: () => {},
+                line: () => {}
+            };
+            
+            const start = performance.now();
+            renderer.renderMuscle(mockP5, muscle, deformation, { x: 10, y: 10 }, { x: 50, y: 50 });
+            const end = performance.now();
+            
+            const duration = end - start;
+            assert(duration < 5, `Should render in <5ms, took ${duration.toFixed(2)}ms`);
+        });
+
+        test('Batch of 20 muscles render <50ms', () => {
+            const renderer = new MuscleShapeRenderer();
+            const mockP5 = {
+                fill: () => {},
+                stroke: () => {},
+                strokeWeight: () => {},
+                beginShape: () => {},
+                vertex: () => {},
+                endShape: () => {},
+                curveVertex: () => {},
+                line: () => {},
+                textSize: () => {},
+                textAlign: () => {},
+                text: () => {}
+            };
+            
+            const muscles = [];
+            const deformations = new Map();
+            for (let i = 0; i < 20; i++) {
+                const type = ['extending_limb_muscle', 'rotation_joint', 'undulation_segment'][i % 3];
+                const muscle = createMockMuscle(`m${i}`, type, 10);
+                muscles.push(muscle);
+                deformations.set(`m${i}`, createMockDeformation(0.8 + Math.random() * 0.4));
+            }
+            
+            const start = performance.now();
+            for (let i = 0; i < muscles.length; i++) {
+                const pos = { x: 10 + i * 3, y: 10 + (i * 5) % 100 };
+                const endPos = { x: 50 + i * 3, y: 50 + (i * 5) % 100 };
+                renderer.renderMuscle(mockP5, muscles[i], deformations.get(muscles[i].id), pos, endPos);
+            }
+            const end = performance.now();
+            
+            const duration = end - start;
+            assert(duration < 50, `20 muscles should render in <50ms, took ${duration.toFixed(2)}ms`);
+        });
+
+        // ========================================
+        // Display Results
+        // ========================================
+
+        function displayResults() {
+            const resultsContainer = document.getElementById('testResults');
+            
+            let html = '';
+            const categories = {
+                'Class Instantiation': [],
+                'Color Management': [],
+                'Deformation Handling': [],
+                'Input Validation': [],
+                'Debug Mode': [],
+                'Batch Rendering': [],
+                'Pipeline Integration': [],
+                'Performance': []
+            };
+
+            results.forEach(result => {
+                let category = 'Other';
+                if (result.name.includes('class') || result.name.includes('instantiates')) category = 'Class Instantiation';
+                else if (result.name.includes('color') || result.name.includes('Color')) category = 'Color Management';
+                else if (result.name.includes('bulged') || result.name.includes('thinned') || result.name.includes('spiraled')) category = 'Deformation Handling';
+                else if (result.name.includes('null') || result.name.includes('degenerate') || result.name.includes('Gracefully')) category = 'Input Validation';
+                else if (result.name.includes('Debug')) category = 'Debug Mode';
+                else if (result.name.includes('Batch') || result.name.includes('multiple')) category = 'Batch Rendering';
+                else if (result.name.includes('integrates') || result.name.includes('Integration')) category = 'Pipeline Integration';
+                else if (result.name.includes('ms') || result.name.includes('Performance')) category = 'Performance';
+
+                if (!categories[category]) categories[category] = [];
+                categories[category].push(result);
+            });
+
+            // Display by category
+            Object.entries(categories).forEach(([category, categoryResults]) => {
+                if (categoryResults.length === 0) return;
+                
+                html += `<div class="test-info"><h2>${category}</h2>`;
+                categoryResults.forEach(result => {
+                    const className = result.passed ? 'pass' : 'fail';
+                    const icon = result.passed ? '✓' : '✗';
+                    const message = result.error ? `: ${result.error}` : '';
+                    html += `<div class="test-result ${className}">${icon} ${result.name}${message}</div>`;
+                });
+                html += '</div>';
+            });
+
+            resultsContainer.innerHTML = html;
+
+            // Summary
+            const failCount = testCount - passCount;
+            const summaryHtml = `
+                <strong>Test Summary</strong><br>
+                Total: ${testCount} | Passed: ${passCount} | Failed: ${failCount}<br>
+                ${failCount === 0 ? '✓ All tests passed!' : '✗ Some tests failed. See above for details.'}
+            `;
+            document.getElementById('summary').innerHTML = summaryHtml;
+        }
+
+        // Run all tests when page loads
+        window.addEventListener('load', displayResults);
+    </script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 1 v2 - Auto-Generation Tests</title>
+    <script src="../FIK.js"></script>
+    
+    <!-- Core systems needed for testing -->
+    <script src="../systems/muscle-shape-types.js"></script>
+    <script src="../systems/muscle-mappings.js"></script>
+    <script src="../systems/muscle-generator.js"></script>
+    <script src="../systems/anatomical-configs.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        
+        .test-group {
+            background: white;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #e7f3ff;
+            color: #0066cc;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .summary {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #666;
+        }
+        
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phase 1 v2 - Muscle Auto-Generation Tests</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = [];
+        
+        function test(name, fn) {
+            try {
+                fn();
+                results.push({ name, passed: true, error: null });
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                results.push({ name, passed: false, error: error.message });
+                console.error(`✗ ${name}: ${error.message}`);
+            }
+        }
+        
+        function assert(condition, message) {
+            if (!condition) throw new Error(message || 'Assertion failed');
+        }
+        
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(message || `Expected ${expected}, got ${actual}`);
+            }
+        }
+        
+        // ========================================
+        // STORY 1.1 TESTS: Shape Types
+        // ========================================
+        
+        test('Story 1.1: All 7 shape types defined', () => {
+            const types = Object.keys(MUSCLE_SHAPE_TYPES);
+            assertEqual(types.length, 7, 'Should have exactly 7 shape types');
+        });
+        
+        test('Story 1.1: All shape types have required fields', () => {
+            Object.entries(MUSCLE_SHAPE_TYPES).forEach(([id, type]) => {
+                assert(type.id, `${id}: missing id`);
+                assert(type.name, `${id}: missing name`);
+                assert(type.deformationRules, `${id}: missing deformationRules`);
+                assert(type.widthRange, `${id}: missing widthRange`);
+                assert(typeof type.twistSensitivity === 'number', `${id}: invalid twistSensitivity`);
+            });
+        });
+        
+        test('Story 1.1: Width ranges follow stretch < rest < compress', () => {
+            Object.entries(MUSCLE_SHAPE_TYPES).forEach(([id, type]) => {
+                const w = type.widthRange;
+                assert(w.stretch < w.rest, `${id}: stretch >= rest`);
+                assert(w.rest < w.compress, `${id}: rest >= compress`);
+            });
+        });
+        
+        test('Story 1.1: Twist sensitivity in valid range (0.3-1.4)', () => {
+            Object.entries(MUSCLE_SHAPE_TYPES).forEach(([id, type]) => {
+                assert(type.twistSensitivity >= 0.3 && type.twistSensitivity <= 1.4,
+                    `${id}: twistSensitivity ${type.twistSensitivity} out of range`);
+            });
+        });
+        
+        test('Story 1.1: Deformation rules have all required sub-fields', () => {
+            Object.entries(MUSCLE_SHAPE_TYPES).forEach(([id, type]) => {
+                const dr = type.deformationRules;
+                assert(dr.stretch && dr.stretch.widthMultiplier !== undefined, `${id}: stretch missing widthMultiplier`);
+                assert(dr.compress && dr.compress.bulgeFactor !== undefined, `${id}: compress missing bulgeFactor`);
+                assert(dr.twist && dr.twist.sensitivity !== undefined, `${id}: twist missing sensitivity`);
+            });
+        });
+        
+        // ========================================
+        // STORY 1.2 TESTS: Locomotion Mappings
+        // ========================================
+        
+        test('Story 1.2: All 5 locomotion types defined', () => {
+            const types = getAllLocomotionTypes();
+            assertEqual(types.length, 5, 'Should have exactly 5 locomotion types');
+            assert(types.includes('erect_quadruped'), 'Missing erect_quadruped');
+            assert(types.includes('sprawling_quadruped'), 'Missing sprawling_quadruped');
+            assert(types.includes('bipedal'), 'Missing bipedal');
+            assert(types.includes('serpentine'), 'Missing serpentine');
+            assert(types.includes('aquatic'), 'Missing aquatic');
+        });
+        
+        test('Story 1.2: All regions reference valid shape types', () => {
+            getAllLocomotionTypes().forEach(locomotionType => {
+                const regions = getRegionsForLocomotionType(locomotionType);
+                regions.forEach(regionName => {
+                    const config = getRegionConfig(locomotionType, regionName);
+                    const shapeType = MUSCLE_SHAPE_TYPES[config.shapeType];
+                    assert(shapeType, `${locomotionType}/${regionName}: invalid shape type ${config.shapeType}`);
+                });
+            });
+        });
+        
+        test('Story 1.2: Region configs have required fields', () => {
+            getAllLocomotionTypes().forEach(locomotionType => {
+                const regions = getRegionsForLocomotionType(locomotionType);
+                regions.forEach(regionName => {
+                    const config = getRegionConfig(locomotionType, regionName);
+                    assert(config.shapeType, `${regionName}: missing shapeType`);
+                    assert(typeof config.baseWidth === 'number', `${regionName}: invalid baseWidth`);
+                    assert(typeof config.sensitivity === 'number', `${regionName}: invalid sensitivity`);
+                });
+            });
+        });
+        
+        // ========================================
+        // STORY 1.3 & 1.4 TESTS: Auto-Generation
+        // ========================================
+        
+        // Create a mock skeleton for testing
+        function createMockSkeleton(boneIds) {
+            return {
+                bones: boneIds.map((id, index) => ({
+                    id: id,
+                    x: index * 50,
+                    y: index * 20,
+                    pos: { x: index * 50, y: index * 20 },
+                    getBoneById: function(id) { return this.id === id ? this : null; }
+                })),
+                getBoneById: function(id) {
+                    return this.bones.find(b => b.id === id) || null;
+                }
+            };
+        }
+        
+        test('Story 1.3: Auto-generation returns array', () => {
+            const skeleton = createMockSkeleton(['spine0', 'spine1', 'spine2']);
+            const muscles = generateMusclesTours('test', skeleton, 'erect_quadruped');
+            assert(Array.isArray(muscles), 'Should return array');
+        });
+        
+        test('Story 1.3: Generated muscles have all required fields', () => {
+            const skeleton = createMockSkeleton(['spine0', 'spine1', 'spine2']);
+            const muscles = generateMusclesTours('test', skeleton, 'erect_quadruped');
+            
+            assert(muscles.length > 0, 'Should generate at least one muscle');
+            
+            muscles.forEach(muscle => {
+                assert(muscle.id, 'missing id');
+                assert(muscle.startJoint, 'missing startJoint');
+                assert(muscle.endJoint, 'missing endJoint');
+                assert(typeof muscle.restLength === 'number', 'invalid restLength');
+                assert(typeof muscle.width === 'number', 'invalid width');
+                assert(muscle.type, 'missing type');
+                assert(muscle.deformationRules, 'missing deformationRules');
+            });
+        });
+        
+        test('Story 1.4: findBonesByRegion identifies spine correctly', () => {
+            const skeleton = createMockSkeleton(['spine0', 'spine1', 'spine2', 'spine3']);
+            const spineBones = findBonesByRegion(skeleton, 'spine');
+            assertEqual(spineBones.length, 4, 'Should find all 4 spine bones');
+        });
+        
+        test('Story 1.4: findBonesByRegion returns empty for missing region', () => {
+            const skeleton = createMockSkeleton(['spine0', 'spine1']);
+            const legBones = findBonesByRegion(skeleton, 'front_left_limb');
+            assertEqual(legBones.length, 0, 'Should return empty array');
+        });
+        
+        // ========================================
+        // INTEGRATION TESTS: Horse Creation
+        // ========================================
+        
+        test('Integration: Horse auto-generation produces valid muscles', () => {
+            const skeleton = createMockSkeleton([
+                'frontLeftShoulder', 'frontLeftTibia', 'frontLeftForearm',
+                'frontRightShoulder', 'frontRightTibia', 'frontRightForearm',
+                'spine0', 'spine1', 'spine2', 'spine3', 'neckBase',
+                'hindLeftFemur', 'hindLeftTibia',
+                'hindRightFemur', 'hindRightTibia'
+            ]);
+            
+            const muscles = generateMusclesTours('horse', skeleton, 'erect_quadruped');
+            assert(muscles.length >= 10, `Horse should have at least 10 muscles, got ${muscles.length}`);
+            
+            // Check that all muscles have deformationRules
+            assert(muscles.every(m => m.deformationRules), 'All muscles should have deformationRules');
+        });
+        
+        test('Integration: Lizard auto-generation produces valid muscles', () => {
+            const skeleton = createMockSkeleton([
+                'spine0', 'spine1', 'spine2', 'spine3',
+                'frontLeftFemur', 'frontLeftTibia',
+                'frontRightFemur', 'frontRightTibia',
+                'hindLeftFemur', 'hindLeftTibia',
+                'hindRightFemur', 'hindRightTibia',
+                'tailSegment1'
+            ]);
+            
+            const muscles = generateMusclesTours('lizard', skeleton, 'sprawling_quadruped');
+            assert(muscles.length >= 8, `Lizard should have at least 8 muscles, got ${muscles.length}`);
+        });
+        
+        test('Integration: Generated muscle IDs are unique', () => {
+            const skeleton = createMockSkeleton([
+                'spine0', 'spine1', 'spine2', 'spine3',
+                'frontLeftShoulder', 'frontLeftTibia'
+            ]);
+            
+            const muscles = generateMusclesTours('horse', skeleton, 'erect_quadruped');
+            const ids = muscles.map(m => m.id);
+            const uniqueIds = new Set(ids);
+            assertEqual(ids.length, uniqueIds.size, 'All muscle IDs should be unique');
+        });
+        
+        // ========================================
+        // VALIDATION TESTS
+        // ========================================
+        
+        test('Validation: validateMuscleMapping returns valid result', () => {
+            const result = validateMuscleMapping();
+            assert(typeof result.valid === 'boolean', 'valid field should be boolean');
+            assert(Array.isArray(result.missingTypes), 'missingTypes should be array');
+            assert(typeof result.locomotionTypesCount === 'number', 'locomotionTypesCount should be number');
+        });
+        
+        test('Validation: validateGeneratedMuscles validates correctly', () => {
+            const skeleton = createMockSkeleton(['spine0', 'spine1']);
+            const muscles = generateMusclesTours('test', skeleton, 'erect_quadruped');
+            const result = validateGeneratedMuscles(muscles);
+            
+            assert(typeof result.valid === 'boolean', 'valid field should be boolean');
+            assert(Array.isArray(result.errors), 'errors should be array');
+            assert(typeof result.muscleCount === 'number', 'muscleCount should be number');
+        });
+        
+        // ========================================
+        // Run tests and display results
+        // ========================================
+        
+        function displayResults() {
+            const resultsContainer = document.getElementById('results');
+            
+            let html = '';
+            let passCount = 0;
+            let failCount = 0;
+            
+            // Group tests by story
+            const stories = {
+                'Story 1.1: Shape Types': [],
+                'Story 1.2: Mappings': [],
+                'Story 1.3 & 1.4: Auto-Generation': [],
+                'Integration': [],
+                'Validation': []
+            };
+            
+            results.forEach(result => {
+                if (result.passed) passCount++;
+                else failCount++;
+                
+                if (result.name.includes('Story 1.1')) stories['Story 1.1: Shape Types'].push(result);
+                else if (result.name.includes('Story 1.2')) stories['Story 1.2: Mappings'].push(result);
+                else if (result.name.includes('Story 1.3') || result.name.includes('Story 1.4')) stories['Story 1.3 & 1.4: Auto-Generation'].push(result);
+                else if (result.name.includes('Integration')) stories['Integration'].push(result);
+                else stories['Validation'].push(result);
+            });
+            
+            // Display by story
+            Object.entries(stories).forEach(([story, storyResults]) => {
+                if (storyResults.length === 0) return;
+                
+                html += `<div class="test-group"><h2>${story}</h2>`;
+                storyResults.forEach(result => {
+                    const className = result.passed ? 'pass' : 'fail';
+                    const icon = result.passed ? '✓' : '✗';
+                    const message = result.error ? `: ${result.error}` : '';
+                    html += `<div class="test-result ${className}">${icon} ${result.name}${message}</div>`;
+                });
+                html += '</div>';
+            });
+            
+            // Summary
+            const summary = `
+                <div class="summary">
+                    <strong>Test Summary</strong><br>
+                    Total: ${results.length} | Passed: ${passCount} | Failed: ${failCount}
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = summary + html;
+        }
+        
+        // Run all tests when page loads
+        window.addEventListener('load', displayResults);
+    </script>
+</body>
+</html>

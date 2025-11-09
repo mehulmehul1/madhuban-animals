@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story 2.2 - Deformation Rules Tests</title>
+    <script src="../FIK.js"></script>
+    <script src="../systems/muscle-shape-types.js"></script>
+    <script src="../systems/deformation-rules.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        
+        .test-group {
+            background: white;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .summary {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #666;
+            font-weight: bold;
+        }
+        
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Story 2.2 - Deformation Rules Engine Tests</h1>
+    <p>Tests for the DeformationEngine class that applies shape-type-specific deformations based on force metrics.</p>
+    <div id="results"></div>
+
+    <script>
+        const results = [];
+        let testCount = 0;
+        let passCount = 0;
+        
+        function test(name, fn) {
+            testCount++;
+            try {
+                fn();
+                results.push({ name, passed: true, error: null });
+                passCount++;
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                results.push({ name, passed: false, error: error.message });
+                console.error(`✗ ${name}: ${error.message}`);
+            }
+        }
+        
+        function assert(condition, message) {
+            if (!condition) throw new Error(message || 'Assertion failed');
+        }
+        
+        function assertAlmostEqual(actual, expected, tolerance, message) {
+            if (Math.abs(actual - expected) > tolerance) {
+                throw new Error(message || `Expected ~${expected} (±${tolerance}), got ${actual}`);
+            }
+        }
+
+        function assertInRange(value, min, max, message) {
+            if (value < min || value > max) {
+                throw new Error(message || `Expected value in range [${min}, ${max}], got ${value}`);
+            }
+        }
+
+        // ========================================
+        // HELPER: Mock Objects
+        // ========================================
+
+        function createMockForceMetrics(ratio = 1.0, twistAngle = 0, compression = false) {
+            return {
+                ratio: ratio,
+                twistAngle: twistAngle,
+                compression: compression,
+                forceVector: { x: 1, y: 0, magnitude: 1 },
+                isExtended: ratio > 1.0,
+                isCompressed: ratio < 1.0,
+                intensity: Math.abs(ratio - 1.0)
+            };
+        }
+
+        function createMockMuscle(id, type = 'extending_limb_muscle', width = 10) {
+            // Return muscle with shape type rules from MUSCLE_SHAPE_TYPES
+            const muscle = {
+                id: id,
+                type: type,
+                width: width,
+                twistSensitivity: 0.8,
+                deformationRules: {}
+            };
+
+            // If MUSCLE_SHAPE_TYPES is available, use its rules
+            if (typeof MUSCLE_SHAPE_TYPES !== 'undefined' && MUSCLE_SHAPE_TYPES[type]) {
+                muscle.deformationRules = MUSCLE_SHAPE_TYPES[type].deformationRules;
+                muscle.twistSensitivity = MUSCLE_SHAPE_TYPES[type].twistSensitivity || 0.8;
+            }
+
+            return muscle;
+        }
+
+        // ========================================
+        // TEST SUITE 1: Class Instantiation
+        // ========================================
+
+        test('DeformationEngine class instantiates', () => {
+            const engine = new DeformationEngine();
+            assert(engine instanceof DeformationEngine, 'Should create DeformationEngine instance');
+            assert(typeof engine.applyDeformationRules === 'function', 'Should have applyDeformationRules method');
+        });
+
+        // ========================================
+        // TEST SUITE 2: Extending Limb Muscle
+        // ========================================
+
+        test('Extending limb: bulges on compression (ratio < 1.0)', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('limb1', 'extending_limb_muscle', 10);
+            const force = createMockForceMetrics(0.6, 0, true);  // Compressed
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width > 1.0, 'Width multiplier should be > 1.0 on compression');
+            assert(deformation.bulgeFactor >= 1.0, 'Bulge factor should be >= 1.0');
+        });
+
+        test('Extending limb: thins on extension (ratio > 1.0)', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('limb1', 'extending_limb_muscle', 10);
+            const force = createMockForceMetrics(1.4, 0, false);  // Extended
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width < 1.0, 'Width multiplier should be < 1.0 on extension');
+            assert(deformation.thinFactor < 1.0, 'Thin factor should be < 1.0');
+            assert(deformation.striations === true, 'Should have striations on extension');
+        });
+
+        // ========================================
+        // TEST SUITE 3: Compression Mass
+        // ========================================
+
+        test('Compression mass: maximum bulge on compress', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('mass1', 'compression_mass', 10);
+            const force = createMockForceMetrics(0.5, 0, true);  // Heavily compressed
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width > 1.0, 'Width multiplier should be > 1.0 significantly');
+            assert(deformation.bulgeFactor >= 1.4, 'Bulge factor should be >= 1.4');
+        });
+
+        test('Compression mass: slight thin on extend', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('mass1', 'compression_mass', 10);
+            const force = createMockForceMetrics(1.3, 0, false);  // Extended
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width < 1.0, 'Width multiplier should be < 1.0');
+            assert(deformation.thinFactor < 1.0, 'Thin factor should be < 1.0');
+        });
+
+        // ========================================
+        // TEST SUITE 4: Rotation Joint
+        // ========================================
+
+        test('Rotation joint: high twist sensitivity', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('spine1', 'rotation_joint', 10);
+            const force = createMockForceMetrics(1.0, Math.PI / 4, false);  // 45 degree twist
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.spiralOffset > 5, 'Spiral offset should be significant');
+        });
+
+        test('Rotation joint: bulges on compression', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('spine1', 'rotation_joint', 10);
+            const force = createMockForceMetrics(0.8, 0, true);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.bulgeFactor >= 1.0, 'Should bulge on compress');
+        });
+
+        // ========================================
+        // TEST SUITE 5: Undulation Segment
+        // ========================================
+
+        test('Undulation segment: very high twist sensitivity', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('tail1', 'undulation_segment', 10);
+            const force = createMockForceMetrics(1.0, Math.PI / 6, false);  // 30 degree twist
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.spiralOffset > 10, 'Spiral offset should be very pronounced');
+            assert(deformation.spiralIntensity !== undefined, 'Should have spiral intensity');
+        });
+
+        test('Undulation segment: bulges on compression', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('tail1', 'undulation_segment', 10);
+            const force = createMockForceMetrics(0.7, 0, true);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width > 1.0, 'Width multiplier should be > 1.0');
+            assert(deformation.bulgeFactor >= 1.0, 'Bulge factor should be positive');
+        });
+
+        // ========================================
+        // TEST SUITE 6: Propulsion Foot
+        // ========================================
+
+        test('Propulsion foot: extreme bulge on ground contact', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('hoof1', 'propulsion_foot', 10);
+            const force = createMockForceMetrics(0.6, 0, true);  // Strong compression
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width > 1.0, 'Width multiplier should be > 1.0 dramatically');
+            assert(deformation.bulgeFactor >= 1.4, 'Bulge factor should be >= 1.4');
+        });
+
+        test('Propulsion foot: low twist sensitivity', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('hoof1', 'propulsion_foot', 10);
+            const force = createMockForceMetrics(1.0, Math.PI / 4, false);  // 45 degree twist
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.spiralOffset < 5, 'Spiral offset should be minimal for foot (low twist sensitivity)');
+        });
+
+        // ========================================
+        // TEST SUITE 7: Balance Tail
+        // ========================================
+
+        test('Balance tail: high twist sensitivity', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('tail1', 'balance_tail', 8);
+            const force = createMockForceMetrics(1.0, Math.PI / 5, false);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.spiralOffset > 8, 'Spiral offset should be significant');
+        });
+
+        test('Balance tail: bulges when compressed', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('tail1', 'balance_tail', 8);
+            const force = createMockForceMetrics(0.7, 0, true);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.bulgeFactor >= 1.0, 'Should bulge on compress');
+        });
+
+        // ========================================
+        // TEST SUITE 8: Flight Wing
+        // ========================================
+
+        test('Flight wing: thins on extension', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('wing1', 'flight_wing', 8);
+            const force = createMockForceMetrics(1.3, 0, false);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.width < 1.0, 'Width multiplier should be < 1.0 on extension');
+            assert(deformation.striations === true, 'Should have striations');
+        });
+
+        test('Flight wing: very high twist sensitivity', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('wing1', 'flight_wing', 8);
+            const force = createMockForceMetrics(1.0, Math.PI / 6, false);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation.spiralOffset > 10, 'Spiral offset should be very high');
+        });
+
+        // ========================================
+        // TEST SUITE 9: Rest State (Ratio = 1.0)
+        // ========================================
+
+        test('Rest state: width unchanged at ratio 1.0', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'extending_limb_muscle', 10);
+            const force = createMockForceMetrics(1.0, 0, false);  // At rest
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assertAlmostEqual(deformation.width, 1.0, 0.01, 'Width multiplier should be 1.0 at rest');
+        });
+
+        test('Rest state: no twist at zero angle', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'rotation_joint', 10);
+            const force = createMockForceMetrics(1.0, 0, false);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assertAlmostEqual(deformation.spiralOffset, 0, 0.1, 'Spiral offset should be ~0');
+        });
+
+        // ========================================
+        // TEST SUITE 10: Value Clamping
+        // ========================================
+
+        test('Width clamped to valid range [0.5, 2.0]', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'propulsion_foot', 10);
+            const force = createMockForceMetrics(0.3, 0, true);  // Extreme compression
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assertInRange(deformation.width, 0.5, 2.0, 'Width should be clamped');
+        });
+
+        test('Spiral offset clamped to [-45, 45] degrees', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'undulation_segment', 10);
+            const force = createMockForceMetrics(1.0, Math.PI * 2, false);  // Extreme twist
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assertInRange(deformation.spiralOffset, -45, 45, 'Spiral offset should be clamped to degrees');
+        });
+
+        test('Bulge factor clamped to [1.0, 2.0]', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'compression_mass', 10);
+            const force = createMockForceMetrics(0.1, 0, true);  // Extreme compression
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assertInRange(deformation.bulgeFactor, 1.0, 2.0, 'Bulge factor should be clamped');
+        });
+
+        // ========================================
+        // TEST SUITE 11: Error Handling
+        // ========================================
+
+        test('Returns safe defaults when muscle is null', () => {
+            const engine = new DeformationEngine();
+            const force = createMockForceMetrics(1.0, 0, false);
+
+            const deformation = engine.applyDeformationRules(null, force);
+            assert(deformation.width === 1.0, 'Should return width 1.0');
+            assert(deformation.bulgeFactor === 1.0, 'Should return bulgeFactor 1.0');
+        });
+
+        test('Returns safe defaults when force is null', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'extending_limb_muscle', 10);
+
+            const deformation = engine.applyDeformationRules(muscle, null);
+            assert(deformation.width === 1.0, 'Should return safe defaults');
+        });
+
+        test('Handles unknown muscle type gracefully', () => {
+            const engine = new DeformationEngine();
+            const muscle = {
+                id: 'unknown',
+                type: 'unknown_type',
+                width: 10,
+                deformationRules: {}
+            };
+            const force = createMockForceMetrics(0.8, 0, true);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(deformation !== null, 'Should return valid deformation');
+            assertInRange(deformation.width, 0.5, 2.0, 'Should still apply conservative deformation');
+        });
+
+        // ========================================
+        // TEST SUITE 12: Output Structure
+        // ========================================
+
+        test('Output has all required fields', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'extending_limb_muscle', 10);
+            const force = createMockForceMetrics(1.0, 0, false);
+
+            const deformation = engine.applyDeformationRules(muscle, force);
+            assert(typeof deformation.width === 'number', 'Should have width');
+            assert(typeof deformation.bulgeFactor === 'number', 'Should have bulgeFactor');
+            assert(typeof deformation.thinFactor === 'number', 'Should have thinFactor');
+            assert(typeof deformation.spiralOffset === 'number', 'Should have spiralOffset');
+            assert(typeof deformation.striations === 'boolean', 'Should have striations');
+            assert(typeof deformation.deformationIntensity === 'number', 'Should have intensity');
+        });
+
+        // ========================================
+        // TEST SUITE 13: Batch Operations
+        // ========================================
+
+        test('applyAllDeformations works for multiple muscles', () => {
+            const engine = new DeformationEngine();
+            
+            const creature = {
+                muscles: [
+                    createMockMuscle('limb1', 'extending_limb_muscle', 10),
+                    createMockMuscle('spine1', 'rotation_joint', 12),
+                    createMockMuscle('tail1', 'undulation_segment', 8)
+                ]
+            };
+
+            const forceMetricsMap = new Map();
+            forceMetricsMap.set('limb1', createMockForceMetrics(0.8, 0, true));
+            forceMetricsMap.set('spine1', createMockForceMetrics(1.0, Math.PI / 4, false));
+            forceMetricsMap.set('tail1', createMockForceMetrics(1.0, Math.PI / 6, false));
+
+            const deformations = engine.applyAllDeformations(creature, forceMetricsMap);
+            assert(deformations.size === 3, 'Should return 3 deformations');
+            assert(deformations.has('limb1'), 'Should have limb1');
+            assert(deformations.has('spine1'), 'Should have spine1');
+            assert(deformations.has('tail1'), 'Should have tail1');
+        });
+
+        // ========================================
+        // TEST SUITE 14: Performance
+        // ========================================
+
+        test('Single deformation application <2ms', () => {
+            const engine = new DeformationEngine();
+            const muscle = createMockMuscle('test', 'extending_limb_muscle', 10);
+            const force = createMockForceMetrics(0.8, 0.5, true);
+
+            const start = performance.now();
+            engine.applyDeformationRules(muscle, force);
+            const end = performance.now();
+
+            const duration = end - start;
+            assert(duration < 2, `Should complete in <2ms, took ${duration.toFixed(2)}ms`);
+        });
+
+        test('Batch of 20 muscle deformations <30ms', () => {
+            const engine = new DeformationEngine();
+            
+            const muscles = [];
+            const forceMetricsMap = new Map();
+            for (let i = 0; i < 20; i++) {
+                const type = ['extending_limb_muscle', 'rotation_joint', 'undulation_segment'][i % 3];
+                const muscle = createMockMuscle(`muscle${i}`, type, 10);
+                muscles.push(muscle);
+                forceMetricsMap.set(`muscle${i}`, createMockForceMetrics(0.8 + Math.random() * 0.4, Math.random() * Math.PI, true));
+            }
+
+            const creature = { muscles: muscles };
+
+            const start = performance.now();
+            engine.applyAllDeformations(creature, forceMetricsMap);
+            const end = performance.now();
+
+            const duration = end - start;
+            assert(duration < 30, `20 muscles should process in <30ms, took ${duration.toFixed(2)}ms`);
+        });
+
+        // ========================================
+        // Display Results
+        // ========================================
+
+        function displayResults() {
+            const resultsContainer = document.getElementById('results');
+            
+            let html = '';
+            const categories = {
+                'Class Instantiation': [],
+                'Extending Limb Muscle': [],
+                'Compression Mass': [],
+                'Rotation Joint': [],
+                'Undulation Segment': [],
+                'Propulsion Foot': [],
+                'Balance Tail': [],
+                'Flight Wing': [],
+                'Rest State': [],
+                'Value Clamping': [],
+                'Error Handling': [],
+                'Output Structure': [],
+                'Batch Operations': [],
+                'Performance': []
+            };
+
+            results.forEach(result => {
+                let category = 'Other';
+                if (result.name.includes('Extending limb')) category = 'Extending Limb Muscle';
+                else if (result.name.includes('Compression mass')) category = 'Compression Mass';
+                else if (result.name.includes('Rotation joint')) category = 'Rotation Joint';
+                else if (result.name.includes('Undulation segment')) category = 'Undulation Segment';
+                else if (result.name.includes('Propulsion foot')) category = 'Propulsion Foot';
+                else if (result.name.includes('Balance tail')) category = 'Balance Tail';
+                else if (result.name.includes('Flight wing')) category = 'Flight Wing';
+                else if (result.name.includes('Rest state')) category = 'Rest State';
+                else if (result.name.includes('Clamped') || result.name.includes('clamped')) category = 'Value Clamping';
+                else if (result.name.includes('Error') || result.name.includes('null') || result.name.includes('unknown')) category = 'Error Handling';
+                else if (result.name.includes('output') || result.name.includes('fields') || result.name.includes('required')) category = 'Output Structure';
+                else if (result.name.includes('Batch') || result.name.includes('multiple')) category = 'Batch Operations';
+                else if (result.name.includes('ms') || result.name.includes('Performance')) category = 'Performance';
+                else if (result.name.includes('class') || result.name.includes('instantiates')) category = 'Class Instantiation';
+
+                if (!categories[category]) categories[category] = [];
+                categories[category].push(result);
+            });
+
+            // Display by category
+            Object.entries(categories).forEach(([category, categoryResults]) => {
+                if (categoryResults.length === 0) return;
+                
+                html += `<div class="test-group"><h2>${category}</h2>`;
+                categoryResults.forEach(result => {
+                    const className = result.passed ? 'pass' : 'fail';
+                    const icon = result.passed ? '✓' : '✗';
+                    const message = result.error ? `: ${result.error}` : '';
+                    html += `<div class="test-result ${className}">${icon} ${result.name}${message}</div>`;
+                });
+                html += '</div>';
+            });
+
+            // Summary
+            const failCount = testCount - passCount;
+            const summary = `
+                <div class="summary">
+                    <strong>Test Summary</strong><br>
+                    Total: ${testCount} | Passed: ${passCount} | Failed: ${failCount}<br>
+                    ${failCount === 0 ? '✓ All tests passed!' : '✗ Some tests failed. See above for details.'}
+                </div>
+            `;
+
+            resultsContainer.innerHTML = summary + html;
+        }
+
+        // Run all tests when page loads
+        window.addEventListener('load', displayResults);
+    </script>
+</body>
+</html>

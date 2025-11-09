@@ -270,3 +270,364 @@ const ANATOMICAL_PROPORTIONS = {
         }
     }
 };
+
+/**
+ * DEPRECATED: MUSCLE LAYER - Legacy Hardcoded System
+ * ===================================================
+ * 
+ * PHASE 1 v2 REFACTORING:
+ * This section is DEPRECATED as of Phase 1 v2 refactoring.
+ * Muscles are now AUTO-GENERATED using:
+ * - muscle-shape-types.js (behavioral definitions)
+ * - muscle-mappings.js (region assignments)
+ * - muscle-generator.js (auto-generation algorithm)
+ * 
+ * Legacy MUSCLE_TEMPLATES below are kept for reference only.
+ * New creatures should use generateMusclesTours(creatureName, skeleton, locomotionType)
+ * 
+ * TODO: Archive this file section after full migration to auto-generation.
+ * 
+ * @deprecated Use generateMusclesTours() from muscle-generator.js instead
+ */
+
+const MUSCLE_TEMPLATES_LEGACY = {
+    horse: {
+        muscle_templates: [
+            // FRONT LEGS - Left
+            {
+                id: 'frontLeftQuadriceps',
+                name: 'Front Left Quadriceps',
+                startJoint: 'frontLeftShoulder',
+                endJoint: 'frontLeftTibia',
+                restLength: 110,
+                restAngle: -75,
+                width: 18,
+                sensitivity: 1.2,
+                group: 'frontLeftLeg'
+            },
+            {
+                id: 'frontLeftBiceps',
+                name: 'Front Left Biceps',
+                startJoint: 'frontLeftShoulder',
+                endJoint: 'frontLeftForearm',
+                restLength: 85,
+                restAngle: -70,
+                width: 14,
+                sensitivity: 1.1,
+                group: 'frontLeftLeg'
+            },
+            // FRONT LEGS - Right
+            {
+                id: 'frontRightQuadriceps',
+                name: 'Front Right Quadriceps',
+                startJoint: 'frontRightShoulder',
+                endJoint: 'frontRightTibia',
+                restLength: 110,
+                restAngle: -75,
+                width: 18,
+                sensitivity: 1.2,
+                group: 'frontRightLeg'
+            },
+            {
+                id: 'frontRightBiceps',
+                name: 'Front Right Biceps',
+                startJoint: 'frontRightShoulder',
+                endJoint: 'frontRightForearm',
+                restLength: 85,
+                restAngle: -70,
+                width: 14,
+                sensitivity: 1.1,
+                group: 'frontRightLeg'
+            },
+            // HIND LEGS - Left
+            {
+                id: 'hindLeftGluteus',
+                name: 'Hind Left Gluteus Maximus',
+                startJoint: 'spine2',
+                endJoint: 'hindLeftFemur',
+                restLength: 120,
+                restAngle: -60,
+                width: 20,
+                sensitivity: 1.4,
+                group: 'hindLeftLeg'
+            },
+            {
+                id: 'hindLeftHamstring',
+                name: 'Hind Left Hamstring',
+                startJoint: 'hindLeftFemur',
+                endJoint: 'hindLeftTibia',
+                restLength: 95,
+                restAngle: -80,
+                width: 16,
+                sensitivity: 1.3,
+                group: 'hindLeftLeg'
+            },
+            // HIND LEGS - Right
+            {
+                id: 'hindRightGluteus',
+                name: 'Hind Right Gluteus Maximus',
+                startJoint: 'spine2',
+                endJoint: 'hindRightFemur',
+                restLength: 120,
+                restAngle: -60,
+                width: 20,
+                sensitivity: 1.4,
+                group: 'hindRightLeg'
+            },
+            {
+                id: 'hindRightHamstring',
+                name: 'Hind Right Hamstring',
+                startJoint: 'hindRightFemur',
+                endJoint: 'hindRightTibia',
+                restLength: 95,
+                restAngle: -80,
+                width: 16,
+                sensitivity: 1.3,
+                group: 'hindRightLeg'
+            },
+            // SPINE & CORE
+            {
+                id: 'spineErector',
+                name: 'Spine Erector Muscles',
+                startJoint: 'spine0',
+                endJoint: 'spine3',
+                restLength: 140,
+                restAngle: 0,
+                width: 22,
+                sensitivity: 0.8,
+                group: 'spine'
+            },
+            {
+                id: 'abdominals',
+                name: 'Abdominal Muscles',
+                startJoint: 'spine1',
+                endJoint: 'spine3',
+                restLength: 130,
+                restAngle: 0,
+                width: 20,
+                sensitivity: 0.9,
+                group: 'spine'
+            },
+            // NECK
+            {
+                id: 'neckFlexor',
+                name: 'Neck Flexor',
+                startJoint: 'spine0',
+                endJoint: 'neckBase',
+                restLength: 60,
+                restAngle: -45,
+                width: 12,
+                sensitivity: 1.0,
+                group: 'neck'
+            }
+        ]
+    },
+    
+    lizard: {
+        muscle_templates: [
+            // FRONT LEGS - Left
+            {
+                id: 'frontLeftLateralFlexor',
+                name: 'Front Left Lateral Flexor',
+                startJoint: 'spine1',
+                endJoint: 'frontLeftFemur',
+                restLength: 95,
+                restAngle: 0,
+                width: 14,
+                sensitivity: 1.1,
+                group: 'frontLeftLeg'
+            },
+            {
+                id: 'frontLeftExtensor',
+                name: 'Front Left Extensor',
+                startJoint: 'frontLeftFemur',
+                endJoint: 'frontLeftTibia',
+                restLength: 80,
+                restAngle: 45,
+                width: 12,
+                sensitivity: 1.0,
+                group: 'frontLeftLeg'
+            },
+            // FRONT LEGS - Right
+            {
+                id: 'frontRightLateralFlexor',
+                name: 'Front Right Lateral Flexor',
+                startJoint: 'spine1',
+                endJoint: 'frontRightFemur',
+                restLength: 95,
+                restAngle: 180,
+                width: 14,
+                sensitivity: 1.1,
+                group: 'frontRightLeg'
+            },
+            {
+                id: 'frontRightExtensor',
+                name: 'Front Right Extensor',
+                startJoint: 'frontRightFemur',
+                endJoint: 'frontRightTibia',
+                restLength: 80,
+                restAngle: 135,
+                width: 12,
+                sensitivity: 1.0,
+                group: 'frontRightLeg'
+            },
+            // HIND LEGS - Left
+            {
+                id: 'hindLeftLateralFlexor',
+                name: 'Hind Left Lateral Flexor',
+                startJoint: 'spine2',
+                endJoint: 'hindLeftFemur',
+                restLength: 100,
+                restAngle: 0,
+                width: 15,
+                sensitivity: 1.2,
+                group: 'hindLeftLeg'
+            },
+            {
+                id: 'hindLeftExtensor',
+                name: 'Hind Left Extensor',
+                startJoint: 'hindLeftFemur',
+                endJoint: 'hindLeftTibia',
+                restLength: 85,
+                restAngle: 45,
+                width: 13,
+                sensitivity: 1.1,
+                group: 'hindLeftLeg'
+            },
+            // HIND LEGS - Right
+            {
+                id: 'hindRightLateralFlexor',
+                name: 'Hind Right Lateral Flexor',
+                startJoint: 'spine2',
+                endJoint: 'hindRightFemur',
+                restLength: 100,
+                restAngle: 180,
+                width: 15,
+                sensitivity: 1.2,
+                group: 'hindRightLeg'
+            },
+            {
+                id: 'hindRightExtensor',
+                name: 'Hind Right Extensor',
+                startJoint: 'hindRightFemur',
+                endJoint: 'hindRightTibia',
+                restLength: 85,
+                restAngle: 135,
+                width: 13,
+                sensitivity: 1.1,
+                group: 'hindRightLeg'
+            },
+            // SPINE - Lateral undulation muscles
+            {
+                id: 'spineUndulator',
+                name: 'Spine Undulator (Lateral)',
+                startJoint: 'spine0',
+                endJoint: 'spine3',
+                restLength: 160,
+                restAngle: 0,
+                width: 18,
+                sensitivity: 1.3,
+                group: 'spine'
+            },
+            // TAIL
+            {
+                id: 'tailBase',
+                name: 'Tail Base Muscles',
+                startJoint: 'spine3',
+                endJoint: 'tailSegment1',
+                restLength: 75,
+                restAngle: 0,
+                width: 16,
+                sensitivity: 1.4,
+                group: 'tail'
+            }
+        ]
+    }
+};
+
+// ============================================
+// MUSCLE ACCESSOR API - PHASE 1 v2 REFACTORED
+// ============================================
+
+/**
+ * Initialize creature musculature using auto-generation
+ * This is the NEW Phase 1 v2 approach (replaces hardcoded muscles)
+ * 
+ * @param {string} creatureName - Name of the creature
+ * @param {Object} skeleton - Skeleton object with bones
+ * @param {string} locomotionType - Locomotion type (e.g., 'erect_quadruped')
+ * @returns {Array} Auto-generated muscle array
+ */
+function initializeCreatureMusculature(creatureName, skeleton, locomotionType) {
+    try {
+        const muscles = generateMusclesTours(creatureName, skeleton, locomotionType);
+        console.log(`✓ Auto-generated ${muscles.length} muscles for ${creatureName} (${locomotionType})`);
+        return muscles;
+    } catch (error) {
+        console.error(`Failed to auto-generate muscles for ${creatureName}:`, error);
+        return [];
+    }
+}
+
+/**
+ * LEGACY: Retrieves all muscle templates for a given creature type.
+ * @deprecated Use initializeCreatureMusculature() instead
+ * @param {string} creatureType - The type of creature (e.g., 'horse', 'lizard').
+ * @returns {Array|null} Array of muscle template objects, or null if creature not found.
+ */
+function getAllMuscles(creatureType) {
+    return MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? null;
+}
+
+/**
+ * LEGACY: Retrieves a specific muscle template by muscle ID.
+ * @deprecated Use initializeCreatureMusculature() instead
+ * @param {string} creatureType - The type of creature.
+ * @param {string} muscleId - The muscle ID (e.g., 'frontLeftQuadriceps').
+ * @returns {Object|null} The muscle template object, or null if not found.
+ */
+function getMuscleTemplate(creatureType, muscleId) {
+    const muscles = MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? [];
+    return muscles.find(m => m.id === muscleId) ?? null;
+}
+
+/**
+ * LEGACY: Retrieves all muscles in a given group (e.g., 'frontLeftLeg', 'spine').
+ * @deprecated Use initializeCreatureMusculature() instead
+ * @param {string} creatureType - The type of creature.
+ * @param {string} groupName - The muscle group name.
+ * @returns {Array} Array of muscle templates in the group, or empty array if not found.
+ */
+function getMusclesByGroup(creatureType, groupName) {
+    const muscles = MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? [];
+    return muscles.filter(m => m.group === groupName);
+}
+
+/**
+ * Validates that all referenced joints in muscle templates exist in the creature's skeleton.
+ * Works with both auto-generated and legacy muscles.
+ * 
+ * @param {string} creatureType - The type of creature.
+ * @param {Object} skeleton - The skeleton object with bones/joints.
+ * @param {Array} muscles - Array of muscle objects to validate
+ * @returns {Object} Validation report { valid: bool, missingJoints: Array, muscleCount: number }
+ */
+function validateMuscleConfig(creatureType, skeleton, muscles) {
+    const muscleArray = muscles || MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? [];
+    const missingJoints = new Set();
+    
+    muscleArray.forEach(muscle => {
+        if (!skeleton.getBoneById(muscle.startJoint)) {
+            missingJoints.add(muscle.startJoint);
+        }
+        if (!skeleton.getBoneById(muscle.endJoint)) {
+            missingJoints.add(muscle.endJoint);
+        }
+    });
+    
+    return {
+        valid: missingJoints.size === 0,
+        missingJoints: Array.from(missingJoints),
+        muscleCount: muscleArray.length
+    };
+}
