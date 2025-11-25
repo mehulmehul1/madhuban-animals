@@ -5,8 +5,7 @@ class UndulatePattern extends LocomotionPattern {
         this.amplitude = config.amplitude || 20;
     }
 
-    update(creature, deltaTime) {
-        super.update(creature, deltaTime);
+    updatePattern(creature, deltaTime) {
         
         // Fish body follows mouse with swimming motion
         const directionToMouse = new FIK.V2(

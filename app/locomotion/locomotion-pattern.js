@@ -1,4 +1,4 @@
-export class LocomotionPattern {
+class LocomotionPattern {
     constructor(name, config) {
         this.name = name;
         this.config = config || {};
@@ -34,5 +34,10 @@ export class LocomotionPattern {
     getRangeOscillation(min, max, phase = 0) {
         const t = (Math.sin(this.cycle + phase) + 1) * 0.5; // 0..1
         return min + (max - min) * t;
+    }
+
+    // Optional hook for tail movement
+    getTailSwing(chainIndex, boneIndex) {
+        return 0;
     }
 }

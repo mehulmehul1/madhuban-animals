@@ -230,9 +230,12 @@ function getAnatomicalConfig(creatureType) {
  * @returns {any|null} The value of the property, or null if the creature or property doesn't exist.
  */
 function getCreatureProperty(creatureType, propertyKey) {
-    // Optional chaining (?.) safely accesses nested properties.
-    // The nullish coalescing operator (??) then converts undefined to null for consistency.
-    return ANATOMICAL_CONFIGS[creatureType]?.[propertyKey] ?? null;
+    // ES5 compatible access
+    var config = ANATOMICAL_CONFIGS[creatureType];
+    if (config && config[propertyKey] !== undefined) {
+        return config[propertyKey];
+    }
+    return null;
 }
 
 // Export for use in other modules (if using modules)
@@ -576,7 +579,8 @@ function initializeCreatureMusculature(creatureName, skeleton, locomotionType) {
  * @returns {Array|null} Array of muscle template objects, or null if creature not found.
  */
 function getAllMuscles(creatureType) {
-    return MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? null;
+    var config = MUSCLE_TEMPLATES_LEGACY[creatureType];
+    return (config && config.muscle_templates) ? config.muscle_templates : null;
 }
 
 /**
@@ -587,8 +591,9 @@ function getAllMuscles(creatureType) {
  * @returns {Object|null} The muscle template object, or null if not found.
  */
 function getMuscleTemplate(creatureType, muscleId) {
-    const muscles = MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? [];
-    return muscles.find(m => m.id === muscleId) ?? null;
+    var templates = (MUSCLE_TEMPLATES_LEGACY[creatureType] && MUSCLE_TEMPLATES_LEGACY[creatureType].muscle_templates) || [];
+    var found = templates.find(function(m) { return m.id === muscleId; });
+    return found || null;
 }
 
 /**
@@ -599,7 +604,7 @@ function getMuscleTemplate(creatureType, muscleId) {
  * @returns {Array} Array of muscle templates in the group, or empty array if not found.
  */
 function getMusclesByGroup(creatureType, groupName) {
-    const muscles = MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? [];
+    var muscles = (MUSCLE_TEMPLATES_LEGACY[creatureType] && MUSCLE_TEMPLATES_LEGACY[creatureType].muscle_templates) || [];
     return muscles.filter(m => m.group === groupName);
 }
 
@@ -613,7 +618,8 @@ function getMusclesByGroup(creatureType, groupName) {
  * @returns {Object} Validation report { valid: bool, missingJoints: Array, muscleCount: number }
  */
 function validateMuscleConfig(creatureType, skeleton, muscles) {
-    const muscleArray = muscles || MUSCLE_TEMPLATES_LEGACY[creatureType]?.muscle_templates ?? [];
+    var legacyTemplates = (MUSCLE_TEMPLATES_LEGACY[creatureType] && MUSCLE_TEMPLATES_LEGACY[creatureType].muscle_templates) || [];
+    const muscleArray = muscles || legacyTemplates;
     const missingJoints = new Set();
     
     muscleArray.forEach(muscle => {

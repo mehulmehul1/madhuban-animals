@@ -1,436 +1,452 @@
 /**
  * Muscle Shape Renderer
- * ====================
- * Converts deformation rules into 2D muscle geometry and renders via p5.js.
- * 
- * Input: Muscle object + deformation parameters from DeformationEngine
- * Output: p5.js rendered shapes (bulged, thinned, twisted muscles)
- * 
- * This is the third and final component of the deformation pipeline.
+ * =====================
+ * The "Artist" of the muscle engine.
+ * Draws the final 2D geometry using p5.js based on deformation parameters.
+ * Handles bulging, tapering, and twist offsets.
  */
 
-/**
- * MuscleShapeRenderer class
- * Renders deformed muscle shapes using p5.js
- */
 class MuscleShapeRenderer {
-    constructor(options = {}) {
-        this.baseColors = {
-            extending_limb_muscle: { r: 200, g: 50, b: 50 },       // Red
-            compression_mass: { r: 220, g: 30, b: 30 },            // Dark red
-            rotation_joint: { r: 150, g: 100, b: 200 },            // Purple
-            undulation_segment: { r: 100, g: 200, b: 100 },        // Green
-            propulsion_foot: { r: 180, g: 80, b: 20 },             // Orange
-            balance_tail: { r: 100, g: 150, b: 200 },              // Blue
-            flight_wing: { r: 200, g: 100, b: 50 },                // Orange-brown
-            neck_flexor: { r: 150, g: 120, b: 180 },               // Light purple
-            stabilizer_muscle: { r: 100, g: 100, b: 100 }          // Gray
-        };
-
-        this.strokeWeight = options.strokeWeight || 1.5;
-        this.debugMode = options.debugMode || false;
-        this.colorIntensity = options.colorIntensity || 1.0;
-        this.striationSpacing = options.striationSpacing || 3;
+    constructor(config = {}) {
+        this.debugMode = config.debugMode || false;
+        this.colorIntensity = config.colorIntensity || 1.0;
     }
 
     /**
-     * Render a single muscle with deformation
-     * @param {Object} p5 - p5.js context
-     * @param {Object} muscle - Muscle object {id, type, width, startJoint, endJoint, ...}
-     * @param {Object} deformation - Deformation parameters {width, bulgeFactor, thinFactor, spiralOffset, ...}
+     * Render a single muscle - dispatches to appropriate renderer
+     * @param {Object} p5 - The p5.js instance
+     * @param {Object} muscle - The muscle object
+     * @param {Object} deformation - Deformation parameters { width, bulge, offset }
      * @param {Object} startPos - Start position {x, y}
      * @param {Object} endPos - End position {x, y}
+     * @param {Function} getBoneById - Function to get live bone by ID
      */
-    renderMuscle(p5, muscle, deformation, startPos, endPos) {
-        if (!p5 || !muscle || !deformation || !startPos || !endPos) {
+    renderMuscle(p5, muscle, deformation, startPos, endPos, getBoneById) {
+        if (!p5 || !muscle || !deformation) return;
+
+
+
+        switch(muscle.shapeType) {
+            case 'spindle':
+                this.renderSpindle(p5, muscle, deformation, startPos, endPos);
+                break;
+            case 'circle-chain':
+                this.renderCircleChain(p5, muscle, deformation, startPos, endPos, getBoneById);
+                break;
+            case 'circle-segment':
+                this.renderCircleSegment(p5, muscle, deformation, startPos, endPos);
+                break;
+            default:
+                // Fallback to spindle
+
+                this.renderSpindle(p5, muscle, deformation, startPos, endPos);
+        }
+    }
+
+    /**
+     * Render Circle-Chain muscle mass (torso, neck, etc.)
+     * Creates organic volume using circles along the bone chain
+     */
+    renderCircleChain(p5, muscle, deformation, startPos, endPos, getBoneById) {
+
+        
+        // Check if muscle has bones array (from mass strategy)
+        if (!muscle.bones || muscle.bones.length === 0) {
+            console.warn(`[RENDER] Circle-chain muscle ${muscle.id} has no bones array, falling back to spindle`);
+            this.renderSpindle(p5, muscle, deformation, startPos, endPos);
             return;
         }
 
-        try {
-            // Calculate muscle properties
-            const baseWidth = muscle.width || 10;
-            const deformedWidth = baseWidth * (deformation.width || 1.0);
-            
-            // Get color for muscle type
-            const color = this.getColorForType(muscle.type);
-            
-            // Calculate direction and perpendicular
-            const dx = endPos.x - startPos.x;
-            const dy = endPos.y - startPos.y;
-            const length = Math.hypot(dx, dy);
-            
-            if (length < 0.1) return; // Skip degenerate muscles
+        const bones = muscle.bones;
 
-            const dirX = dx / length;
-            const dirY = dy / length;
-            const perpX = -dirY;
-            const perpY = dirX;
-
-            // Render based on deformation type
-            if (Math.abs(deformation.bulgeFactor - 1.0) > 0.01) {
-                this.renderBulgedMuscle(p5, startPos, endPos, deformedWidth, deformation.bulgeFactor, color, dirX, dirY, perpX, perpY);
-            } else if (Math.abs(deformation.thinFactor - 1.0) > 0.01) {
-                this.renderTinnedMuscle(p5, startPos, endPos, deformedWidth, deformation.thinFactor, color, dirX, dirY, perpX, perpY);
-            } else if (Math.abs(deformation.spiralOffset) > 0.1) {
-                this.renderSpiralMuscle(p5, startPos, endPos, deformedWidth, deformation.spiralOffset, color, dirX, dirY, perpX, perpY);
-            } else {
-                this.renderStandardMuscle(p5, startPos, endPos, deformedWidth, color, dirX, dirY, perpX, perpY);
+        const circles = [];
+        
+        // Generate circles along each bone in the span
+        // IMPORTANT: Use getBoneById to get LIVE bone positions, not cached ones!
+        for (let boneIdx = 0; boneIdx < bones.length; boneIdx++) {
+            const cachedBone = bones[boneIdx];
+            
+            // Get the LIVE bone from the skeleton
+            const liveBone = getBoneById ? getBoneById(cachedBone.id) : cachedBone;
+            
+            if (!liveBone) continue;
+            
+            const t = boneIdx / (bones.length - 1); // 0 to 1
+            
+            // Position at bone midpoint (using LIVE positions)
+            const x = (liveBone.start.x + liveBone.end.x) / 2;
+            const y = (liveBone.start.y + liveBone.end.y) / 2;
+            
+            // Base width from muscle config or deformation
+            const baseRadius = (muscle.width || deformation.width || 10) / 2;
+            
+            // ANATOMICAL PROFILING based on role
+            let profileScale = 1.0;
+            const role = (muscle.role || 'default').toLowerCase();
+            
+            if (role.includes('neck')) {
+                // Neck: Thick at base (t=0), thinner at head (t=1)
+                profileScale = 1.2 - t * 0.5;
+            } else if (role.includes('tail')) {
+                // Tail: Thick at base, very thin at tip
+                profileScale = 1.0 - t * 0.8;
+            } else if (role.includes('spine') || role.includes('body') || role.includes('mantle')) {
+                // Torso/Body: Thicker in middle (barrel), tapered slightly at ends
+                // sin(t * PI) gives 0->1->0 hump
+                profileScale = 0.9 + 0.3 * Math.sin(t * Math.PI);
+            } else if (role.includes('tentacle') || role.includes('arm')) {
+                // Tentacles: Linear taper
+                profileScale = 1.0 - t * 0.6;
             }
-
-            // Add striations if enabled
-            if (deformation.striations && deformation.deformationIntensity > 0.3) {
-                this.drawStriations(p5, startPos, endPos, deformedWidth, deformation.deformationIntensity, color);
-            }
-
-            // Debug overlay if enabled
-            if (this.debugMode) {
-                this.drawDebugOverlay(p5, muscle, deformation, startPos, endPos);
-            }
-        } catch (error) {
-            console.error(`Error rendering muscle ${muscle.id}:`, error);
+            
+            // Apply deformation (muscle contraction/extension)
+            const bulgeFactor = deformation.bulgeFactor !== undefined ? deformation.bulgeFactor : 0;
+            const deformedRadius = baseRadius * profileScale * (1 + bulgeFactor * (muscle.bulgeSensitivity || 1.0));
+            
+            circles.push({ x, y, radius: Math.max(2, deformedRadius) });
         }
+        
+        // Draw smooth organic hull
+        p5.push();
+        p5.noStroke();
+        p5.fill(180, 90, 90, 200); // Darker red-brown for muscle masses
+        
+        this.drawOrganicHull(p5, circles);
+        
+        p5.pop();
     }
 
     /**
-     * Render standard muscle shape (capsule with no deformation)
-     * @private
+     * Draw filled outline from tangent points of circles
      */
-    renderStandardMuscle(p5, startPos, endPos, width, color, dirX, dirY, perpX, perpY) {
-        const halfWidth = width / 2;
-
-        // Set styling
-        p5.fill(color.r, color.g, color.b, 200);
-        p5.stroke(0);
-        p5.strokeWeight(this.strokeWeight);
-
-        // Create capsule shape (rounded rectangle)
-        p5.beginShape();
+    drawCircleChainOutline(p5, circles) {
+        if (circles.length < 2) return;
         
-        // Calculate endpoints with rounded ends
-        const startLeft = {
-            x: startPos.x + perpX * halfWidth,
-            y: startPos.y + perpY * halfWidth
-        };
-        const startRight = {
-            x: startPos.x - perpX * halfWidth,
-            y: startPos.y - perpY * halfWidth
-        };
-        const endLeft = {
-            x: endPos.x + perpX * halfWidth,
-            y: endPos.y + perpY * halfWidth
-        };
-        const endRight = {
-            x: endPos.x - perpX * halfWidth,
-            y: endPos.y - perpY * halfWidth
-        };
-
-        // Draw sides
-        p5.vertex(startLeft.x, startLeft.y);
-        p5.vertex(endLeft.x, endLeft.y);
+        p5.push();
+        p5.noStroke();
+        p5.fill(180, 90, 90, 200); // Darker red-brown for muscle masses
         
-        // Arc at end
-        this.drawArcSegment(p5, endPos, perpX, perpY, width, Math.PI * 0.5, Math.PI * 1.5);
+        // Calculate tangent points for upper and lower outline
+        const upperTangents = [];
+        const lowerTangents = [];
         
-        // Other side back
-        p5.vertex(endRight.x, endRight.y);
-        p5.vertex(startRight.x, startRight.y);
-        
-        // Arc at start
-        this.drawArcSegment(p5, startPos, perpX, perpY, width, -Math.PI * 0.5, Math.PI * 0.5);
-        
-        p5.endShape(p5.CLOSE);
-    }
-
-    /**
-     * Render bulged muscle (compressed state)
-     * @private
-     */
-    renderBulgedMuscle(p5, startPos, endPos, width, bulgeFactor, color, dirX, dirY, perpX, perpY) {
-        const halfWidth = width / 2;
-        const bulgeAmount = halfWidth * (bulgeFactor - 1.0);
-        const midX = (startPos.x + endPos.x) / 2;
-        const midY = (startPos.y + endPos.y) / 2;
-
-        // Set styling with darker color for bulge
-        const bulgeCo = {
-            r: Math.max(0, color.r - 30),
-            g: Math.max(0, color.g - 30),
-            b: Math.max(0, color.b - 30)
-        };
-        p5.fill(bulgeCo.r, bulgeCo.g, bulgeCo.b, 200);
-        p5.stroke(0);
-        p5.strokeWeight(this.strokeWeight);
-
-        p5.beginShape();
-
-        // Left side with bulge
-        p5.vertex(startPos.x + perpX * halfWidth, startPos.y + perpY * halfWidth);
-        
-        // Bezier curve for bulge on left side
-        const bulgeLeftMid = {
-            x: midX + perpX * (halfWidth + bulgeAmount),
-            y: midY + perpY * (halfWidth + bulgeAmount)
-        };
-        p5.curveVertex(midX + perpX * (halfWidth + bulgeAmount * 0.7), 
-                       midY + perpY * (halfWidth + bulgeAmount * 0.7));
-        p5.curveVertex(bulgeLeftMid.x, bulgeLeftMid.y);
-        p5.curveVertex(midX + perpX * (halfWidth + bulgeAmount * 0.7), 
-                       midY + perpY * (halfWidth + bulgeAmount * 0.7));
-        
-        p5.vertex(endPos.x + perpX * halfWidth, endPos.y + perpY * halfWidth);
-
-        // Right side (return)
-        p5.vertex(endPos.x - perpX * halfWidth, endPos.y - perpY * halfWidth);
-        
-        // Bulge on right side
-        p5.curveVertex(midX - perpX * (halfWidth + bulgeAmount * 0.7), 
-                       midY - perpY * (halfWidth + bulgeAmount * 0.7));
-        p5.curveVertex(midX - perpX * (halfWidth + bulgeAmount), 
-                       midY - perpY * (halfWidth + bulgeAmount));
-        p5.curveVertex(midX - perpX * (halfWidth + bulgeAmount * 0.7), 
-                       midY - perpY * (halfWidth + bulgeAmount * 0.7));
-        
-        p5.vertex(startPos.x - perpX * halfWidth, startPos.y - perpY * halfWidth);
-
-        p5.endShape(p5.CLOSE);
-    }
-
-    /**
-     * Render thinned muscle (extended state)
-     * @private
-     */
-    renderTinnedMuscle(p5, startPos, endPos, width, thinFactor, color, dirX, dirY, perpX, perpY) {
-        const halfWidth = width / 2;
-        const thinAmount = halfWidth * (1.0 - thinFactor);
-
-        // Set styling with lighter color for thin
-        const thinColor = {
-            r: Math.min(255, color.r + 20),
-            g: Math.min(255, color.g + 20),
-            b: Math.min(255, color.b + 20)
-        };
-        p5.fill(thinColor.r, thinColor.g, thinColor.b, 180);
-        p5.stroke(0);
-        p5.strokeWeight(this.strokeWeight);
-
-        const midX = (startPos.x + endPos.x) / 2;
-        const midY = (startPos.y + endPos.y) / 2;
-
-        p5.beginShape();
-
-        // Tapered left side
-        p5.vertex(startPos.x + perpX * halfWidth, startPos.y + perpY * halfWidth);
-        p5.curveVertex(midX + perpX * (halfWidth - thinAmount * 0.5), 
-                       midY + perpY * (halfWidth - thinAmount * 0.5));
-        p5.vertex(endPos.x + perpX * (halfWidth - thinAmount), endPos.y + perpY * (halfWidth - thinAmount));
-
-        // Right side back
-        p5.vertex(endPos.x - perpX * (halfWidth - thinAmount), endPos.y - perpY * (halfWidth - thinAmount));
-        p5.curveVertex(midX - perpX * (halfWidth - thinAmount * 0.5), 
-                       midY - perpY * (halfWidth - thinAmount * 0.5));
-        p5.vertex(startPos.x - perpX * halfWidth, startPos.y - perpY * halfWidth);
-
-        p5.endShape(p5.CLOSE);
-    }
-
-    /**
-     * Render spiraled muscle (twist-driven deformation)
-     * @private
-     */
-    renderSpiralMuscle(p5, startPos, endPos, width, spiralOffset, color, dirX, dirY, perpX, perpY) {
-        const halfWidth = width / 2;
-        const spiralRadians = spiralOffset * Math.PI / 180; // Convert degrees to radians
-        const length = Math.hypot(endPos.x - startPos.x, endPos.y - startPos.y);
-
-        // Set styling
-        p5.fill(color.r, color.g, color.b, 190);
-        p5.stroke(0);
-        p5.strokeWeight(this.strokeWeight);
-
-        p5.beginShape();
-
-        const segments = Math.ceil(length / 4);
-        const halfSegments = Math.floor(segments / 2);
-
-        // Draw first half of spiral (one side)
-        for (let i = 0; i <= halfSegments; i++) {
-            const t = i / segments;
-            const x = startPos.x + (endPos.x - startPos.x) * t;
-            const y = startPos.y + (endPos.y - startPos.y) * t;
+        for (let i = 0; i < circles.length - 1; i++) {
+            const c1 = circles[i];
+            const c2 = circles[i + 1];
             
-            // Spiral offset increases with t
-            const currentOffset = spiralRadians * t;
-            const offsetDirX = perpX * Math.cos(currentOffset) - dirX * Math.sin(currentOffset);
-            const offsetDirY = perpY * Math.cos(currentOffset) - dirY * Math.sin(currentOffset);
+            // Vector from c1 to c2
+            const dx = c2.x - c1.x;
+            const dy = c2.y - c1.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
             
-            p5.vertex(x + offsetDirX * halfWidth, y + offsetDirY * halfWidth);
+            if (dist < 0.1) continue;
+            
+            // Perpendicular vector (normalized)
+            const perpX = -dy / dist;
+            const perpY = dx / dist;
+            
+            // Average radius for tangent calculation
+            const avgRadius = (c1.radius + c2.radius) / 2;
+            
+            // Upper tangent points
+            upperTangents.push({
+                x: c1.x + perpX * c1.radius,
+                y: c1.y + perpY * c1.radius
+            });
+            
+            // Lower tangent points
+            lowerTangents.push({
+                x: c1.x - perpX * c1.radius,
+                y: c1.y - perpY * c1.radius
+            });
         }
-
-        // Return on other side (opposite spiral)
-        for (let i = halfSegments; i >= 0; i--) {
-            const t = i / segments;
-            const x = startPos.x + (endPos.x - startPos.x) * t;
-            const y = startPos.y + (endPos.y - startPos.y) * t;
-            
-            const currentOffset = spiralRadians * t;
-            const offsetDirX = perpX * Math.cos(currentOffset) - dirX * Math.sin(currentOffset);
-            const offsetDirY = perpY * Math.cos(currentOffset) - dirY * Math.sin(currentOffset);
-            
-            p5.vertex(x - offsetDirX * halfWidth, y - offsetDirY * halfWidth);
+        
+        // Add last circle's tangent points
+        const lastCircle = circles[circles.length - 1];
+        const secondLast = circles[circles.length - 2];
+        const dx = lastCircle.x - secondLast.x;
+        const dy = lastCircle.y - secondLast.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const perpX = -dy / dist;
+        const perpY = dx / dist;
+        
+        upperTangents.push({
+            x: lastCircle.x + perpX * lastCircle.radius,
+            y: lastCircle.y + perpY * lastCircle.radius
+        });
+        
+        lowerTangents.push({
+            x: lastCircle.x - perpX * lastCircle.radius,
+            y: lastCircle.y - perpY * lastCircle.radius
+        });
+        
+        // Draw filled shape
+        p5.beginShape();
+        
+        // Upper outline
+        upperTangents.forEach(pt => p5.vertex(pt.x, pt.y));
+        
+        // Lower outline (reversed)
+        for (let i = lowerTangents.length - 1; i >= 0; i--) {
+            p5.vertex(lowerTangents[i].x, lowerTangents[i].y);
         }
-
+        
         p5.endShape(p5.CLOSE);
+        p5.pop();
     }
 
     /**
-     * Draw striations (muscle fiber lines) on the muscle
-     * @private
+     * Render Circle-Segment muscle (tentacles, snake body, flexible parts)
+     * Dense overlapping circles for continuous flexible appearance
      */
-    drawStriations(p5, startPos, endPos, width, intensity, color) {
+    renderCircleSegment(p5, muscle, deformation, startPos, endPos) {
         const dx = endPos.x - startPos.x;
         const dy = endPos.y - startPos.y;
-        const length = Math.hypot(dx, dy);
-
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
         if (length < 1) return;
+        
+        const baseRadius = (muscle.width || deformation.width || 6) / 2;
+        const bulgeFactor = deformation.bulgeFactor !== undefined ? deformation.bulgeFactor : 0;
+        const overlapFactor = muscle.overlapFactor || 0.5; // Less overlap needed with hull
+        
+        // Number of circles based on overlap
+        // With hull, we can space them out more (radius * 1.0 instead of radius * 0.5)
+        const spacing = Math.max(2, baseRadius * 1.0); 
+        const circleCount = Math.max(2, Math.ceil(length / spacing));
+        
+        const circles = [];
+        const role = (muscle.role || 'default').toLowerCase();
 
-        const dirX = dx / length;
-        const dirY = dy / length;
-        const perpX = -dirY;
-        const perpY = dirX;
-
-        // Set striation styling
-        const striationColor = {
-            r: Math.max(0, color.r - 50),
-            g: Math.max(0, color.g - 50),
-            b: Math.max(0, color.b - 50)
-        };
-
-        p5.stroke(striationColor.r, striationColor.g, striationColor.b, 100 * intensity);
-        p5.strokeWeight(0.5);
-
-        const spacing = this.striationSpacing;
-        const halfWidth = width / 2;
-
-        // Draw lines perpendicular to muscle along its length
-        for (let i = 0; i < length; i += spacing) {
-            const t = i / length;
+        for (let i = 0; i < circleCount; i++) {
+            const t = i / (circleCount - 1);
             const x = startPos.x + dx * t;
             const y = startPos.y + dy * t;
-
-            const x1 = x + perpX * halfWidth;
-            const y1 = y + perpY * halfWidth;
-            const x2 = x - perpX * halfWidth;
-            const y2 = y - perpY * halfWidth;
-
-            p5.line(x1, y1, x2, y2);
+            
+            // Apply tapering profile
+            let profileScale = 1.0;
+            if (role.includes('tentacle') || role.includes('arm') || role.includes('tail')) {
+                // Linear taper for appendages
+                profileScale = 1.0 - t * 0.6;
+            }
+            
+            const deformedRadius = baseRadius * profileScale * (1 + bulgeFactor * 0.6);
+            circles.push({ x, y, radius: Math.max(1.5, deformedRadius) });
         }
+        
+        p5.push();
+        p5.noStroke();
+        p5.fill(200, 100, 100, 180); // Lighter red for flexible segments
+        
+        this.drawOrganicHull(p5, circles);
+        
+        p5.pop();
     }
 
-    /**
-     * Draw debug overlay (centerline, force vectors, metrics)
-     * @private
-     */
-    drawDebugOverlay(p5, muscle, deformation, startPos, endPos) {
-        // Draw centerline
-        p5.stroke(255, 0, 0, 128);
-        p5.strokeWeight(1);
-        p5.line(startPos.x, startPos.y, endPos.x, endPos.y);
-
-        // Draw force vector
-        const forceScale = 20;
+    renderSpindle(p5, muscle, deformation, startPos, endPos) {
+        // 1. Calculate Geometry Vectors
         const dx = endPos.x - startPos.x;
         const dy = endPos.y - startPos.y;
-        const midX = (startPos.x + endPos.x) / 2;
-        const midY = (startPos.y + endPos.y) / 2;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
 
-        p5.stroke(0, 255, 0, 200);
-        p5.strokeWeight(2);
-        const arrowLength = Math.abs(deformation.width - 1.0) * forceScale;
-        p5.line(midX, midY, midX + arrowLength, midY);
+        // Perpendicular vector (normalized)
+        const perpX = -Math.sin(angle);
+        const perpY = Math.cos(angle);
 
-        // Draw metrics text
+        // 2. Calculate Control Points
+        // We use a simplified "spindle" shape logic with Bezier curves.
+        // The "peak" of the spindle is determined by the offset (0.0 - 1.0)
+        // The "width" at the peak is determined by width * bulge
+
+        const halfWidth = (deformation.width * deformation.bulge) / 2;
+        
+        // Offset position along the length
+        const peakRatio = deformation.offset; // 0.5 is center
+        const peakX = startPos.x + dx * peakRatio;
+        const peakY = startPos.y + dy * peakRatio;
+
+        // Peak points (top and bottom)
+        const topX = peakX + perpX * halfWidth;
+        const topY = peakY + perpY * halfWidth;
+        const bottomX = peakX - perpX * halfWidth;
+        const bottomY = peakY - perpY * halfWidth;
+
+        // 3. Draw Shape
+        p5.push();
+        
+        // Styling (Placeholder for Phase 3 integration)
+        // For now, use a simple fill based on state
+        if (this.debugMode) {
+            p5.noFill();
+            p5.stroke(0);
+            p5.strokeWeight(1);
+        } else {
+            // Simple organic look
+            p5.noStroke();
+            // Color based on muscle group or type?
+            // Let's use a reddish muscle color
+            p5.fill(200, 100, 100, 200); 
+        }
+
+        p5.beginShape();
+        
+        // Start point
+        p5.vertex(startPos.x, startPos.y);
+
+        // Curve to Top Peak
+        // Control point 1: Start -> Peak
+        // We want a smooth curve. Control point should be tangent to the line?
+        // Or just use curveVertex? Bezier gives more control.
+        // Simple Quadratic Bezier: Start -> Control -> End
+        // Control point is "out" from the midpoint of the segment?
+        // Let's use bezierVertex(c1x, c1y, c2x, c2y, x, y)
+        
+        // Top Curve: Start -> Top Peak -> End
+        // To make it round, control points should be parallel to the length vector
+        const cpLen = length * 0.3; // Control point handle length
+        
+        // CP1: Out from start towards peak
+        // Actually, for a spindle, we can just use the peak as the anchor?
+        // Let's try drawing two curves: Start->Top->End and End->Bottom->Start
+        
+        // Simplified: just use curveVertex for organic shape
+        // p5.curveVertex(startPos.x, startPos.y); // Start guide
+        // p5.curveVertex(startPos.x, startPos.y); // Start point
+        // p5.curveVertex(topX, topY);             // Peak
+        // p5.curveVertex(endPos.x, endPos.y);     // End point
+        // p5.curveVertex(endPos.x, endPos.y);     // End guide
+        
+        // Better: Bezier for precise bulge control
+        // Start -> Top
+        p5.bezierVertex(
+            startPos.x + dx * (peakRatio * 0.5), startPos.y + dy * (peakRatio * 0.5), // CP1 (on line)
+            topX - dx * 0.1, topY - dy * 0.1, // CP2 (near peak)
+            topX, topY // Anchor (Peak)
+        );
+        
+        // Top -> End
+        p5.bezierVertex(
+            topX + dx * 0.1, topY + dy * 0.1, // CP1 (near peak)
+            endPos.x - dx * ((1-peakRatio) * 0.5), endPos.y - dy * ((1-peakRatio) * 0.5), // CP2 (on line)
+            endPos.x, endPos.y // Anchor (End)
+        );
+
+        // End -> Bottom
+        p5.bezierVertex(
+            endPos.x - dx * ((1-peakRatio) * 0.5), endPos.y - dy * ((1-peakRatio) * 0.5),
+            bottomX + dx * 0.1, bottomY + dy * 0.1,
+            bottomX, bottomY
+        );
+
+        // Bottom -> Start
+        p5.bezierVertex(
+            bottomX - dx * 0.1, bottomY - dy * 0.1,
+            startPos.x + dx * (peakRatio * 0.5), startPos.y + dy * (peakRatio * 0.5),
+            startPos.x, startPos.y
+        );
+
+        p5.endShape(p5.CLOSE);
+        p5.pop();
+
+        // 4. Striations (Optional Debug/Visual)
+        if (deformation.showStriations) {
+            p5.stroke(255, 255, 255, 100);
+            p5.strokeWeight(1);
+            p5.noFill();
+            // Draw lines along the length
+            p5.line(startPos.x, startPos.y, endPos.x, endPos.y);
+        }
+
+        // 5. Debug Overlay
+        if (this.debugMode) {
+            this._drawDebug(p5, startPos, endPos, topX, topY, bottomX, bottomY, deformation);
+        }
+    }
+
+    _drawDebug(p5, start, end, tx, ty, bx, by, def) {
+        p5.push();
+        p5.stroke(0, 255, 0);
+        p5.line(start.x, start.y, end.x, end.y); // Centerline
+        
+        p5.stroke(255, 0, 0);
+        p5.line(tx, ty, bx, by); // Width at peak
+        
         p5.fill(0);
-        p5.textSize(10);
-        p5.textAlign(p5.LEFT);
-        const metrics = `W:${deformation.width.toFixed(2)} B:${deformation.bulgeFactor.toFixed(2)}`;
-        p5.text(metrics, startPos.x + 5, startPos.y - 5);
+        p5.noStroke();
+        // p5.text(`W:${def.width.toFixed(1)}`, tx, ty - 10);
+        p5.pop();
     }
 
     /**
-     * Get color for muscle type
-     * @private
+     * Draw a smooth organic hull around a chain of circles.
+     * Uses external tangents to connect adjacent circles smoothly.
      */
-    getColorForType(muscleType) {
-        return this.baseColors[muscleType] || { r: 150, g: 150, b: 150 };
-    }
+    drawOrganicHull(p5, circles) {
+        if (circles.length < 2) return;
 
-    /**
-     * Helper: Draw arc segment for capsule ends
-     * @private
-     */
-    drawArcSegment(p5, center, perpX, perpY, width, startAngle, endAngle) {
-        const radius = width / 2;
-        const steps = 8;
+        p5.push();
+        p5.noStroke();
+        // Use the current fill color set before calling this
+        
+        // 1. Draw all circles first (to fill the joints)
+        circles.forEach(c => p5.circle(c.x, c.y, c.radius * 2));
 
-        for (let i = 0; i <= steps; i++) {
-            const angle = startAngle + (endAngle - startAngle) * (i / steps);
-            const x = center.x + Math.cos(angle) * perpX * radius + Math.sin(angle) * radius;
-            const y = center.y + Math.cos(angle) * perpY * radius + Math.sin(angle) * radius;
-            p5.vertex(x, y);
+        // 2. Draw connections between adjacent circles
+        for (let i = 0; i < circles.length - 1; i++) {
+            const c1 = circles[i];
+            const c2 = circles[i + 1];
+            
+            const dx = c2.x - c1.x;
+            const dy = c2.y - c1.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // Skip if circles are too close or completely contained
+            if (dist < Math.abs(c1.radius - c2.radius) + 0.1) continue;
+
+            const angle = Math.atan2(dy, dx);
+            
+            // Calculate spread angle for external tangents
+            // cos(spread) = (r1 - r2) / dist
+            let spread = 0;
+            try {
+                // Clamp input to acos to avoid NaN due to floating point errors
+                const val = (c1.radius - c2.radius) / dist;
+                if (val >= 1) spread = 0;
+                else if (val <= -1) spread = Math.PI;
+                else spread = Math.acos(val);
+            } catch (e) { continue; }
+
+            // Tangent points
+            const ang1 = angle + spread;
+            const ang2 = angle - spread;
+            
+            const x1a = c1.x + Math.cos(ang1) * c1.radius;
+            const y1a = c1.y + Math.sin(ang1) * c1.radius;
+            
+            const x1b = c1.x + Math.cos(ang2) * c1.radius;
+            const y1b = c1.y + Math.sin(ang2) * c1.radius;
+            
+            const x2a = c2.x + Math.cos(ang1) * c2.radius;
+            const y2a = c2.y + Math.sin(ang1) * c2.radius;
+            
+            const x2b = c2.x + Math.cos(ang2) * c2.radius;
+            const y2b = c2.y + Math.sin(ang2) * c2.radius;
+            
+            // Draw the trapezoid connecting the circles
+            p5.beginShape();
+            p5.vertex(x1a, y1a);
+            p5.vertex(x2a, y2a);
+            p5.vertex(x2b, y2b);
+            p5.vertex(x1b, y1b);
+            p5.endShape(p5.CLOSE);
         }
-    }
-
-    /**
-     * Render all muscles in a creature with their deformations
-     * @param {Object} p5 - p5.js context
-     * @param {Object} creature - Creature object with muscles and skeleton
-     * @param {Map} deformationsMap - Map of muscleId -> deformation parameters
-     * @param {Map} forceMetricsMap - Map of muscleId -> force metrics (for debug)
-     */
-    renderAllMuscles(p5, creature, deformationsMap, forceMetricsMap = null) {
-        if (!creature || !creature.muscles || !deformationsMap) {
-            return;
-        }
-
-        for (const muscle of creature.muscles) {
-            const deformation = deformationsMap.get(muscle.id);
-            if (!deformation) continue;
-
-            // Get bone positions
-            const startBone = creature.skeleton && creature.skeleton.getBoneById 
-                ? creature.skeleton.getBoneById(muscle.startJoint)
-                : null;
-            const endBone = creature.skeleton && creature.skeleton.getBoneById
-                ? creature.skeleton.getBoneById(muscle.endJoint)
-                : null;
-
-            if (!startBone || !endBone) continue;
-
-            const startPos = { x: startBone.posX || startBone.pos?.x || 0, 
-                             y: startBone.posY || startBone.pos?.y || 0 };
-            const endPos = { x: endBone.posX || endBone.pos?.x || 0, 
-                           y: endBone.posY || endBone.pos?.y || 0 };
-
-            this.renderMuscle(p5, muscle, deformation, startPos, endPos);
-        }
-    }
-
-    /**
-     * Set debug mode
-     */
-    setDebugMode(enabled) {
-        this.debugMode = enabled;
-    }
-
-    /**
-     * Set color for muscle type
-     */
-    setColorForType(muscleType, color) {
-        this.baseColors[muscleType] = color;
+        
+        p5.pop();
     }
 }
 
-// Export for use in other systems
-if (typeof module !== 'undefined' && module.exports) {
+// Export
+if (typeof module !== 'undefined') {
     module.exports = MuscleShapeRenderer;
 }

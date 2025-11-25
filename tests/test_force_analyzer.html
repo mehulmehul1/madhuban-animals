@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test: Force Analyzer (Phase 2)</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .pass { color: green; }
+        .fail { color: red; font-weight: bold; }
+        .test-group { margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; }
+        h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>Phase 2: Force Analyzer Tests</h1>
+    <div id="results"></div>
+
+    <!-- Load System -->
+    <script src="../app/systems/force-analyzer.js"></script>
+
+    <script>
+        const results = document.getElementById('results');
+        const analyzer = new ForceAnalyzer();
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.textContent = message;
+            if (type === 'pass') div.className = 'pass';
+            if (type === 'fail') div.className = 'fail';
+            results.appendChild(div);
+        }
+
+        function assert(condition, message) {
+            if (condition) {
+                log(`✓ ${message}`, 'pass');
+                return true;
+            } else {
+                log(`✗ ${message}`, 'fail');
+                return false;
+            }
+        }
+
+        function runTests() {
+            log('Starting Tests...');
+
+            // --- Setup Mock Data ---
+            const mockSkeleton = {
+                bones: [
+                    { id: 'bone1', pos: { x: 100, y: 100 } },
+                    { id: 'bone2', pos: { x: 200, y: 100 } } // 100px apart
+                ]
+            };
+
+            const mockMuscle = {
+                id: 'test_muscle',
+                startJoint: 'bone1',
+                endJoint: 'bone2',
+                restLength: 100, // Matches initial distance
+                restAngle: 0     // Horizontal
+            };
+
+            // --- Test 1: Rest State ---
+            log('--- Test 1: Rest State ---');
+            let metrics = analyzer.calculateMuscleForce(mockMuscle, mockSkeleton);
+            assert(Math.abs(metrics.ratio - 1.0) < 0.001, `Rest Ratio should be 1.0 (Got: ${metrics.ratio})`);
+            assert(metrics.state === 'rest', `State should be 'rest' (Got: ${metrics.state})`);
+            assert(Math.abs(metrics.twistAngle) < 0.001, `Twist should be 0 (Got: ${metrics.twistAngle})`);
+
+            // --- Test 2: Stretch State ---
+            log('--- Test 2: Stretch State ---');
+            // Move bone2 to 250 (150px dist)
+            mockSkeleton.bones[1].pos.x = 250; 
+            metrics = analyzer.calculateMuscleForce(mockMuscle, mockSkeleton);
+            assert(Math.abs(metrics.ratio - 1.5) < 0.001, `Stretch Ratio should be 1.5 (Got: ${metrics.ratio})`);
+            assert(metrics.state === 'stretch', `State should be 'stretch' (Got: ${metrics.state})`);
+            assert(metrics.isStretched === true, `isStretched should be true`);
+
+            // --- Test 3: Compression State ---
+            log('--- Test 3: Compression State ---');
+            // Move bone2 to 150 (50px dist)
+            mockSkeleton.bones[1].pos.x = 150;
+            metrics = analyzer.calculateMuscleForce(mockMuscle, mockSkeleton);
+            assert(Math.abs(metrics.ratio - 0.5) < 0.001, `Compression Ratio should be 0.5 (Got: ${metrics.ratio})`);
+            assert(metrics.state === 'compress', `State should be 'compress' (Got: ${metrics.state})`);
+            assert(metrics.isCompressed === true, `isCompressed should be true`);
+
+            // --- Test 4: Twist Calculation ---
+            log('--- Test 4: Twist Calculation ---');
+            // Move bone2 to (100, 200) -> 90 degrees down
+            mockSkeleton.bones[1].pos.x = 100;
+            mockSkeleton.bones[1].pos.y = 200;
+            metrics = analyzer.calculateMuscleForce(mockMuscle, mockSkeleton);
+            
+            // Current angle is 90, rest was 0. Twist should be 90.
+            assert(Math.abs(metrics.twistAngle - 90) < 0.1, `Twist should be 90 deg (Got: ${metrics.twistAngle})`);
+            
+            // Length check (should be 100 again)
+            assert(Math.abs(metrics.ratio - 1.0) < 0.001, `Ratio should be 1.0 (Got: ${metrics.ratio})`);
+
+            // --- Test 5: Missing Bones ---
+            log('--- Test 5: Error Handling ---');
+            const badMuscle = { startJoint: 'ghost', endJoint: 'phantom' };
+            metrics = analyzer.calculateMuscleForce(badMuscle, mockSkeleton);
+            assert(metrics.ratio === 1.0, 'Should return default metrics on missing bones');
+
+            log('Tests Complete.');
+        }
+
+        // Run immediately
+        runTests();
+    </script>
+</body>
+</html>

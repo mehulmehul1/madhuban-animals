@@ -317,3 +317,76 @@ function validateMuscleMapping() {
         locomotionTypesCount: Object.keys(MUSCLE_MAPPINGS).length
     };
 }
+
+/**
+ * Muscle Generation Strategies Configuration
+ * Maps anatomical roles to generation strategies with meaningful parameters.
+ */
+window.MUSCLE_STRATEGIES = {
+  'spine': { 
+    type: 'mass', 
+    mergeCount: 4, 
+    shape: 'circle-chain',
+    baseWidth: 15,
+    taper: 0.7,
+    bulgeSensitivity: 1.2
+  },
+  'body': { 
+    type: 'mass', 
+    mergeCount: 3, 
+    shape: 'circle-chain',
+    baseWidth: 18,
+    taper: 0.6,
+    bulgeSensitivity: 1.3
+  },
+  'mantle': { 
+    type: 'mass', 
+    mergeCount: 2, 
+    shape: 'circle-chain',
+    baseWidth: 12,
+    taper: 0.8,
+    bulgeSensitivity: 1.1
+  },
+  'neck': { 
+    type: 'mass', 
+    mergeCount: 2, 
+    shape: 'circle-chain',
+    baseWidth: 10,
+    taper: 0.9,
+    bulgeSensitivity: 0.9
+  },
+  'leg': { 
+    type: 'limb', 
+    shape: 'spindle',
+    baseWidth: 8,
+    bulgeSensitivity: 0.8
+  },
+  'arm': { 
+    type: 'segment', 
+    shape: 'circle-segment',
+    baseWidth: 6,
+    overlapFactor: 0.7,
+    bulgeSensitivity: 0.7
+  },
+  'tentacle': { 
+    type: 'segment', 
+    shape: 'circle-segment',
+    baseWidth: 5,
+    overlapFactor: 0.8,
+    bulgeSensitivity: 0.6
+  },
+  'tail': { 
+    type: 'segment', 
+    shape: 'circle-segment',
+    baseWidth: 6,
+    overlapFactor: 0.7,
+    bulgeSensitivity: 0.7
+  },
+  'default': { 
+    type: 'segment', 
+    shape: 'circle-segment',
+    baseWidth: 6,
+    overlapFactor: 0.7,
+    bulgeSensitivity: 0.7
+  }
+};

@@ -5,8 +5,7 @@ class SerpentinePattern extends LocomotionPattern {
         this.amplitude = config.amplitude || 30;
     }
 
-    update(creature, deltaTime) {
-        super.update(creature, deltaTime);
+    updatePattern(creature, deltaTime) {
         
         // Serpentine movement toward mouse
         const directionToMouse = new FIK.V2(

@@ -20,6 +20,7 @@
       stroke: (...args) => global.stroke(...args),
       strokeWeight: (...args) => global.strokeWeight(...args),
       noStroke: (...args) => global.noStroke(...args),
+      noFill: (...args) => global.noFill(...args),
 
       // Primitives
       line: (...args) => global.line(...args),
@@ -34,6 +35,8 @@
       // Shapes
       beginShape: (...args) => global.beginShape(...args),
       vertex: (...args) => global.vertex(...args),
+      bezierVertex: (...args) => global.bezierVertex(...args),
+      endShape: (...args) => global.endShape(...args),
       endShapeClose: () => global.endShape(global.CLOSE),
 
       // Misc

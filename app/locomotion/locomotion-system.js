@@ -24,19 +24,4 @@ class LocomotionSystem {
     }
 }
 
-class LocomotionPattern {
-    constructor(name, config) {
-        this.name = name;
-        this.config = config;
-        this.cycle = 0;
-        this.frequency = config.frequency || 1.0;
-    }
 
-    update(creature, deltaTime) {
-        this.cycle += this.frequency * deltaTime;
-    }
-
-    getCycle() {
-        return this.cycle;
-    }
-}

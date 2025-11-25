@@ -1069,6 +1069,9 @@
 		clone() {
 			let b = new this.constructor(this.start, this.end);
 			b.joint = this.joint.clone();
+			b.color = this.color;
+			b.name = this.name;
+			b.id = this.id; // Copy custom ID
 			return b;
 		} // SET
 
@@ -2226,6 +2229,7 @@
 			b.joint = this.joint.clone();
 			b.color = this.color;
 			b.name = this.name;
+			b.id = this.id; // Copy custom ID
 			return b;
 		} // SET
 

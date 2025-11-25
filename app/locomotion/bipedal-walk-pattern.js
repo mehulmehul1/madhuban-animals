@@ -23,8 +23,7 @@ class BipedalWalkPattern extends LocomotionPattern {
         }
     }
 
-    update(creature, deltaTime) {
-        super.update(creature, deltaTime);
+    updatePattern(creature, deltaTime) {
         
         // 1. Compute direction to target and angle difference
         const dirToTarget = new FIK.V2(

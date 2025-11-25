@@ -150,8 +150,8 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         }
     }
 
-    update(creature, deltaTime) {
-        super.update(creature, deltaTime);
+    updatePattern(creature, deltaTime) {
+
 
         // *** SIMPLIFIED MODE - Use crane-like movement logic ***
         if (this.debugSimpleMode) {
@@ -193,12 +193,13 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         this.state = 'walk';
         
         // 3. Update heading gradually while walking (smoother than turn-then-walk)
-        const walkTurnBlend = 0.08; // Increased from 0.05 for faster turning
+        // Increase turn rate if we are moving slow (turning in place)
+        const turnRate = 0.08 * (1.0 + Math.abs(angleDiff) * 0.5);
         creature.bodyHeading = creature.normalizeAngle(
-            creature.bodyHeading + walkTurnBlend * angleDiff
+            creature.bodyHeading + turnRate * angleDiff
         );
 
-        // 4. Move the body toward target (ALWAYS - no state restriction)
+        // 4. Move the body toward target (Non-Holonomic)
         const speed = (this.stepLength * 1.2) * (deltaTime || 0.016);
         const distanceToTarget = new FIK.V2(
             creature.mouseTarget.x - creature.bodyPosition.x,
@@ -207,9 +208,14 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         
         // Only move if not too close to target
         if (distanceToTarget.length() > 30) {
-            const dirToTarget = distanceToTarget.normalised();
-            creature.bodyPosition.x += dirToTarget.x * speed;
-            creature.bodyPosition.y += dirToTarget.y * speed;
+            // Throttle speed based on turning angle (slow down to turn)
+            const turnThrottle = Math.max(0.2, 1.0 - Math.abs(angleDiff) / (Math.PI / 2));
+            
+            // Move in direction of BODY HEADING (not mouse direction)
+            const fwd = new FIK.V2(Math.cos(creature.bodyHeading), Math.sin(creature.bodyHeading));
+            
+            creature.bodyPosition.x += fwd.x * speed * turnThrottle;
+            creature.bodyPosition.y += fwd.y * speed * turnThrottle;
         }
 
         // 5. Animate foot placement in body-local and transform to world
@@ -238,20 +244,26 @@ class QuadrupedWalkPattern extends LocomotionPattern {
         this.state = 'walk';
         
         // 3. Update heading gradually (like crane)
-        const turnBlend = 0.08;
+        // Increase turn rate if we are moving slow (turning in place)
+        const turnRate = 0.08 * (1.0 + Math.abs(angleDiff) * 0.5);
         creature.bodyHeading = creature.normalizeAngle(
-            creature.bodyHeading + turnBlend * angleDiff
+            creature.bodyHeading + turnRate * angleDiff
         );
 
-        // 4. *** MOVE BODY TOWARD MOUSE (LIKE CRANE DOES) ***
+        // 4. *** MOVE BODY TOWARD MOUSE (Non-Holonomic) ***
         const speed = this.stepLength * 1.5 * (deltaTime || 0.016);
         const distanceToTarget = dirToTarget.length();
         
         // Only move if not too close to target
         if (distanceToTarget > 30) {
-            const moveDir = dirToTarget.normalised();
-            creature.bodyPosition.x += moveDir.x * speed;
-            creature.bodyPosition.y += moveDir.y * speed;
+            // Throttle speed based on turning angle (slow down to turn)
+            const turnThrottle = Math.max(0.2, 1.0 - Math.abs(angleDiff) / (Math.PI / 2));
+            
+            // Move in direction of BODY HEADING
+            const fwd = new FIK.V2(Math.cos(creature.bodyHeading), Math.sin(creature.bodyHeading));
+            
+            creature.bodyPosition.x += fwd.x * speed * turnThrottle;
+            creature.bodyPosition.y += fwd.y * speed * turnThrottle;
         }
 
         // 5. *** CHASSIS FOOT PLACEMENT WITH STEPPING MOTION ***

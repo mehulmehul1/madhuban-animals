@@ -1,38 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FullIK Incremental Skeleton Builder</title>  
+    <title>FullIK Incremental Skeleton Builder</title>
     <script src="FIK.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.js"></script>
-    
+
     <!-- Adapter interfaces and shims -->
     <script src="types/ik-adapter.js"></script>
     <script src="adapters/fik-adapter.js"></script>
     <script src="types/renderer.js"></script>
     <script src="adapters/p5-renderer.js"></script>
-    
+
     <!-- Styling Systems -->
     <script src="styling/ThemeManager.js"></script>
     <script src="styling/border.js"></script>
     <script src="styling/filler.js"></script>
     <script src="styling/segmenter.js"></script>
-    
+
     <!-- Core Systems (load before creature-builder) -->
     <script src="systems/shape-generation.js"></script>
     <script src="systems/anatomical-data.js"></script>
     <script src="systems/anatomical-configs.js"></script>
     <script src="systems/muscle-shape-types.js"></script>
     <script src="systems/muscle-mappings.js"></script>
+    <script src="systems/muscle-strategies.js"></script>
     <script src="systems/muscle-generator.js"></script>
     <script src="systems/constraint-system.js"></script>
     <script src="systems/gait-system.js"></script>
-     <script src="systems/bone-template-system.js"></script>
-     <script src="systems/quadruped-template-system.js"></script>
-     <script src="systems/shape-profile-system.js"></script>
-     <script src="systems/debug-manager.js"></script>
-    
+    <script src="systems/bone-template-system.js"></script>
+    <script src="systems/quadruped-template-system.js"></script>
+    <script src="systems/shape-profile-system.js"></script>
+    <script src="systems/debug-manager.js"></script>
+
+    <!-- Phase 2: Force-Driven Deformation Engine -->
+    <script src="systems/force-analyzer.js"></script>
+    <script src="systems/deformation-engine.js"></script>
+    <script src="systems/shape-renderer.js"></script>
+
     <!-- Locomotion Systems -->
     <script src="locomotion/locomotion-pattern.js"></script>
     <script src="locomotion/locomotion-system.js"></script>
@@ -43,10 +50,10 @@
     <script src="locomotion/sprawling-quadruped-gait.js"></script>
     <script src="systems/octopus-template-system.js"></script>
     <script src="locomotion/octopus-crawl-pattern.js"></script>
-    
+
     <!-- Main Application -->
     <script src="creature-builder.js"></script>
-    
+
     <!-- Editor System (New Unified Architecture) -->
     <script src="editor/ui-components.js"></script>
     <script src="editor/config-manager.js"></script>
@@ -55,7 +62,7 @@
     <script src="editor/skeleton-editor.js"></script>
     <script src="editor/property-panel.js"></script>
     <script src="editor/editor-system.js"></script>
-    
+
     <!-- <script src="test-horse-implementation.js"></script> -->
     <!-- Test files - disabled for production -->
     <!--
@@ -70,4 +77,5 @@
 
 <body>
 </body>
+
 </html>
