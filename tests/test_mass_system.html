@@ -1,0 +1,158 @@
+background: #333;
+color: #fff;
+}
+
+#controls {
+margin-bottom: 20px;
+}
+
+button {
+padding: 10px;
+margin-right: 10px;
+cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+    <h1>Mass Construction System Verification</h1>
+    <div id="controls">
+        <button onclick="setCreature('horse')">Horse (Erect Quadruped)</button>
+        background: #333;
+        color: #fff;
+        }
+
+        #controls {
+        margin-bottom: 20px;
+        }
+
+        button {
+        padding: 10px;
+        margin-right: 10px;
+        cursor: pointer;
+        }
+        </style>
+        </head>
+
+        <body>
+            <h1>Mass Construction System Verification</h1>
+            <div id="controls">
+                <button onclick="setCreature('horse')">Horse (Erect Quadruped)</button>
+                <button onclick="setCreature('lizard')">Lizard (Sprawling)</button>
+                <button onclick="setCreature('crane')">Crane (Bipedal)</button>
+                <button onclick="toggleDebug()">Toggle Debug</button>
+            </div>
+            <div id="canvas-container"></div>
+
+            <script>
+                let builder;
+                let currentCreature = 'horse';
+
+                function setup() {
+                    const canvas = createCanvas(1000, 600);
+                    canvas.parent('canvas-container');
+
+                    builder = new ModularCreatureBuilder();
+                    builder.renderer.initialize(this);
+
+                    // Force muscle view
+                    builder.renderMode = 'muscle';
+                    builder.showDebug = true;
+
+                    setCreature('horse');
+                }
+
+                function draw() {
+                    background(50);
+
+                    // Update IK
+                    if (builder.ik) {
+                        builder.ik.update();
+                    }
+
+                    // Update Locomotion
+                    if (builder.activeLocomotion) {
+                        builder.activeLocomotion.update(deltaTime);
+                    }
+
+                    // Update Physics/Deformation
+                    if (builder.forceAnalyzer && builder.deformationEngine) {
+                        // Calculate forces
+                        const deformations = builder.deformationEngine.calculateAllMuscleForcesForCreature({
+                            muscles: builder.muscles,
+                            chains: builder.chains,
+                            bodyPosition: builder.bodyPosition,
+                            bodyVelocity: builder.bodyVelocity
+                        });
+                        builder.deformationParams = deformations;
+                    }
+
+                    // Render
+                    // Draw skeleton (faint)
+                    builder.renderer.drawSkeleton(builder.chains);
+
+                    // Draw Muscles (Masses)
+                    if (builder.muscleRenderer && builder.muscles) {
+                        builder.muscles.forEach(muscle => {
+                            const startBone = findBone(muscle.startJoint);
+                            const endBone = findBone(muscle.endJoint);
+
+                            if (startBone && endBone) {
+                                const deformation = builder.deformationParams[muscle.id] || { width: muscle.width, bulge: 1.0, offset: 0.5 };
+
+                                builder.muscleRenderer.renderMuscle(
+                                    this, // p5 instance
+                                    muscle,
+                                    deformation,
+                                    startBone.start, // Use start of bone for joint position
+                                    endBone.start,   // Use start of next bone
+                                    (id) => findBone(id) // Helper to find bones
+                                );
+                            }
+                        });
+                    }
+
+                    // Draw UI info
+                    fill(255);
+                    noStroke();
+                    text(`Creature: ${currentCreature}`, 20, 30);
+                    text(`Muscles: ${builder.muscles ? builder.muscles.length : 0}`, 20, 50);
+                }
+
+                function setCreature(type) {
+                    currentCreature = type;
+                    console.log('Creating creature:', type);
+                    builder.createCreature(type);
+                    console.log(`Created ${type} with ${builder.muscles.length} muscles`);
+                }
+
+                function toggleDebug() {
+                    builder.showDebug = !builder.showDebug;
+                    if (builder.muscleRenderer) {
+                        builder.muscleRenderer.debugMode = builder.showDebug;
+                    }
+                }
+
+                // Helper to find bone by ID in the builder's chains
+                function findBone(id) {
+                    for (const chain of builder.chains) {
+                        for (const bone of chain.bones) {
+                            if (bone.id === id) return bone;
+                        }
+                    }
+                    return null;
+                }
+
+                function mousePressed() {
+                    builder.mouseTarget.x = mouseX;
+                    builder.mouseTarget.y = mouseY;
+                }
+
+                function mouseDragged() {
+                    builder.mouseTarget.x = mouseX;
+                    builder.mouseTarget.y = mouseY;
+                }
+            </script>
+        </body>
+
+        </html>

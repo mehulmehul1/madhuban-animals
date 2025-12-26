@@ -28,69 +28,97 @@ const MUSCLE_MAPPINGS = {
     // ========================================
     // Legs under body, powerful hindquarters, vertical-plane locomotion
     erect_quadruped: {
+        // FRONT LEGS
         front_left_limb: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_cylinder',
             baseWidth: 14,
             sensitivity: 1.2,
-            description: 'Quadriceps-like extension'
+            description: 'Upper leg mass'
         },
         front_left_flexor: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_ovoid',
             baseWidth: 12,
             sensitivity: 1.0,
-            description: 'Biceps-like flexion'
+            description: 'Shoulder/Chest mass'
         },
         front_right_limb: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_cylinder',
             baseWidth: 14,
             sensitivity: 1.2
         },
         front_right_flexor: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_ovoid',
             baseWidth: 12,
             sensitivity: 1.0
         },
+        // HIND LEGS
         hind_left_limb: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_cylinder',
             baseWidth: 16,
             sensitivity: 1.3,
-            description: 'Extensor (powerful push)'
+            description: 'Hind leg mass'
         },
         hind_left_compression: {
-            shapeType: 'compression_mass',
-            baseWidth: 18,
+            shapeType: 'mass_ovoid',
+            baseWidth: 20,
             sensitivity: 1.0,
             attachmentPattern: 'spine_to_femur',
-            description: 'Gluteus-like power muscle'
+            description: 'Gluteal mass'
         },
         hind_right_limb: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_cylinder',
             baseWidth: 16,
             sensitivity: 1.3
         },
         hind_right_compression: {
-            shapeType: 'compression_mass',
-            baseWidth: 18,
+            shapeType: 'mass_ovoid',
+            baseWidth: 20,
             sensitivity: 1.0,
             attachmentPattern: 'spine_to_femur'
         },
-        spine: {
-            shapeType: 'rotation_joint',
-            baseWidth: 20,
+        // NEW: Main Torso Coverage (was missing!)
+        chest: {
+            shapeType: 'mass_ovoid',
+            baseWidth: 35,
+            sensitivity: 0.9,
+            description: 'Chest and ribcage mass'
+        },
+        ribcage: {
+            shapeType: 'mass_ovoid',
+            baseWidth: 30,
+            sensitivity: 0.7,
+            description: 'Ribcage and organ cavity'
+        },
+        thorax: {
+            shapeType: 'mass_sausage',
+            baseWidth: 28,
             sensitivity: 0.8,
-            description: 'Spinal extensors (posture)'
+            description: 'Thoracic spine mass'
+        },
+        abdomen: {
+            shapeType: 'mass_sausage',
+            baseWidth: 26,
+            sensitivity: 0.9,
+            description: 'Abdominal cavity'
+        },
+        // ORIGINAL REGIONS
+        spine: {
+            shapeType: 'mass_sausage',
+            baseWidth: 22,
+            sensitivity: 0.8,
+            description: 'Main torso mass'
         },
         neck: {
-            shapeType: 'neck_flexor',
-            baseWidth: 11,
+            shapeType: 'mass_cylinder',
+            baseWidth: 12,
             sensitivity: 0.9,
-            description: 'Neck control'
+            description: 'Neck cylinder'
         },
         tail: {
-            shapeType: 'balance_tail',
-            baseWidth: 16,
+            shapeType: 'mass_sausage',
+            baseWidth: 14,
             sensitivity: 1.2,
-            description: 'Tail balance'
+            description: 'Tail taper'
         }
     },
 
@@ -99,60 +127,88 @@ const MUSCLE_MAPPINGS = {
     // ========================================
     // Legs splayed outward, lateral undulation, low stance
     sprawling_quadruped: {
+        // FRONT LEGS
         front_left_limb: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 12,
+            shapeType: 'mass_cylinder',
+            baseWidth: 10,
             sensitivity: 1.1,
-            description: 'Extended outward'
+            description: 'Limb cylinder'
         },
         front_left_lateral: {
-            shapeType: 'undulation_segment',
-            baseWidth: 13,
+            shapeType: 'mass_ovoid',
+            baseWidth: 12,
             sensitivity: 1.2,
-            description: 'Lateral pull'
+            description: 'Shoulder mass'
         },
         front_right_limb: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 12,
+            shapeType: 'mass_cylinder',
+            baseWidth: 10,
             sensitivity: 1.1
         },
         front_right_lateral: {
-            shapeType: 'undulation_segment',
-            baseWidth: 13,
+            shapeType: 'mass_ovoid',
+            baseWidth: 12,
             sensitivity: 1.2
         },
+        // HIND LEGS
         hind_left_limb: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 13,
+            shapeType: 'mass_cylinder',
+            baseWidth: 11,
             sensitivity: 1.15
         },
         hind_left_lateral: {
-            shapeType: 'undulation_segment',
+            shapeType: 'mass_ovoid',
             baseWidth: 14,
             sensitivity: 1.3,
-            description: 'Powerful lateral push'
+            description: 'Hip mass'
         },
         hind_right_limb: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 13,
+            shapeType: 'mass_cylinder',
+            baseWidth: 11,
             sensitivity: 1.15
         },
         hind_right_lateral: {
-            shapeType: 'undulation_segment',
+            shapeType: 'mass_ovoid',
             baseWidth: 14,
             sensitivity: 1.3
         },
-        spine: {
-            shapeType: 'undulation_segment',
+        // NEW: Full Body Coverage (was missing!)
+        torso: {
+            shapeType: 'mass_sausage',
+            baseWidth: 24,
+            sensitivity: 1.1,
+            description: 'Main body mass'
+        },
+        thorax: {
+            shapeType: 'mass_sausage',
+            baseWidth: 20,
+            sensitivity: 1.0,
+            description: 'Chest cavity'
+        },
+        abdomen: {
+            shapeType: 'mass_sausage',
+            baseWidth: 22,
+            sensitivity: 1.2,
+            description: 'Abdominal cavity'
+        },
+        pelvis: {
+            shapeType: 'mass_ovoid',
             baseWidth: 18,
+            sensitivity: 1.1,
+            description: 'Pelvic region'
+        },
+        // ORIGINAL REGIONS
+        spine: {
+            shapeType: 'mass_sausage',
+            baseWidth: 16,
             sensitivity: 1.3,
-            description: 'Main undulation driver'
+            description: 'Flexible torso'
         },
         tail: {
-            shapeType: 'undulation_segment',
-            baseWidth: 16,
+            shapeType: 'mass_sausage',
+            baseWidth: 12,
             sensitivity: 1.4,
-            description: 'Tail wave (balance + propulsion)'
+            description: 'Tail taper'
         }
     },
 
@@ -162,42 +218,42 @@ const MUSCLE_MAPPINGS = {
     // Two legs under body, powerful tail for balance, vertical spine
     bipedal: {
         left_limb: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 18,
+            shapeType: 'mass_cylinder',
+            baseWidth: 14,
             sensitivity: 1.3,
-            description: 'Powerful leg extension'
+            description: 'Leg cylinder'
         },
         left_flexor: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 15,
+            shapeType: 'mass_ovoid',
+            baseWidth: 16,
             sensitivity: 1.1,
-            description: 'Hip flexor (high step)'
+            description: 'Thigh mass'
         },
         right_limb: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 18,
+            shapeType: 'mass_cylinder',
+            baseWidth: 14,
             sensitivity: 1.3
         },
         right_flexor: {
-            shapeType: 'extending_limb_muscle',
-            baseWidth: 15,
+            shapeType: 'mass_ovoid',
+            baseWidth: 16,
             sensitivity: 1.1
         },
         spine: {
-            shapeType: 'rotation_joint',
-            baseWidth: 22,
+            shapeType: 'mass_ovoid',
+            baseWidth: 24,
             sensitivity: 0.7,
-            description: 'Vertical alignment'
+            description: 'Main body mass'
         },
         tail: {
-            shapeType: 'balance_tail',
-            baseWidth: 20,
+            shapeType: 'mass_sausage',
+            baseWidth: 18,
             sensitivity: 1.3,
-            description: 'Critical balance organ'
+            description: 'Tail mass'
         },
         neck: {
-            shapeType: 'neck_flexor',
-            baseWidth: 12,
+            shapeType: 'mass_cylinder',
+            baseWidth: 10,
             sensitivity: 1.0
         }
     },
@@ -208,22 +264,22 @@ const MUSCLE_MAPPINGS = {
     // No limbs, pure lateral undulation
     serpentine: {
         spine: {
-            shapeType: 'undulation_segment',
+            shapeType: 'mass_sausage',
             baseWidth: 16,
             sensitivity: 1.4,
-            description: 'Main locomotion driver'
+            description: 'Body segment'
         },
         spine_deep: {
-            shapeType: 'stabilizer_muscle',
+            shapeType: 'mass_cylinder',
             baseWidth: 12,
             sensitivity: 0.8,
-            description: 'Deep core stability'
+            description: 'Inner core'
         },
         head: {
-            shapeType: 'neck_flexor',
-            baseWidth: 10,
+            shapeType: 'mass_sphere',
+            baseWidth: 14,
             sensitivity: 1.2,
-            description: 'Head steering'
+            description: 'Head mass'
         }
     },
 
@@ -233,28 +289,28 @@ const MUSCLE_MAPPINGS = {
     // Flexible spine, tail-driven locomotion
     aquatic: {
         spine: {
-            shapeType: 'undulation_segment',
-            baseWidth: 17,
+            shapeType: 'mass_sausage',
+            baseWidth: 18,
             sensitivity: 1.3,
-            description: 'Wave propagation'
+            description: 'Body mass'
         },
         tail: {
-            shapeType: 'undulation_segment',
-            baseWidth: 18,
+            shapeType: 'mass_sausage',
+            baseWidth: 16,
             sensitivity: 1.4,
-            description: 'Primary thrust'
+            description: 'Tail mass'
         },
         pectoral_fins: {
-            shapeType: 'extending_limb_muscle',
+            shapeType: 'mass_ovoid',
             baseWidth: 8,
             sensitivity: 0.9,
-            description: 'Steering/braking'
+            description: 'Fin base'
         },
         dorsal_fin: {
-            shapeType: 'stabilizer_muscle',
+            shapeType: 'mass_ovoid',
             baseWidth: 6,
             sensitivity: 0.6,
-            description: 'Stability'
+            description: 'Fin base'
         }
     }
 };
@@ -326,67 +382,68 @@ window.MUSCLE_STRATEGIES = {
   'spine': { 
     type: 'mass', 
     mergeCount: 4, 
-    shape: 'circle-chain',
-    baseWidth: 15,
+    shape: 'mass_sausage',  // Changed from 'circle-chain'
+    baseWidth: 22,
     taper: 0.7,
-    bulgeSensitivity: 1.2
+    bulgeSensitivity: 0.8
   },
   'body': { 
     type: 'mass', 
     mergeCount: 3, 
-    shape: 'circle-chain',
-    baseWidth: 18,
+    shape: 'mass_sausage',  // Changed from 'circle-chain'
+    baseWidth: 22,
     taper: 0.6,
-    bulgeSensitivity: 1.3
+    bulgeSensitivity: 0.8
   },
   'mantle': { 
     type: 'mass', 
     mergeCount: 2, 
-    shape: 'circle-chain',
-    baseWidth: 12,
+    shape: 'mass_ovoid',  // Changed from 'circle-chain'
+    baseWidth: 16,
     taper: 0.8,
     bulgeSensitivity: 1.1
   },
   'neck': { 
     type: 'mass', 
     mergeCount: 2, 
-    shape: 'circle-chain',
-    baseWidth: 10,
+    shape: 'mass_cylinder',  // Changed from 'circle-chain'
+    baseWidth: 12,
     taper: 0.9,
     bulgeSensitivity: 0.9
   },
   'leg': { 
     type: 'limb', 
-    shape: 'spindle',
-    baseWidth: 8,
-    bulgeSensitivity: 0.8
+    shape: 'mass_cylinder',  // Changed from 'spindle'
+    baseWidth: 14,
+    bulgeSensitivity: 1.2
   },
   'arm': { 
     type: 'segment', 
-    shape: 'circle-segment',
-    baseWidth: 6,
+    shape: 'mass_sausage',  // Changed from 'circle-segment'
+    baseWidth: 10,
     overlapFactor: 0.7,
     bulgeSensitivity: 0.7
   },
   'tentacle': { 
     type: 'segment', 
-    shape: 'circle-segment',
-    baseWidth: 5,
+    shape: 'mass_sausage',  // Changed from 'circle-segment'
+    baseWidth: 8,
     overlapFactor: 0.8,
     bulgeSensitivity: 0.6
   },
   'tail': { 
     type: 'segment', 
-    shape: 'circle-segment',
-    baseWidth: 6,
+    shape: 'mass_sausage',  // Changed from 'circle-segment'
+    baseWidth: 14,
     overlapFactor: 0.7,
-    bulgeSensitivity: 0.7
+    bulgeSensitivity: 1.2
   },
   'default': { 
     type: 'segment', 
-    shape: 'circle-segment',
-    baseWidth: 6,
+    shape: 'mass_cylinder',  // Changed from 'circle-segment'
+    baseWidth: 10,
     overlapFactor: 0.7,
     bulgeSensitivity: 0.7
   }
 };
+

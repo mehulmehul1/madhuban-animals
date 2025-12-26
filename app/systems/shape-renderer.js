@@ -24,22 +24,116 @@ class MuscleShapeRenderer {
     renderMuscle(p5, muscle, deformation, startPos, endPos, getBoneById) {
         if (!p5 || !muscle || !deformation) return;
 
+        // DEBUG: Check if we are receiving mass shapes
+        if (this.debugMode && Math.random() < 0.01) {
+            console.log('Rendering muscle:', muscle.id, muscle.shapeType, muscle.constructor.name);
+        }
 
+        // ***** VOLUME MASS RENDERING *****
+        // If muscle has massData, it's a geometric primitive (not path-based)
+        if (muscle.massData) {
+            return this.renderVolumeMass(p5, muscle, getBoneById);  // Pass getBoneById for dynamic positioning
+        }
 
+        // ***** PATH-BASED RENDERING (Legacy) *****
         switch(muscle.shapeType) {
             case 'spindle':
+            case 'mass_ovoid':  // Ovoids are basically spindles
+            case 'mass_sphere': // Spheres are short spindles
                 this.renderSpindle(p5, muscle, deformation, startPos, endPos);
                 break;
             case 'circle-chain':
                 this.renderCircleChain(p5, muscle, deformation, startPos, endPos, getBoneById);
                 break;
             case 'circle-segment':
+            case 'mass_cylinder': // Cylinders are segments
+            case 'mass_sausage':  // Sausages are segments
                 this.renderCircleSegment(p5, muscle, deformation, startPos, endPos);
                 break;
             default:
                 // Fallback to spindle
-
                 this.renderSpindle(p5, muscle, deformation, startPos, endPos);
+        }
+    }
+
+    /**
+     * Render a volume mass using geometric primitives
+     * NOW CALCULATES LIVE POSITIONS from bone IDs!
+     * @param {Object} p5 - The p5.js instance
+     * @param {Object} muscle - Muscle object with massData property
+     * @param {Function} getBoneById - Function to get live bone by ID
+     */
+    renderVolumeMass(p5, muscle, getBoneById) {
+        const massData = muscle.massData;
+        if (!massData || !getBoneById) return;
+
+        // **DYNAMIC POSITIONING** - Calculate from live bones each frame!
+        const liveGeometry = MassIdentifier.calculateMassPosition(massData, getBoneById);
+        if (!liveGeometry) {
+            console.warn('[VOLUME RENDER] Could not calculate position for:', muscle.id);
+            return;
+        }
+
+        const primitiveRenderer = new GeometricPrimitiveRenderer();
+        const color = this.getMuscleColor(p5, muscle.shapeType);
+
+        // Render using LIVE geometry (not static massData)
+        switch(massData.type) {
+            case 'sphere':
+                primitiveRenderer.renderSphere(
+                    p5,
+                    liveGeometry.position,  // DYNAMIC position
+                    liveGeometry.radius,    // DYNAMIC size
+                    color
+                );
+                break;
+
+            case 'ovoid':
+                primitiveRenderer.renderOvoid(
+                    p5,
+                    liveGeometry.position,  // DYNAMIC position
+                    liveGeometry.width,     // DYNAMIC width
+                    liveGeometry.height,    // DYNAMIC height
+                    liveGeometry.rotation,  // DYNAMIC rotation
+                    color,
+                    muscle.role === 'ribcage'  // Green outline for ribcage
+                );
+                break;
+
+            case 'cylinder':
+                primitiveRenderer.renderCylinder(
+                    p5,
+                    liveGeometry.startPos,  // DYNAMIC start
+                    liveGeometry.endPos,    // DYNAMIC end
+                    liveGeometry.radius,    // DYNAMIC radius
+                    color
+                );
+                break;
+
+            case 'sausage':
+                primitiveRenderer.renderSausage(
+                    p5,
+                    liveGeometry.startPos,  // DYNAMIC start
+                    liveGeometry.endPos,    // DYNAMIC end
+                    liveGeometry.radius,    // DYNAMIC radius
+                    color
+                );
+                break;
+
+            default:
+                console.warn('[VOLUME RENDER] Unknown mass type:', massData.type);
+        }
+    }
+
+    getMuscleColor(p5, type) {
+        // Madhubani-inspired palette for Mass Construction
+        switch(type) {
+            case 'mass_sphere': return p5.color(255, 180, 0, 220);   // Gold (Joints)
+            case 'mass_ovoid': return p5.color(200, 60, 60, 220);    // Deep Red (Masses)
+            case 'mass_cylinder': return p5.color(60, 100, 200, 220); // Blue (Structure)
+            case 'mass_sausage': return p5.color(60, 180, 100, 220);  // Green (Flexible)
+            case 'spindle': return p5.color(200, 100, 100, 200);     // Legacy Red
+            default: return p5.color(180, 180, 180, 200);            // Grey default
         }
     }
 
@@ -109,7 +203,7 @@ class MuscleShapeRenderer {
         // Draw smooth organic hull
         p5.push();
         p5.noStroke();
-        p5.fill(180, 90, 90, 200); // Darker red-brown for muscle masses
+        p5.fill(this.getMuscleColor(p5, muscle.shapeType));
         
         this.drawOrganicHull(p5, circles);
         
@@ -124,7 +218,9 @@ class MuscleShapeRenderer {
         
         p5.push();
         p5.noStroke();
-        p5.fill(180, 90, 90, 200); // Darker red-brown for muscle masses
+        // Use a default color since we don't have the muscle object here easily
+        // Or we could pass it, but for now let's just stick to a safe default
+        p5.fill(180, 90, 90, 200);
         
         // Calculate tangent points for upper and lower outline
         const upperTangents = [];
@@ -230,13 +326,23 @@ class MuscleShapeRenderer {
                 profileScale = 1.0 - t * 0.6;
             }
             
+            // Mass specific profiles
+            if (muscle.shapeType === 'mass_sausage') {
+                // Slight taper at ends for sausage
+                // sin(t * PI) gives 0->1->0. We want 0.8->1.0->0.8
+                profileScale = 0.8 + 0.2 * Math.sin(t * Math.PI);
+            } else if (muscle.shapeType === 'mass_cylinder') {
+                // Uniform width
+                profileScale = 1.0;
+            }
+            
             const deformedRadius = baseRadius * profileScale * (1 + bulgeFactor * 0.6);
             circles.push({ x, y, radius: Math.max(1.5, deformedRadius) });
         }
         
         p5.push();
         p5.noStroke();
-        p5.fill(200, 100, 100, 180); // Lighter red for flexible segments
+        p5.fill(this.getMuscleColor(p5, muscle.shapeType));
         
         this.drawOrganicHull(p5, circles);
         
@@ -272,6 +378,14 @@ class MuscleShapeRenderer {
         const bottomX = peakX - perpX * halfWidth;
         const bottomY = peakY - perpY * halfWidth;
 
+        // Mass specific adjustments
+        let roundness = 0.5; // Default bezier control
+        if (muscle.shapeType === 'mass_sphere') {
+            roundness = 0.8; // More circular
+        } else if (muscle.shapeType === 'mass_ovoid') {
+            roundness = 0.6; // Slightly rounder
+        }
+
         // 3. Draw Shape
         p5.push();
         
@@ -284,9 +398,8 @@ class MuscleShapeRenderer {
         } else {
             // Simple organic look
             p5.noStroke();
-            // Color based on muscle group or type?
-            // Let's use a reddish muscle color
-            p5.fill(200, 100, 100, 200); 
+            // Use distinct colors for mass types
+            p5.fill(this.getMuscleColor(p5, muscle.shapeType)); 
         }
 
         p5.beginShape();
@@ -318,16 +431,23 @@ class MuscleShapeRenderer {
         // p5.curveVertex(endPos.x, endPos.y);     // End guide
         
         // Better: Bezier for precise bulge control
+        // Use roundness to control handle lengths
+        // roundness 0.5 = default (sharpish)
+        // roundness 1.0 = very round (circle-like)
+        
+        const handleLenX = dx * (0.1 + roundness * 0.2); // 0.1 to 0.3
+        const handleLenY = dy * (0.1 + roundness * 0.2);
+        
         // Start -> Top
         p5.bezierVertex(
             startPos.x + dx * (peakRatio * 0.5), startPos.y + dy * (peakRatio * 0.5), // CP1 (on line)
-            topX - dx * 0.1, topY - dy * 0.1, // CP2 (near peak)
+            topX - handleLenX, topY - handleLenY, // CP2 (near peak)
             topX, topY // Anchor (Peak)
         );
         
         // Top -> End
         p5.bezierVertex(
-            topX + dx * 0.1, topY + dy * 0.1, // CP1 (near peak)
+            topX + handleLenX, topY + handleLenY, // CP1 (near peak)
             endPos.x - dx * ((1-peakRatio) * 0.5), endPos.y - dy * ((1-peakRatio) * 0.5), // CP2 (on line)
             endPos.x, endPos.y // Anchor (End)
         );
@@ -335,13 +455,13 @@ class MuscleShapeRenderer {
         // End -> Bottom
         p5.bezierVertex(
             endPos.x - dx * ((1-peakRatio) * 0.5), endPos.y - dy * ((1-peakRatio) * 0.5),
-            bottomX + dx * 0.1, bottomY + dy * 0.1,
+            bottomX + handleLenX, bottomY + handleLenY,
             bottomX, bottomY
         );
 
         // Bottom -> Start
         p5.bezierVertex(
-            bottomX - dx * 0.1, bottomY - dy * 0.1,
+            bottomX - handleLenX, bottomY - handleLenY,
             startPos.x + dx * (peakRatio * 0.5), startPos.y + dy * (peakRatio * 0.5),
             startPos.x, startPos.y
         );

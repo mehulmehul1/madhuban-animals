@@ -21,11 +21,17 @@
       strokeWeight: (...args) => global.strokeWeight(...args),
       noStroke: (...args) => global.noStroke(...args),
       noFill: (...args) => global.noFill(...args),
+      color: (...args) => global.color(...args),
 
       // Primitives
       line: (...args) => global.line(...args),
       circle: (...args) => global.circle(...args),
+      ellipse: (...args) => global.ellipse(...args),  // For ovoids
       rect: (...args) => global.rect(...args),
+
+      // Transformations
+      translate: (...args) => global.translate(...args),
+      rotate: (...args) => global.rotate(...args),
 
       // Text
       text: (...args) => global.text(...args),

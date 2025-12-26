@@ -1,0 +1,5 @@
+{
+  "name": "MechQuadruped",
+  "description": "A 3D visualization of a mechanical erect quadruped skeleton using Three.js and React.",
+  "requestFramePermissions": []
+}

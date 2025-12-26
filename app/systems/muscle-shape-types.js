@@ -314,6 +314,62 @@ const MUSCLE_SHAPE_TYPES = {
             compress: 1.2
         },
         twistSensitivity: 1.4
+    },
+
+    // ========================================
+    // NEW MASS TYPES (Madhubani Style)
+    // ========================================
+
+    // SPHERE MASS (Joints, Cranium)
+    mass_sphere: {
+        id: 'mass_sphere',
+        name: 'Sphere Mass',
+        deformationRules: {
+            stretch: { widthMultiplier: 0.9, thinFactor: 0.95, addStriations: false },
+            compress: { widthMultiplier: 1.1, bulgeFactor: 1.1, roundness: 1.0 },
+            twist: { sensitivity: 0.2, offsetFactor: 0.1 }
+        },
+        widthRange: { stretch: 0.9, rest: 1.0, compress: 1.1 },
+        twistSensitivity: 0.2
+    },
+
+    // OVOID MASS (Torso, Pelvis)
+    mass_ovoid: {
+        id: 'mass_ovoid',
+        name: 'Ovoid Mass',
+        deformationRules: {
+            stretch: { widthMultiplier: 0.8, thinFactor: 0.85, addStriations: false },
+            compress: { widthMultiplier: 1.3, bulgeFactor: 1.4, roundness: 0.9 },
+            twist: { sensitivity: 0.5, offsetFactor: 0.3 }
+        },
+        widthRange: { stretch: 0.8, rest: 1.0, compress: 1.3 },
+        twistSensitivity: 0.5
+    },
+
+    // CYLINDER MASS (Limbs)
+    mass_cylinder: {
+        id: 'mass_cylinder',
+        name: 'Cylinder Mass',
+        deformationRules: {
+            stretch: { widthMultiplier: 0.75, thinFactor: 0.8, addStriations: false },
+            compress: { widthMultiplier: 1.2, bulgeFactor: 1.2, roundness: 0.7 },
+            twist: { sensitivity: 0.8, offsetFactor: 0.5 }
+        },
+        widthRange: { stretch: 0.75, rest: 1.0, compress: 1.2 },
+        twistSensitivity: 0.8
+    },
+
+    // SAUSAGE MASS (Flexible Torso, Tail)
+    mass_sausage: {
+        id: 'mass_sausage',
+        name: 'Sausage Mass',
+        deformationRules: {
+            stretch: { widthMultiplier: 0.7, thinFactor: 0.75, addStriations: false },
+            compress: { widthMultiplier: 1.25, bulgeFactor: 1.3, roundness: 0.8 },
+            twist: { sensitivity: 1.2, offsetFactor: 0.6 }
+        },
+        widthRange: { stretch: 0.7, rest: 1.0, compress: 1.25 },
+        twistSensitivity: 1.2
     }
 };
 

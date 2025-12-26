@@ -117,6 +117,44 @@ function createMuscle(creatureName, regionName, counter, startBone, endBone, reg
     const restLength = Math.sqrt(dx * dx + dy * dy);
     const restAngle = Math.atan2(dy, dx) * 180 / Math.PI;
 
+    // Use MassShapeLibrary if available
+    if (typeof MassShapeLibrary !== 'undefined') {
+        const shape = MassShapeLibrary.createShape(
+            regionConfig.shapeType,
+            {
+                id: `${creatureName}_${regionName}_${counter}`,
+                name: `${regionName} #${counter}`
+            }
+        );
+
+        if (shape) {
+            // Configure the shape
+            shape.startJoint = startBone.id;
+            shape.endJoint = endBone.id;
+            shape.restLength = restLength;
+            shape.restAngle = restAngle;
+            shape.width = regionConfig.baseWidth;
+            shape.sensitivity = regionConfig.sensitivity;
+            shape.group = regionName;
+            shape.shapeType = regionConfig.shapeType; // CRITICAL: Required for renderer switch
+            
+            // Merge deformation rules
+            shape.deformationRules = {
+                stretch: { ...shapeType.deformationRules.stretch },
+                compress: { ...shapeType.deformationRules.compress },
+                twist: { ...shapeType.deformationRules.twist }
+            };
+            
+            shape.widthRange = { ...shapeType.widthRange };
+            shape.twistSensitivity = shapeType.twistSensitivity;
+            shape.description = regionConfig.description || `Auto-generated muscle for ${regionName}`;
+            shape.attachmentPattern = regionConfig.attachmentPattern || 'sequential';
+
+            return shape;
+        }
+    }
+
+    // Fallback to old object structure if library not found or shape creation failed
     return {
         // Core properties
         id: `${creatureName}_${regionName}_${counter}`,
@@ -169,36 +207,42 @@ function findBonesByRegion(skeleton, regionName) {
     // Pattern definitions for anatomical regions
     const patterns = {
         // FRONT LIMBS
-        front_left_limb: /^frontLeft(?!.*flexor)/i,  // frontLeft but not flexor variant
-        front_left_flexor: /^frontLeft/i,
-        front_right_limb: /^frontRight(?!.*flexor)/i,
-        front_right_flexor: /^frontRight/i,
-        
+        front_left_limb: /^front-leg-left(?!.*flexor)/i,  // front-leg-left but not flexor variant
+        front_left_flexor: /^front-leg-left/i,            // Any front-leg-left bone
+        front_right_limb: /^front-leg-right(?!.*flexor)/i, // front-leg-right but not flexor variant
+        front_right_flexor: /^front-leg-right/i,          // Any front-leg-right bone
+
         // HIND LIMBS
-        hind_left_limb: /^hindLeft(?!.*lateral|compression)/i,
-        hind_left_lateral: /^hindLeft/i,
-        hind_left_compression: /^(spine|hindLeft)/i,  // Composite pattern
-        hind_right_limb: /^hindRight(?!.*lateral|compression)/i,
-        hind_right_lateral: /^hindRight/i,
-        hind_right_compression: /^(spine|hindRight)/i,
-        
-        // BIPEDAL
-        left_limb: /^left(?!.*flexor)/i,
-        left_flexor: /^left/i,
-        right_limb: /^right(?!.*flexor)/i,
-        right_flexor: /^right/i,
-        
+        hind_left_limb: /^hind-leg-left(?!.*lateral|compression)/i,
+        hind_left_lateral: /^hind-leg-left/i,
+        hind_left_compression: /^(spine|hind-leg-left)/i,  // Composite pattern
+        hind_right_limb: /^hind-leg-right(?!.*lateral|compression)/i,
+        hind_right_lateral: /^hind-leg-right/i,
+        hind_right_compression: /^(spine|hind-leg-right)/i,
+
+        // BIPEDAL (for future use)
+        left_limb: /^leg-left(?!.*flexor)/i,
+        left_flexor: /^leg-left/i,
+        right_limb: /^leg-right(?!.*flexor)/i,
+        right_flexor: /^leg-right/i,
+
         // BODY/SPINE
-        spine: /^spine(\d+)?$/i,
-        spine_deep: /^spine(\d+)?$/i,
-        
+        spine: /^(spine|body)(\d*)?$/i,  // Match both 'spine' and 'body' with optional numbers
+        spine_deep: /^(spine|body)(\d*)?$/i,
+        chest: /^(spine|body)(\d*)?$/i,  // Map to same bones for now
+        ribcage: /^(spine|body)(\d*)?$/i,
+        thorax: /^(spine|body)(\d*)?$/i,
+        abdomen: /^(spine|body)(\d*)?$/i,
+        torso: /^(spine|body)(\d*)?$/i,
+        pelvis: /^(spine|body)(\d*)?$/i,
+
         // TAIL
         tail: /^tail/i,
-        
+
         // NECK/HEAD
         neck: /^neck/i,
         head: /^head/i,
-        
+
         // FINS (aquatic)
         pectoral_fins: /^(pectoral|dorsal|fin)/i,
         dorsal_fin: /^(dorsal|fin)/i

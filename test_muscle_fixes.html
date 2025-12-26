@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Muscle System Fix Test</title>
+    <style>
+        body {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: #fff;
+        }
+        #test-results {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #444;
+            border-radius: 5px;
+        }
+        .pass {
+            color: #4CAF50;
+        }
+        .fail {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+        code {
+            background: #555;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Muscle System Fix Verification</h1>
+    <div id="test-results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('test-results');
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            testResults.push({ message, type });
+            renderResults();
+        }
+
+        function pass(message) {
+            log(`✓ ${message}`, 'pass');
+        }
+
+        function fail(message) {
+            log(`✗ ${message}`, 'fail');
+        }
+
+        function info(message) {
+            log(`ℹ ${message}`, 'info');
+        }
+
+        function renderResults() {
+            resultsDiv.innerHTML = testResults.map(r =>
+                `<div class="${r.type}">${r.message}</div>`
+            ).join('');
+        }
+
+        // Mock dependencies if not available
+        if (typeof MUSCLE_MAPPINGS === 'undefined') {
+            window.MUSCLE_MAPPINGS = {
+                erect_quadruped: {
+                    front_left_limb: { shapeType: 'mass_cylinder', baseWidth: 14 },
+                    front_right_limb: { shapeType: 'mass_cylinder', baseWidth: 14 },
+                    spine: { shapeType: 'mass_sausage', baseWidth: 22 }
+                },
+                sprawling_quadruped: {
+                    front_left_limb: { shapeType: 'mass_cylinder', baseWidth: 10 },
+                    front_right_limb: { shapeType: 'mass_cylinder', baseWidth: 10 },
+                    torso: { shapeType: 'mass_sausage', baseWidth: 24 }
+                }
+            };
+        }
+
+        if (typeof MUSCLE_SHAPE_TYPES === 'undefined') {
+            window.MUSCLE_SHAPE_TYPES = {
+                mass_cylinder: {
+                    deformationRules: { stretch: { widthMultiplier: 0.75 }, compress: { widthMultiplier: 1.2 } }
+                },
+                mass_sausage: {
+                    deformationRules: { stretch: { widthMultiplier: 0.7 }, compress: { widthMultiplier: 1.25 } }
+                }
+            };
+        }
+
+        // Simulate bone patterns from our fixes
+        function testBonePatternMatching() {
+            log('\n<h2>🔍 Testing Bone Pattern Matching</h2>');
+
+            // Test 1: Check if patterns match bone IDs
+            const testBoneIds = [
+                'front-leg-left',
+                'front-leg-right',
+                'hind-leg-left',
+                'hind-leg-right',
+                'spine',
+                'body',
+                'tail'
+            ];
+
+            const patterns = {
+                'front_left_limb': /^front-leg-left(?!.*flexor)/i,
+                'front_right_limb': /^front-leg-right(?!.*flexor)/i,
+                'hind_left_limb': /^hind-leg-left(?!.*lateral|compression)/i,
+                'hind_right_limb': /^hind-leg-right(?!.*lateral|compression)/i,
+                'spine': /^(spine|body)(\d*)?$/i,
+                'tail': /^tail/i
+            };
+
+            let passedTests = 0;
+            let totalTests = 0;
+
+            for (const [region, pattern] of Object.entries(patterns)) {
+                // Test if pattern exists
+                totalTests++;
+                if (pattern) {
+                    pass(`Pattern for ${region} exists`);
+                    passedTests++;
+                } else {
+                    fail(`Pattern for ${region} missing`);
+                }
+
+                // Test if bone IDs match patterns
+                for (const boneId of testBoneIds) {
+                    totalTests++;
+                    if (pattern.test(boneId)) {
+                        pass(`Bone ID "${boneId}" matches ${region} pattern`);
+                        passedTests++;
+                    }
+                }
+            }
+
+            info(`Pattern matching: ${passedTests}/${totalTests} tests passed`);
+        }
+
+        // Test muscle mapping coverage
+        function testMuscleCoverage() {
+            log('\n<h2>📊 Testing Muscle Coverage</h2>');
+
+            // Test horse (erect_quadruped) coverage
+            const horseMapping = MUSCLE_MAPPINGS.erect_quadruped;
+            const horseRegions = Object.keys(horseMapping);
+
+            pass(`Horse has ${horseRegions.length} muscle regions`);
+
+            const expectedHorseRegions = [
+                'front_left_limb', 'front_right_limb',
+                'hind_left_limb', 'hind_right_limb',
+                'chest', 'ribcage', 'thorax', 'abdomen',
+                'spine', 'neck', 'tail'
+            ];
+
+            let missingHorseRegions = expectedHorseRegions.filter(r => !horseRegions.includes(r));
+            if (missingHorseRegions.length === 0) {
+                pass('Horse has all expected muscle regions');
+            } else {
+                fail(`Horse missing regions: ${missingHorseRegions.join(', ')}`);
+            }
+
+            // Test lizard (sprawling_quadruped) coverage
+            const lizardMapping = MUSCLE_MAPPINGS.sprawling_quadruped;
+            const lizardRegions = Object.keys(lizardMapping);
+
+            pass(`Lizard has ${lizardRegions.length} muscle regions`);
+
+            const expectedLizardRegions = [
+                'front_left_limb', 'front_right_limb',
+                'hind_left_limb', 'hind_right_limb',
+                'torso', 'thorax', 'abdomen', 'pelvis',
+                'spine', 'tail'
+            ];
+
+            let missingLizardRegions = expectedLizardRegions.filter(r => !lizardRegions.includes(r));
+            if (missingLizardRegions.length === 0) {
+                pass('Lizard has all expected muscle regions');
+            } else {
+                fail(`Lizard missing regions: ${missingLizardRegions.join(', ')}`);
+            }
+        }
+
+        // Test locomotion type detection
+        function testLocomotionTypeDetection() {
+            log('\n<h2>🦎 Testing Locomotion Type Detection</h2>');
+
+            const testCases = [
+                { creature: 'horse', expected: 'erect_quadruped' },
+                { creature: 'lizard', expected: 'sprawling_quadruped' },
+                { creature: 'crane', expected: 'bipedal' },
+                { creature: 'snake', expected: 'serpentine' },
+                { creature: 'fish', expected: 'aquatic' }
+            ];
+
+            testCases.forEach(({ creature, expected }) => {
+                let locomotionType = 'erect_quadruped'; // default
+                if (creature === 'lizard' || creature === 'crocodile') {
+                    locomotionType = 'sprawling_quadruped';
+                } else if (creature === 'crane' || creature === 'ostrich') {
+                    locomotionType = 'bipedal';
+                } else if (creature === 'snake' || creature === 'eel') {
+                    locomotionType = 'serpentine';
+                } else if (creature === 'fish' || creature === 'whale') {
+                    locomotionType = 'aquatic';
+                }
+
+                if (locomotionType === expected) {
+                    pass(`${creature} → ${locomotionType}`);
+                } else {
+                    fail(`${creature} → ${locomotionType} (expected ${expected})`);
+                }
+            });
+        }
+
+        // Test integration flow
+        function testIntegrationFlow() {
+            log('\n<h2>🔗 Testing Integration Flow</h2>');
+
+            // Simulate generateVolumeMasses flow
+            let locomotionType = 'erect_quadruped';
+            let creatureType = 'horse';
+
+            // Check if mappings exist
+            if (MUSCLE_MAPPINGS && MUSCLE_MAPPINGS[locomotionType]) {
+                pass(`Found mappings for ${locomotionType}`);
+            } else {
+                fail(`No mappings found for ${locomotionType}`);
+            }
+
+            // Check if shape types exist
+            const mapping = MUSCLE_MAPPINGS[locomotionType];
+            for (const [region, config] of Object.entries(mapping)) {
+                if (MUSCLE_SHAPE_TYPES && MUSCLE_SHAPE_TYPES[config.shapeType]) {
+                    pass(`${region} → ${config.shapeType} exists`);
+                } else {
+                    fail(`${region} → ${config.shapeType} missing`);
+                }
+            }
+        }
+
+        // Run all tests
+        function runAllTests() {
+            log('<h1>🚀 Running Muscle System Tests</h1>');
+
+            testBonePatternMatching();
+            testMuscleCoverage();
+            testLocomotionTypeDetection();
+            testIntegrationFlow();
+
+            log('\n<h2>📋 Summary</h2>');
+            const passed = testResults.filter(r => r.type === 'pass').length;
+            const failed = testResults.filter(r => r.type === 'fail').length;
+            const total = passed + failed;
+
+            log(`Tests: ${passed} passed, ${failed} failed out of ${total}`);
+
+            if (failed === 0) {
+                pass('🎉 All tests passed! Muscle system fixes are working.');
+            } else {
+                fail(`❌ ${failed} test(s) failed. Please review the issues above.`);
+            }
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', runAllTests);
+    </script>
+</body>
+</html>

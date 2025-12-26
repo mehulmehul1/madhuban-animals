@@ -228,8 +228,8 @@ class ModularCreatureBuilder {
 
     console.log("Built modular fish with " + this.chains.length + " chains");
   
-  // *** PHASE 2: Generate muscles for deformation engine ***
-  this.muscles = this.generateFullMuscles();
+  // *** PHASE 2: Generate VOLUME MASSES (geometric primitive approach) ***
+  this.muscles = this.generateVolumeMasses();
 }
 
   buildBipedalCrane() {
@@ -524,8 +524,8 @@ class ModularCreatureBuilder {
       "Built modular quadruped with " + this.chains.length + " chains"
     );
     
-    // *** PHASE 2: Generate muscles for deformation engine ***
-    this.muscles = this.generateFullMuscles();
+    // *** PHASE 2: Generate VOLUME MASSES (geometric primitive approach) ***
+    this.muscles = this.generateVolumeMasses();
   }
 
   buildLizard() {
@@ -657,8 +657,8 @@ class ModularCreatureBuilder {
 
     console.log("Built modular lizard with " + this.chains.length + " chains");
     
-    // *** PHASE 2: Generate muscles for deformation engine ***
-    this.muscles = this.generateFullMuscles();
+    // *** PHASE 2: Generate VOLUME MASSES (geometric primitive approach) ***
+    this.muscles = this.generateVolumeMasses();
   }
 
   buildOctopus() {
@@ -698,9 +698,8 @@ class ModularCreatureBuilder {
     }
 
     console.log("Built modular octopus with " + this.chains.length + " chains");
-
-    // *** PHASE 2: Generate muscles for deformation engine ***
-    this.muscles = this.generateFullMuscles();
+  // *** PHASE 2: Generate VOLUME MASSES (geometric primitive approach) ***
+  this.muscles = this.generateVolumeMasses();
   }
 
   buildSnake() {
@@ -1558,6 +1557,28 @@ class ModularCreatureBuilder {
         for (const muscle of this.muscles) {
           if (!muscle) continue;
 
+          // ***** VOLUME MASS RENDERING *****
+          // Volume masses don't have bone connections, they have geometric data
+          if (muscle.massData) {
+            const deformation = this.deformationParams[muscle.id] || {
+              width: muscle.width || 20,
+              bulge: 1.0,
+              offset: 0.5
+            };
+            
+            this.muscleRenderer.renderMuscle(
+              this.renderer,
+              muscle,
+              deformation,
+              null, // startPos not needed for volume masses
+              null, // endPos not needed for volume masses
+              this.getBoneById.bind(this)
+            );
+            renderedCount++;
+            continue; // Skip bone lookup
+          }
+
+          // ***** PATH-BASED RENDERING (Legacy) *****
           // Get bone positions from skeleton
           const startBone = this.getBoneById(muscle.startJoint);
           const endBone = this.getBoneById(muscle.endJoint);
@@ -1569,6 +1590,7 @@ class ModularCreatureBuilder {
               foundStart: !!startBone,
               foundEnd: !!endBone
             });
+            continue; // Skip if bones not found
           }
 
           // Get start and end positions
@@ -1958,6 +1980,73 @@ class ModularCreatureBuilder {
     }
     
     return null;
+  }
+
+
+  /**
+   * Generate volumetric masses using geometric primitive approach
+   * Uses MassIdentifier to detect anatomical regions from skeleton
+   * Returns discrete geometric masses instead of path-based muscles
+   */
+  generateVolumeMasses() {
+    console.log('[VOLUME MASS GEN] Starting volume-based mass generation');
+
+    // Check if MassIdentifier is available
+    if (typeof MassIdentifier === 'undefined') {
+      console.warn('[VOLUME MASS GEN] MassIdentifier not available, falling back to generateFullMuscles');
+      return this.generateFullMuscles();
+    }
+    
+    const massIdentifier = new MassIdentifier();
+    const masses = [];
+    
+    // Build skeleton object from chains
+    const skeleton = {
+      chains: this.chains.map((chain, i) => ({
+        role: this.chainConfigs[i].role,
+        config: this.chainConfigs[i],
+        bones: chain.bones
+      }))
+    };
+    
+    // Determine creature type and mass approach
+    const creatureType = this.creatureType || 'quadruped';
+    // Only use single torso for creatures that truly need it (snakes, eels)
+    const useSeparateMasses = creatureType !== 'snake' && creatureType !== 'eel';
+    
+    // Identify all masses
+    const identifiedMasses = massIdentifier.identifyAllMasses(skeleton, creatureType, useSeparateMasses);
+    
+    console.log(`[VOLUME MASS GEN] Identified ${identifiedMasses.length} masses`);
+    
+    // Convert to muscle-like objects for compatibility with existing systems
+    identifiedMasses.forEach((massData, i) => {
+      const muscle = {
+        id: `volumeMass_${i}`,
+        massData: massData, // Store geometric data for rendering
+        shapeType: `mass_${massData.type}`, // 'mass_sphere', 'mass_ovoid', 'mass_cylinder'
+        type: massData.type === 'sphere' ? 'compression_mass' : 'extending_limb_muscle',
+        role: massData.role,
+        width: massData.radius ? massData.radius * 2 : 20,
+        
+        // For compatibility with existing deformation/force systems
+        startJoint: null, // Not bone-based
+        endJoint: null,
+        deformationRules: {
+          rest: { widthMultiplier: 1.0, bulgeFactor: 1.0 },
+          stretch: { widthMultiplier: 0.9, bulgeFactor: 0.8 },
+          compress: { widthMultiplier: 1.1, bulgeFactor: 1.2 }
+        },
+        twistSensitivity: 0.5,
+        restAngle: massData.rotation || 0
+      };
+      
+      console.log(`[VOLUME MASS] ${muscle.shapeType} - ${muscle.role}`);
+      masses.push(muscle);
+    });
+    
+    console.log(`[VOLUME MASS GEN] Total volume masses generated: ${masses.length}`);
+    return masses;
   }
 
   /**

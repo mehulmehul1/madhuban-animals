@@ -380,7 +380,7 @@ class BoneTemplateSystem {
         if (templateName.includes('quadruped-')) {
             return this.generateQuadrupedBones(templateName, scale, config);
         }
-        
+    
         // Use existing template system
         const template = this.templates.get(templateName);
         if (template) {

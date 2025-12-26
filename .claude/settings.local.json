@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "WebFetch(domain:drawabox.com)",
+      "WebSearch",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(xargs cat:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:iquilezles.org)",
+      "Bash(mkdir:*)",
+      "Bash(bun run dev)",
+      "Bash(bun run build)",
+      "Bash(claude mcp add:*)"
     ],
     "deny": []
   }
